@@ -26,6 +26,9 @@ interface AbstractModel {
         return null
     }
 
+    fun convertYNtoBoolean(ynValue:String): Boolean =
+        ynValue.lowercase() == "y"
+
     fun isNumeric(str: String) = str.all { it in '0'..'9' }
 
     private fun parseStringOnDelimiter(s: String, delimiter: String): List<String> =
@@ -63,17 +66,20 @@ interface AbstractModel {
             else -> 0.0F
         }
 
+    fun parseValidDoubleFromString(fs: String): Double =
+        when (Regex("[-+]?[0-9]*\\.?[0-9]+").matches(fs)) {
+            true -> fs.toDouble()
+            else -> 0.0
+        }
     /*
     Function to convert an Integer String to an Integer
     returns 0 if the field is not numeric
      */
 
     fun parseValidIntegerFromString(s: String): Int =
-        when (Regex(" \"^\\\\d+\$\"").matches(s)) {
-            true -> s.toInt()
-            else -> 0
+        when (s.toIntOrNull()) {
+            null -> 0
+            else  -> s.toInt()
         }
-
-
 
 }

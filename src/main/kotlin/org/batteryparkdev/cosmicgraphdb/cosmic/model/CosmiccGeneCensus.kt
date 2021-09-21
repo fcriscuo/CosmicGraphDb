@@ -11,14 +11,14 @@ Tumour Types(Germline),Cancer Syndrome,Tissue Type,
 Molecular Genetics,Role in Cancer,Mutation Types,
 Translocation Partner,Other Germline Mut,
 Other Syndrome,Synonyms
-
  */
+
 data class CosmicGeneCensus(
     val geneSymbol:String, val geneName:String, val entrezGeneId: String,
     val genomeLocation:String, val Tier:Int=0, val hallmark:Boolean = false,
     val chromosomeBand:String, val somatic:Boolean = false, val germline: Boolean,
     val somaticTumorTypeList: List<String>, val germlineTumorTypeList: List<String>,
-    val cancerSyndrome:String, val tissueType:String, val molecularGenetics: String,
+    val cancerSyndrome:String, val tissueTypeList:List<String>, val molecularGenetics: String,
     val roleInCancerList:List<String>, val mutationTypeList: List<String>,
     val translocationPartnerList: List<String>,
     val otherGermlineMut: String, val otherSyndromeList: List<String>, val synonymList: List<String>
@@ -40,7 +40,7 @@ data class CosmicGeneCensus(
             val somaticTumorTypeList = parseStringOnComma(record.get("Tumour Types(Somatic)"))
             val germlineTumorTypeList = parseStringOnComma(record.get("Tumour Types(Germline)"))
             val cancerSyndrome = record.get("Cancer Syndrome")?: ""
-            val tissueType = record.get("Tissue Type")?: ""
+            val tissueTypeList = parseStringOnComma(record.get("Tissue Type"))
             val molecularGenetics = record.get("Molecular Genetics") ?: ""
             val roleInCancerList = parseStringOnComma(record.get("Role in Cancer") )
             val mutationTypeList = parseStringOnComma(record.get("Mutation Types") )
@@ -50,12 +50,11 @@ data class CosmicGeneCensus(
             val synonymList = parseStringOnComma(record.get("Synonyms"))
             return CosmicGeneCensus( geneSymbol,geneName, entrezGeneId, genomeLocation,tier,
                 hallmark, chromosomeBand, somatic, germline, somaticTumorTypeList,
-                germlineTumorTypeList, cancerSyndrome, tissueType, molecularGenetics,
+                germlineTumorTypeList, cancerSyndrome, tissueTypeList, molecularGenetics,
                 roleInCancerList, mutationTypeList, translocationPartnerList,
                 otherGermlineMut, otherSyndromeList,synonymList
             )
         }
-
     }
 }
 
@@ -70,7 +69,7 @@ fun main() {
                 .forEach {
                         cgc -> println("Gene Symbol= ${cgc.geneSymbol}  location= ${cgc.genomeLocation}" +
                         "  role in cancer = ${cgc.roleInCancerList} " +
-                        "  other syndrome = ${cgc.otherSyndromeList} ")
+                        "  tissue type = ${cgc.tissueTypeList} ")
                     recordCount += 1
                 }
         }
