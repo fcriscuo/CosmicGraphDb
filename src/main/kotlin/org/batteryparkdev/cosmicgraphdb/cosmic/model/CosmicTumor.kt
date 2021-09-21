@@ -6,7 +6,6 @@ import java.nio.file.Paths
 
 data class CosmicTumor(
     val tumorId: String, val sampleId: String, val sampleName: String,
-    val cosmicGene: CosmicGene,
     val site: CosmicType, val histology: CosmicType,
     val genomeWideScreen: Boolean,
     val pubmedId: String, val studyId: String, val sampleTYpe: String,
@@ -17,7 +16,7 @@ data class CosmicTumor(
         fun parseCsvRecord(record: CSVRecord): CosmicTumor =
             CosmicTumor(
                 record.get("ID_tumour"), record.get("ID_sample"),
-                record.get("Sample name"), CosmicGene.parseCsvRecrod(record),
+                record.get("Sample name"),
                 CosmicType.resolveSiteType(record), CosmicType.resolveHistologyType(record),
                 resolveGenomeWideScreen(record),
                 record.get("Pubmed_PMID"), record.get("ID_STUDY"),
