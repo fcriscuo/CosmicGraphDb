@@ -8,13 +8,21 @@ Accession Number
 	Gene CDS length
 	HGNC ID
  */
-data class CosmicGene(val geneName:String, val accessionNumber:String,
- val cdsLength:Int, val hgncId: String) {
+data class CosmicGene(
+    val geneName: String, val accessionNumber: String,
+    val cdsLength: Int, val hgncId: String
+) {
 
     companion object {
-        fun parseCsvRecrod(record: CSVRecord): CosmicGene =
-             CosmicGene( record.get("Gene name"), record.get("Accession Number"),
-            record.get("Gene CDS length").toInt(), record.get("HGNC ID"))
+        fun parseCsvRecord(record: CSVRecord): CosmicGene =
+            CosmicGene(
+                when (record.isMapped("Gene name")) {
+                    true -> record.get("Gene name")
+                    false -> record.get("Gene Name")
+                },
+                record.get("Accession Number"),
+                record.get("Gene CDS length").toInt(), record.get("HGNC ID")
+            )
 
     }
 }

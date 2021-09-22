@@ -32,6 +32,10 @@ data class CosmicType (val label: String,
                     record.get("Histology subtype 1"), record.get("Histology subtype 2"), record.get("Histology subtype 3")
                 )
             }
+        fun resolveTissueType (record: CSVRecord): CosmicType =
+            CosmicType("Tissue", record.get("Primary Tissue"),
+            record.get("Tissue Subtype 1"), record.get("Tissue Subtype 2"),"")
+
 
         fun resolveCosmicSiteType (record:CSVRecord): CosmicType =
              CosmicType("CosmicSite", record.get("SITE_PRIMARY_COSMIC"),
