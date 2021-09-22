@@ -1,7 +1,9 @@
 package org.batteryparkdev.cosmicgraphdb.cosmic.model
 
 import org.apache.commons.csv.CSVRecord
-
+/*
+PRIMARY_SITE	SITE_SUBTYPE_1	SITE_SUBTYPE_2	SITE_SUBTYPE_3
+ */
 data class CosmicType (val label: String,
                        val primary: String,
                        val subtype1: String = "NS",
