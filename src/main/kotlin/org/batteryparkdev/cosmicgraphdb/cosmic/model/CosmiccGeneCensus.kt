@@ -15,7 +15,7 @@ Other Syndrome,Synonyms
 
 data class CosmicGeneCensus(
     val geneSymbol:String, val geneName:String, val entrezGeneId: String,
-    val genomeLocation:String, val Tier:Int=0, val hallmark:Boolean = false,
+    val genomeLocation:String, val tier:Int=0, val hallmark:Boolean = false,
     val chromosomeBand:String, val somatic:Boolean = false, val germline: Boolean,
     val somaticTumorTypeList: List<String>, val germlineTumorTypeList: List<String>,
     val cancerSyndrome:String, val tissueTypeList:List<String>, val molecularGenetics: String,
@@ -67,9 +67,13 @@ fun main() {
             it.stream()
                 .map { CosmicGeneCensus.parseCsvRecord(it) }
                 .forEach {
-                        cgc -> println("Gene Symbol= ${cgc.geneSymbol}  location= ${cgc.genomeLocation}" +
+                        cgc -> println("Gene Symbol= ${cgc.geneSymbol} " +
                         "  role in cancer = ${cgc.roleInCancerList} " +
-                        "  tissue type = ${cgc.tissueTypeList} ")
+                        "  tissue type = ${cgc.tissueTypeList} +" +
+                        "  translocation partner(s) = ${cgc.translocationPartnerList}\n" +
+                        "  mutation type(s) = ${cgc.mutationTypeList}    somatic tumor types = ${cgc.somaticTumorTypeList} \n" +
+                        "  cancer syndrome = ${cgc.cancerSyndrome}   other syndromes= ${cgc.otherSyndromeList}\n" +
+                        "  other germline mut = ${cgc.otherGermlineMut}  synonyms =  ${cgc.synonymList}")
                     recordCount += 1
                 }
         }
