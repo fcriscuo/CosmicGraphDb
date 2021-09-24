@@ -132,7 +132,7 @@ object CosmicGeneLoader {
     }
 
     private fun loadCosmicGeneNode(cosmicGene: CosmicGeneCensus): String {
-        if (!cancerGeneLoaded(cosmicGene.geneSymbol)) {
+        if (!cancerGeneSymbolLoaded(cosmicGene.geneSymbol)) {
             val merge = cypherLoadTemplate.replace("GENESYMBOL", cosmicGene.geneSymbol)
                 .replace("GENENAME", cosmicGene.geneName)
                 .replace("ENTREZ", cosmicGene.entrezGeneId)
@@ -178,14 +178,25 @@ object CosmicGeneLoader {
     }
 
     /*
-    Function to determine if a CancerGene node for a specified gene
+    Function to determine if a CancerGene node for a specified gene symbol
     has already been loaded
      */
-    fun cancerGeneLoaded(geneSymbol: String): Boolean =
+    fun cancerGeneSymbolLoaded(geneSymbol: String): Boolean =
         Neo4jUtils.nodeLoadedPredicate(
             "OPTIONAL MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
                     " RETURN cg IS NOT NULL AS PREDICATE"
         )
+
+    /*
+   Function to determine if a CancerGene node for a specified gene name
+   has already been loaded
+    */
+    fun cancerGeneNameLoaded(geneName: String): Boolean =
+        Neo4jUtils.nodeLoadedPredicate(
+            "OPTIONAL MATCH (cg:CosmicGene{gene_name: \"$geneName\" }) " +
+                    " RETURN cg IS NOT NULL AS PREDICATE"
+        )
+
 }
 /*
 Test loading sample CosmicCensusGene file

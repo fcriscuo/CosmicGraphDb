@@ -8,18 +8,22 @@ data class CosmicType (val label: String,
                        val primary: String,
                        val subtype1: String = "NS",
                        val subtype2: String = "NS",
-                       val subtype3: String = "NS") {
+                       val subtype3: String = "NS",
+                       val typeId: Int   // unique identifier for database
+                        ) {
 
     companion object: AbstractModel {
         fun resolveSiteType (record:CSVRecord) :CosmicType =
             when(record.isMapped("SITE_PRIMARY")) {
                true -> CosmicType(
                     "Site", record.get("SITE_PRIMARY"),
-                    record.get("SITE_SUBTYPE1"), record.get("SITE_SUBTYPE2"), record.get("SITE_SUBTYPE3")
+                    record.get("SITE_SUBTYPE1"), record.get("SITE_SUBTYPE2"), record.get("SITE_SUBTYPE3"),
+                   record.hashCode()
                 )
                 false -> CosmicType(
                     "Site", record.get("Primary site"),
-                    record.get("Site subtype 1"), record.get("Site subtype 2"), record.get("Site subtype 3")
+                    record.get("Site subtype 1"), record.get("Site subtype 2"), record.get("Site subtype 3"),
+                    record.hashCode()
                 )
             }
 
@@ -27,27 +31,31 @@ data class CosmicType (val label: String,
             when (record.isMapped("HISTOLOGY")) {
                 true -> CosmicType(
                     "Histology", record.get("HISTOLOGY"),
-                    record.get("HIST_SUBTYPE1"), record.get("HIST_SUBTYPE2"), record.get("HIST_SUBTYPE3")
+                    record.get("HIST_SUBTYPE1"), record.get("HIST_SUBTYPE2"), record.get("HIST_SUBTYPE3"),
+                    record.hashCode()
                 )
                 false ->CosmicType(
                     "Histology", record.get("Primary histology"),
-                    record.get("Histology subtype 1"), record.get("Histology subtype 2"), record.get("Histology subtype 3")
+                    record.get("Histology subtype 1"), record.get("Histology subtype 2"), record.get("Histology subtype 3"),
+                    record.hashCode()
                 )
             }
         fun resolveTissueType (record: CSVRecord): CosmicType =
             CosmicType("Tissue", record.get("Primary Tissue"),
-            record.get("Tissue Subtype 1"), record.get("Tissue Subtype 2"),"")
+            record.get("Tissue Subtype 1"), record.get("Tissue Subtype 2"),"",
+        record.hashCode())
 
 
         fun resolveCosmicSiteType (record:CSVRecord): CosmicType =
              CosmicType("CosmicSite", record.get("SITE_PRIMARY_COSMIC"),
                 record.get("SITE_SUBTYPE1_COSMIC"), record.get("SITE_SUBTYPE2_COSMIC"),
-                record.get("SITE_SUBTYPE3_COSMIC"))
+                record.get("SITE_SUBTYPE3_COSMIC"),record.hashCode())
 
         fun resolveCosmicHistologyType(record:CSVRecord): CosmicType =
            CosmicType("CosmicHistology",record.get("HISTOLOGY_COSMIC"),
                 record.get("HIST_SUBTYPE1_COSMIC"), record.get("HIST_SUBTYPE2_COSMIC"),
-                record.get("HIST_SUBTYPE3_COSMIC")
+                record.get("HIST_SUBTYPE3_COSMIC"),record.hashCode()
             )
+
     }
 }

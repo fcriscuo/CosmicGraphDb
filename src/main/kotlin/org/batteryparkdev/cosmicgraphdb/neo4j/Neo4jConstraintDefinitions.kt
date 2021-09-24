@@ -15,8 +15,9 @@ val constraints by lazy {
         "CREATE CONSTRAINT unique_cosmic_gene_symbol IF NOT EXISTS ON (cg: CosmicGene) ASSERT cg.gene_symbol IS UNIQUE",
         "CREATE CONSTRAINT unique_cosmic_hallmark_id IF NOT EXISTS ON (hm: CosmicHallmark) ASSERT hm.hallmark_id IS UNIQUE",
         "CREATE CONSTRAINT unique_pubmed_id IF NOT EXISTS ON (pma:PubMedArticle) ASSERT pma.pubmed_id IS UNIQUE",
-        "CREATE CONSTRAINT unique_annotation_id IF NOT EXISTS ON (ca:CosmicAnnotation) ASSERT ca.annotation_value IS UNIQUE"
-
+        "CREATE CONSTRAINT unique_annotation_id IF NOT EXISTS ON (ca:CosmicAnnotation) ASSERT ca.annotation_value IS UNIQUE",
+        "CREATE CONSTRAINT unique_type_id IF NOT EXISTS ON (ct:CosmicType) ASSERT ct.type_id IS UNIQUE",
+        "CREATE CONSTRAINT unique_mutation_id IF NOT EXISTS ON (cm:CosmicMutation) ASSERT cm.mutation_id IS UNIQUE"
     )
 }
 
