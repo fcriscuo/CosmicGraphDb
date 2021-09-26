@@ -131,6 +131,7 @@ object CosmicGeneLoader {
         }
     }
 
+
     private fun loadCosmicGeneNode(cosmicGene: CosmicGeneCensus): String {
         if (!cancerGeneSymbolLoaded(cosmicGene.geneSymbol)) {
             val merge = cypherLoadTemplate.replace("GENESYMBOL", cosmicGene.geneSymbol)

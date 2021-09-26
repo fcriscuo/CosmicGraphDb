@@ -6,7 +6,7 @@ import java.nio.file.Paths
 
 // SAMPLE_ID	SAMPLE_NAME	GENE_NAME	REGULATION	Z_SCORE	ID_STUDY
 data class CosmicCompleteGeneExpression(
-    val sample: CosmicSample,
+    val sampleId:Int,
     val geneName: String,
     val regulation: String,
     val zScore: Float,
@@ -14,12 +14,11 @@ data class CosmicCompleteGeneExpression(
     )
 {
     companion object: AbstractModel {
-        fun resolveSample(record: CSVRecord): CosmicSample =
-            CosmicSample(record.get("SAMPLE_ID").toInt(),
-            record.get("SAMPLE_NAME"),"")
+
 
         fun parseCsvRecord(record: CSVRecord): CosmicCompleteGeneExpression =
-            CosmicCompleteGeneExpression( resolveSample(record),
+            CosmicCompleteGeneExpression(
+                record.get("SAMPLE_ID").toInt(),
                 record.get("GENE_NAME"),
                 record.get("REGULATION"), record.get("Z_SCORE").toFloat(),
                 record.get("ID_STUDY").toInt()
@@ -38,7 +37,7 @@ fun main() {
                 .map { CosmicCompleteGeneExpression.parseCsvRecord(it) }
                 .forEach { exp ->
                     println(
-                        "Sample: ${exp.sample.sampleName}  Gene name: ${exp.geneName} " +
+                        "Sample: ${exp.sampleId}  Gene name: ${exp.geneName} " +
                                 " Regulation: ${exp.regulation} " +
                                 " z-Score: ${exp.zScore}  Study Id: ${exp.studyId} "
                     )

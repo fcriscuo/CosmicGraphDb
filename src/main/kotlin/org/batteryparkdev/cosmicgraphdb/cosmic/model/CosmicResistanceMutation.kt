@@ -16,7 +16,7 @@ Genome Coordinates (GRCh38)	Tier	HGVSP	HGVSC	HGVSG
  */
 
 data class CosmicResistanceMutation(
-    val cosmicSample: CosmicSample,
+    val sampleId: Int,
     val geneName: String,
     val transcript: String,
     val censusGene: Boolean,
@@ -35,7 +35,7 @@ data class CosmicResistanceMutation(
     companion object : AbstractModel {
         fun parseCsvRecord(record: CSVRecord): CosmicResistanceMutation =
             CosmicResistanceMutation(
-                CosmicSample.parseCsvRecord(record),
+                record.get("Ssmple ID").toInt(),
                 record.get("Gene Name"),
                 record.get("Transcript"),
                 when (record.get("Census Gene")) {
@@ -62,7 +62,8 @@ data class CosmicResistanceMutation(
             CosmicType(
                 "Histology", record.get("Histology"),
                 record.get("Histology Subtype 1"), record.get("Histology Subtype 2"),
-                ""
+                "",
+                record.hashCode()
             )
     }
 }
@@ -77,7 +78,7 @@ fun main() {
                 .map { CosmicResistanceMutation.parseCsvRecord(it) }
                 .forEach { mut ->
                     println(
-                        "Sample: ${mut.cosmicSample.sampleName}  Transcript: ${mut.transcript} " +
+                        "Sample Id: ${mut.sampleId}  Transcript: ${mut.transcript} " +
                                 " Drug name: ${mut.drugName}  Mutation: ${mut.cosmicMutation.mutationAA} " +
                                 "Histology: ${mut.cosmicHistology.primary}"
                     )

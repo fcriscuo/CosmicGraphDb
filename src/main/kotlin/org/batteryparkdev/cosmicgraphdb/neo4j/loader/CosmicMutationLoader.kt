@@ -21,7 +21,7 @@ object CosmicMutationLoader {
    private  fun loadCosmicMutation(cosmicMutation: CosmicMutation):Int =
         Neo4jConnectionService.executeCypherCommand(
             "MERGE " +
-                    " (cm{mutation_id: ${cosmicMutation.mutationId}}) " +
+                    " (cm:CosmicMutation{mutation_id: ${cosmicMutation.mutationId}}) " +
                     " SET cm.genomic_mutation_id = \"${cosmicMutation.genomicMutationId}\", " +
                     "  cm.mutation_cds = \"${cosmicMutation.mutationCds}\", " +
                     "  cm.mutation_aa = \"${cosmicMutation.mutationAA}\", " +

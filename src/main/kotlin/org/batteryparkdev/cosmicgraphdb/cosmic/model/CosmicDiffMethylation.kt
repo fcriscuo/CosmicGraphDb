@@ -5,7 +5,7 @@ import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
 data class CosmicDiffMethylation (
-    val studyId: Int, val sample: CosmicSample,
+    val studyId: Int, val sampleId: Int,
     val tumorId: Int, val site: CosmicType,
     val histology: CosmicType, val fragmentId: String,
     // n.b. numeric values for chromosomes (x=23, y=24)
@@ -20,7 +20,7 @@ data class CosmicDiffMethylation (
         fun parseCsvRecord(record: CSVRecord): CosmicDiffMethylation =
             CosmicDiffMethylation(
                 record.get("STUDY_ID").toInt(),
-                resolveSample(record),
+                record.get("ID_SAMPLE").toInt(),
                 record.get("ID_TUMOUR").toInt(),
                 resolveSite(record),
                 resolveHistology(record),
@@ -42,18 +42,18 @@ data class CosmicDiffMethylation (
         fun resolveHistology(record:CSVRecord): CosmicType =
             CosmicType(
                 "Histology", record.get("PRIMARY_HISTOLOGY"),
-                record.get("HISTOLOGY_SUBTYPE_1"), record.get("HISTOLOGY_SUBTYPE_2"), record.get("HISTOLOGY_SUBTYPE_3")
+                record.get("HISTOLOGY_SUBTYPE_1"), record.get("HISTOLOGY_SUBTYPE_2"), record.get("HISTOLOGY_SUBTYPE_3"),
+                record.hashCode()
             )
 
         fun resolveSite(record: CSVRecord): CosmicType =
             CosmicType(
                 "Site", record.get("PRIMARY_SITE"),
-                record.get("SITE_SUBTYPE_1"), record.get("SITE_SUBTYPE_2"), record.get("SITE_SUBTYPE_3")
+                record.get("SITE_SUBTYPE_1"), record.get("SITE_SUBTYPE_2"), record.get("SITE_SUBTYPE_3"),
+                record.hashCode()
             )
 
-        fun resolveSample(record: CSVRecord): CosmicSample =
-            CosmicSample(record.get("ID_SAMPLE").toInt(),
-                record.get("SAMPLE_NAME"),"")
+
     }
 }
 
@@ -69,7 +69,7 @@ fun main() {
                     println(
                         "Tumor Id: ${methyl.tumorId}  Gene name: ${methyl.geneName} " +
                                 " Chromosome: ${methyl.chromosome}   Position: ${methyl.position}" +
-                                " SampleName: ${methyl.sample.sampleName}  Histology: ${methyl.histology.primary}" +
+                                " SampleName: ${methyl.sampleId}  Histology: ${methyl.histology.primary}" +
                                 " Methylation: ${methyl.methylation} "
                     )
                     recordCount += 1

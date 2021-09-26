@@ -15,9 +15,10 @@ object CosmicTypeLoader {
     }
 
     private fun loadCosmicTypeNode(cosmicType: CosmicType): Int {
-        val id = Neo4jConnectionService.executeCypherCommand(
+        val id = cosmicType.hashCode();  // generate a unique id for database
+        Neo4jConnectionService.executeCypherCommand(
             "MERGE " +
-                    " (ct:CosmicType{type_id: ${cosmicType.typeId}}) " +
+                    " (ct:CosmicType{type_id: ${id}) " +
                     " SET ct.primary = \"${cosmicType.primary}\", ct.subtype1 = \"${cosmicType.subtype1}\", " +
                     " ct.subtype2 = \"${cosmicType.subtype2}\"," +
                     "  ct.subtype3 = \"${cosmicType.subtype3}\"  RETURN ct.type_id"

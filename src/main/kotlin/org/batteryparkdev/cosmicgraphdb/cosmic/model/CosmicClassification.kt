@@ -16,8 +16,8 @@ data class CosmicClassification(
 
     companion object : AbstractModel {
         fun parseCsvRecord(record: CSVRecord): CosmicClassification {
-            val site = CosmicType.resolveCosmicSiteType(record)
-            val histology = CosmicType.resolveHistologyType(record)
+            val site = CosmicType.resolveSiteTypeBySource(record,"CosmicClassification")
+            val histology = CosmicType.resolveHistologyTypeBySource(record,"CosmicClassification")
             val cosmicSite = CosmicType.resolveCosmicSiteType(record)
             val cosmicHistology = CosmicType.resolveCosmicHistologyType(record)
             val code = record.get("NCI_CODE") ?: "NS"
@@ -39,7 +39,8 @@ fun main() {
             it.stream()
                 .map { CosmicClassification.parseCsvRecord(it) }
                 .forEach { cc ->
-                    println("Cosmic id= ${cc.cosmicPhenotypeId}  histology= ${cc.histologyType.primary}")
+                    println("Cosmic id= ${cc.cosmicPhenotypeId}  histology= ${cc.histologyType.primary}" +
+                            " Site = ${cc.siteType.primary}")
                     recordCount += 1
                 }
         }

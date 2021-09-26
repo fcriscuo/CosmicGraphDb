@@ -17,7 +17,8 @@ val constraints by lazy {
         "CREATE CONSTRAINT unique_pubmed_id IF NOT EXISTS ON (pma:PubMedArticle) ASSERT pma.pubmed_id IS UNIQUE",
         "CREATE CONSTRAINT unique_annotation_id IF NOT EXISTS ON (ca:CosmicAnnotation) ASSERT ca.annotation_value IS UNIQUE",
         "CREATE CONSTRAINT unique_type_id IF NOT EXISTS ON (ct:CosmicType) ASSERT ct.type_id IS UNIQUE",
-        "CREATE CONSTRAINT unique_mutation_id IF NOT EXISTS ON (cm:CosmicMutation) ASSERT cm.mutation_id IS UNIQUE"
+        "CREATE CONSTRAINT unique_mutation_id IF NOT EXISTS ON (cm:CosmicMutation) ASSERT cm.mutation_id IS UNIQUE",
+        "CREATE CONSTRAINT unique_sample_id IF NOT EXISTS ON (cs:CosmicSample) ASSERT cs.sample_id IS UNIQUE"
     )
 }
 
