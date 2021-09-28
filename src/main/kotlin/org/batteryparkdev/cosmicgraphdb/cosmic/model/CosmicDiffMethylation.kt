@@ -4,7 +4,7 @@ import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
-data class CosmicDiffMethylation (
+data class CosmicDiffMethylation(
     val studyId: Int, val sampleId: Int,
     val tumorId: Int, val site: CosmicType,
     val histology: CosmicType, val fragmentId: String,
@@ -14,16 +14,16 @@ data class CosmicDiffMethylation (
     val geneName: String, val methylation: String,
     val avgBetaValueNormal: Float, val betaValue: Float,
     val twoSidedPValue: Double
- ){
+) {
 
-    companion object: AbstractModel {
+    companion object : AbstractModel {
         fun parseCsvRecord(record: CSVRecord): CosmicDiffMethylation =
             CosmicDiffMethylation(
                 record.get("STUDY_ID").toInt(),
                 record.get("ID_SAMPLE").toInt(),
                 record.get("ID_TUMOUR").toInt(),
-                resolveSite(record),
-                resolveHistology(record),
+                CosmicType.resolveSiteTypeBySource(record, "CosmicDiffMethylation"),
+                CosmicType.resolveHistologyTypeBySource(record, "CosmicDiffMethylation"),
                 record.get("FRAGMENT_ID"),
                 record.get("GENOME_VERSION"),
                 record.get("CHROMOSOME").toInt(),  // Integer is OK
@@ -38,21 +38,6 @@ data class CosmicDiffMethylation (
                 record.get("BETA_VALUE").toFloat(),
                 record.get("TWO_SIDED_P_VALUE").toDouble()
             )
-
-        fun resolveHistology(record:CSVRecord): CosmicType =
-            CosmicType(
-                "Histology", record.get("PRIMARY_HISTOLOGY"),
-                record.get("HISTOLOGY_SUBTYPE_1"), record.get("HISTOLOGY_SUBTYPE_2"), record.get("HISTOLOGY_SUBTYPE_3"),
-                record.hashCode()
-            )
-
-        fun resolveSite(record: CSVRecord): CosmicType =
-            CosmicType(
-                "Site", record.get("PRIMARY_SITE"),
-                record.get("SITE_SUBTYPE_1"), record.get("SITE_SUBTYPE_2"), record.get("SITE_SUBTYPE_3"),
-                record.hashCode()
-            )
-
 
     }
 }

@@ -81,5 +81,11 @@ interface AbstractModel {
             null -> 0
             else  -> s.toInt()
         }
+    /*
+   Double quotes (i.e. ") inside a text field causes Cypher
+   processing errors
+    */
+    fun removeInternalQuotes(text: String): String =
+        text.replace("\"", "'")
 
 }

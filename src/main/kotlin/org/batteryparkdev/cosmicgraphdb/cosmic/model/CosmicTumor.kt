@@ -5,30 +5,31 @@ import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
 data class CosmicTumor(
-    val tumorId: String,  val sampleId: Int,
+    val tumorId: Int, val sampleId: Int, val mutationId: Int,
     val site: CosmicType, val histology: CosmicType,
     val genomeWideScreen: Boolean,
     val pubmedId: String, val studyId: String, val sampleType: String,
-    val tumorOrigin: String, val age:Int,
+    val tumorOrigin: String, val age: Int,
     val cosmicMutation: CosmicMutation
 ) {
     companion object : AbstractModel {
         fun parseCsvRecord(record: CSVRecord): CosmicTumor =
             CosmicTumor(
-                record.get("ID_tumour"),record.get("ID_sample").toInt(),
-                CosmicType.resolveSiteTypeBySource(record,"CosmicTumor"),
-                CosmicType.resolveHistologyTypeBySource(record,"CosmicTumor"),
+                record.get("ID_tumour").toInt(), record.get("ID_sample").toInt(),
+                record.get("MUTATION_ID").toInt(),
+                CosmicType.resolveSiteTypeBySource(record, "CosmicTumor"),
+                CosmicType.resolveHistologyTypeBySource(record, "CosmicTumor"),
                 record.get("Genome-wide screen").lowercase() == "y",
                 record.get("Pubmed_PMID"), record.get("ID_STUDY"),
                 record.get("Sample Type"), record.get("Tumour origin"),
                 parseValidIntegerFromString(record.get("Age")),
                 CosmicMutation.parseCsvRecord(record)
-                )
-
+            )
     }
 }
+
 fun main() {
-    val path = Paths.get("./data/sample_CosmicMutantExport.tsv")
+    val path = Paths.get("./data/sample_CosmicMutantExportCensus.tsv")
     println("Processing csv file ${path.fileName}")
     var recordCount = 0
     TsvRecordSequenceSupplier(path).get().chunked(500)
@@ -37,16 +38,19 @@ fun main() {
                 .map { CosmicTumor.parseCsvRecord(it) }
                 .forEach { tumor ->
                     println(
-                        "Tumor Id= ${tumor.tumorId}  PubMed Id= ${tumor.pubmedId}" +
+                        "Tumor Id= ${tumor.tumorId}  Mutation id= ${tumor.mutationId}" +
                                 "  Tumor origin = ${tumor.tumorOrigin} " +
-                                "  sample type = ${tumor.sampleType} " +
+                                "  gene = ${tumor.cosmicMutation.geneName} " +
                                 "  sample id = ${tumor.sampleId}" +
-                                "  age = ${tumor.age} " +
+                                "  mutation id = ${tumor.cosmicMutation.mutationId} " +
                                 "  mutation AA = ${tumor.cosmicMutation.mutationAA} " +
-                                "  description = ${tumor.cosmicMutation.mutationDescription} "
+                                "  tumor pubmed id = ${tumor.pubmedId} "
                     )
                     recordCount += 1
                 }
+
+
         }
     println("Record count = $recordCount")
 }
+

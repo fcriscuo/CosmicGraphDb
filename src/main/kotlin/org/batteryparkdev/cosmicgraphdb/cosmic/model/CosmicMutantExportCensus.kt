@@ -4,8 +4,8 @@ import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
-data class CosmicMutantExport(
-    val gene: CosmicGene,
+data class CosmicMutantExportCensus(
+    val geneId: CosmicGene,
     val sample: CosmicSample, val tumor: CosmicTumor,
     val genomicMutation: CosmicMutation
 ) {

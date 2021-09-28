@@ -97,6 +97,8 @@ object CosmicGeneLoader {
         )
     }
 
+
+
     private fun addAnnotationLabel(value: String, label: String) {
         val labelExistsQuery = "MERGE (ca:CosmicAnnotation{annotation_value:\"$value\"}) " +
                 "RETURN apoc.label.exists(ca, \"$label\") AS output;"
@@ -192,9 +194,9 @@ object CosmicGeneLoader {
    Function to determine if a CancerGene node for a specified gene name
    has already been loaded
     */
-    fun cancerGeneNameLoaded(geneName: String): Boolean =
+    fun cancerGeneNameLoaded(geneSymbol: String): Boolean =
         Neo4jUtils.nodeLoadedPredicate(
-            "OPTIONAL MATCH (cg:CosmicGene{gene_name: \"$geneName\" }) " +
+            "OPTIONAL MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
                     " RETURN cg IS NOT NULL AS PREDICATE"
         )
 

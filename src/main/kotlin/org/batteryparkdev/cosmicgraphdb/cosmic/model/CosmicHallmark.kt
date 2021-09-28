@@ -4,12 +4,10 @@ import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
-/*
-GENE_NAME	CELL_TYPE	PUBMED_PMID	HALLMARK	IMPACT	DESCRIPTION	CELL_LINE
- */
+
 data class CosmicHallmark(
     val hallmarkId: Int,   // needed to establish unique database identifier
-    val geneName: String, val cellType: String, val pubmedId: String,
+    val geneSymbol: String, val cellType: String, val pubmedId: String,
     val hallmark: String, val impact: String, val description: String
 )
 {
@@ -20,9 +18,9 @@ data class CosmicHallmark(
                 record.get("GENE_NAME"),
                 record.get("CELL_TYPE"),
                 record.get("PUBMED_PMID"),
-                record.get("HALLMARK"),
+                removeInternalQuotes(record.get("HALLMARK")),
                 record.get("IMPACT"),
-                record.get("DESCRIPTION")
+                removeInternalQuotes(record.get("DESCRIPTION"))
             )
     }
 }
@@ -38,7 +36,7 @@ fun main() {
                 .map { CosmicHallmark.parseCsvRecord(it) }
                 .forEach { hallmark ->
                     println(
-                        "Gene: ${hallmark.geneName}  Hallmark: ${hallmark.hallmark} " +
+                        "Gene: ${hallmark.geneSymbol}  Hallmark: ${hallmark.hallmark} " +
                                 " PubMed ID: ${hallmark.pubmedId} " +
                                 " Cell Type: ${hallmark.cellType}  Impact: ${hallmark.impact}" +
                                 " Description: ${hallmark.description} \n" +

@@ -38,20 +38,20 @@ object CosmicClassificationLoader {
         Neo4jConnectionService.executeCypherCommand(
             "MATCH (cc:CosmicClassification), (ct:CosmicType) WHERE cc.phenotype_id = " +
                     " \"${cosmicClassification.cosmicPhenotypeId}\" AND ct.type_id = " +
-                    "${cosmicClassification.siteType.typeId} MERGE " +
+                    "${cosmicClassification.siteType.generateIdentifier()} MERGE " +
                     "(cc) - [r:HAS_SITE] -> (ct)"
         )
         Neo4jConnectionService.executeCypherCommand(
             "MATCH (cc:CosmicClassification), (ct:CosmicType) WHERE cc.phenotype_id = " +
                     " \"${cosmicClassification.cosmicPhenotypeId}\" AND ct.type_id = " +
-                    "${cosmicClassification.histologyType.typeId} MERGE " +
+                    "${cosmicClassification.histologyType.generateIdentifier()} MERGE " +
                     "(cc) - [r:HAS_HISTOLOGY] -> (ct)"
         )
         if (cosmicClassification.cosmicSiteType != null) {
             Neo4jConnectionService.executeCypherCommand(
                 "MATCH (cc:CosmicClassification), (ct:CosmicType) WHERE cc.phenotype_id = " +
                         " \"${cosmicClassification.cosmicPhenotypeId}\" AND ct.type_id = " +
-                        "${cosmicClassification.cosmicSiteType.typeId} MERGE " +
+                        "${cosmicClassification.cosmicSiteType.generateIdentifier()} MERGE " +
                         "(cc) - [r:HAS_COSMIC_SITE] -> (ct)"
             )
         }
@@ -59,7 +59,7 @@ object CosmicClassificationLoader {
             Neo4jConnectionService.executeCypherCommand(
                 "MATCH (cc:CosmicClassification), (ct:CosmicType) WHERE cc.phenotype_id = " +
                         " \"${cosmicClassification.cosmicPhenotypeId}\" AND ct.type_id = " +
-                        "${cosmicClassification.cosmicHistologyType.typeId} MERGE " +
+                        "${cosmicClassification.cosmicHistologyType.generateIdentifier()} MERGE " +
                         "(cc) - [r:HAS_COSMIC_HISTOLOGY] -> (ct)"
             )
         }

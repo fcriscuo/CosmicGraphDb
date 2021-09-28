@@ -26,15 +26,14 @@ abstract class AbstractPropertiesService {
 
     //TODO: This should be using arrow-kt Either as a return type
     //      resolve why that no longer works
-    fun resolvePropertyAsString(propertyName: String): String? =
-        if (properties.containsKey(propertyName)) {
-            logger.atInfo().log("Property Value: ${properties.getProperty(propertyName)}")
-            properties.getProperty(propertyName).toString()
-        } else {
-            logger.atWarning().log( "$propertyName is an invalid property name " )
-            null
+    fun resolvePropertyAsString(propertyName: String): String =
+        when (properties.containsKey(propertyName)) {
+            true -> properties.getProperty(propertyName).toString()
+            false -> {
+                logger.atWarning().log("$propertyName is an invalid property name ")
+                ""
+            }
         }
-
 
     private fun resolvePropertyAsStringOption(propertyName: String): Option<String> =
         if (properties.containsKey(propertyName)) {

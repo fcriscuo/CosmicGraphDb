@@ -45,7 +45,7 @@ data class CosmicResistanceMutation(
                 record.get("Drug Name"),
                 CosmicMutation.parseResistanceMutationCsvRecord(record),
                 CosmicType.resolveTissueType(record),
-                parseResitMutationHistology(record),
+                CosmicType.resolveHistologyTypeBySource(record,"CosmicResistanceMutation"),
                 record.get("Pubmed Id"),
                 record.get("CGP Study"),
                 record.get("Somatic Status"),
@@ -58,13 +58,7 @@ data class CosmicResistanceMutation(
         The CosmicResistanceMutations file has non-standard column names
         for histology columns
          */
-        fun parseResitMutationHistology(record: CSVRecord): CosmicType =
-            CosmicType(
-                "Histology", record.get("Histology"),
-                record.get("Histology Subtype 1"), record.get("Histology Subtype 2"),
-                "",
-                record.hashCode()
-            )
+
     }
 }
 

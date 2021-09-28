@@ -5,40 +5,14 @@ import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicSample
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 import java.nio.file.Paths
-import kotlin.math.cos
 
-/*
- val sampleId: Int,
-    val sampleName: String, val tumorId: Int, val site: CosmicType, val histology: CosmicType,
-    val therapyRelationship: String, val sampleDifferentiator: String, val mutationAlleleSpecification: String,
-     val msi: String, val averagePloidy: String, val wholeGeneomeScrren: String, val wholeExomeScreen: String,
-     val sampleRemark: String, val drugResponse: String, val grade:String, val ageAtTumorRecurrence: Int,
-    val Stage: String, val cytogenetics: String, val metastaticSite: String, val tumorSource: String,
-    val tumorRemark: String, val age: Int, val ethnicity: String, val environmentalVariables: String,
-    val germlineMutation: String, val therapy: String, val family: String, val normalTissueTested: String,
-    val gender: String, val individualRemark: String, val nciCode: String, val sampleType: String,
-    val cosmicPhenotypeId: String
-
-     sample_id	sample_name	id_tumour	id_individual
-     primary_site	site_subtype_1	site_subtype_2	site_subtype_3
-     primary_histology	histology_subtype_1	histology_subtype_2	histology_subtype_3
-     therapy_relationship	sample_differentiator	mutation_allele_specification
-     msi	average_ploidy	whole_genome_screen	whole_exome_screen	sample_remark
-     drug_response	grade	age_at_tumour_recurrence	stage	cytogenetics
-     metastatic_site	tumour_source	tumour_remark	age	ethnicity
-     environmental_variables	germline_mutation	therapy	family
-     normal_tissue_tested	gender	individual_remark	nci_code
-     sample_type	cosmic_phenotype_id
-
-
- */
 object CosmicSampleLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass();
 
     fun processCosmicSampleNode(cosmicSample: CosmicSample){
         val id = loadCosmicSample(cosmicSample)
         if (cosmicSample.sampleType.isNotEmpty()) {
-            addCosmicSampleTypeLabel(id, cosmicSample.sampleType)
+            addCosmicSampleTypeLabel(id, cosmicSample.sampleName)
         }
         loadCosmicSampleTypes(cosmicSample)
         createCosmicSampleRelationships(cosmicSample)
@@ -84,6 +58,7 @@ object CosmicSampleLoader {
         CosmicTypeLoader.processCosmicTypeNode(cosmicSample.site)
         CosmicTypeLoader.processCosmicTypeNode(cosmicSample.histology)
     }
+
     private fun createCosmicSampleRelationships(cosmicSample: CosmicSample){
         // CosmicSample to CosmicClassification relationship
         Neo4jConnectionService.executeCypherCommand(
@@ -93,11 +68,11 @@ object CosmicSampleLoader {
                     " MERGE (cs) - [r:HAS_CLASSIFICATION] -> (cc)"
         )
     }
-
 }
+
 fun main() {
     val path = Paths.get("./data/sample_CosmicSample.tsv")
-    println("Processing csv file ${path.fileName}")
+    println("Processing tsv file ${path.fileName}")
     var recordCount = 0
     TsvRecordSequenceSupplier(path).get().chunked(500)
         .forEach { it ->
