@@ -150,7 +150,7 @@ class CosmicDatabaseLoader(fileDirectory: String) {
             "MATCH (n: $nodeName) RETURN COUNT (n)"
         )
         Neo4jConnectionService.executeCypherCommand(
-            "MATCH (n $nodeName) DETACH DELETE (n);")
+            "MATCH (n: $nodeName) DETACH DELETE (n);")
         val afterCount = Neo4jConnectionService.executeCypherCommand(
             "MATCH (n: $nodeName) RETURN COUNT (n)"
         )
