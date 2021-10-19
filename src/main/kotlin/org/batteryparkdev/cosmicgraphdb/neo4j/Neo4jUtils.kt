@@ -63,4 +63,21 @@ object Neo4jUtils {
         logger.atInfo().log("Node type: $nodeName, after label removal command count = $afterCount")
     }
 
+    // detach and delete specified nodes in database
+    fun detachAndDeleteNodesByName(nodeName: String) {
+        val beforeCount = Neo4jConnectionService.executeCypherCommand(
+            "MATCH (n: $nodeName) RETURN COUNT (n)"
+        )
+        Neo4jConnectionService.executeCypherCommand(
+            "MATCH (n: $nodeName) DETACH DELETE (n);")
+        val afterCount = Neo4jConnectionService.executeCypherCommand(
+            "MATCH (n: $nodeName) RETURN COUNT (n)"
+        )
+        logger.atInfo().log("Deleted $nodeName nodes, before count=${beforeCount.toString()}" +
+                "  after count=$afterCount")
+    }
+
+
+
+
 }

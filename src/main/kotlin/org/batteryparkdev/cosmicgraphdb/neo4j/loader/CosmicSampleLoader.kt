@@ -34,7 +34,8 @@ object CosmicSampleLoader {
                     " cs.age_at_tumor_recurrennce = ${cosmicSample.ageAtTumorRecurrence}, " +
                     " cs.stage=\"${cosmicSample.stage}\", cs.cytogenetics= \"${cosmicSample.cytogenetics}\", " +
                     " cs.metastatic_site = \"${cosmicSample.metastaticSite}\", " +
-                    " cs.tumor_source= \"${cosmicSample.tumorSource}\", cs.tumor_remark=\"${cosmicSample.tumorRemark}\"," +
+                    " cs.tumor_source= \"${cosmicSample.tumorSource}\"," +
+                    " cs.tumor_remark=\"${cosmicSample.tumorRemark}\"," +
                     " cs.age=${cosmicSample.age}, cs.ethnicity=\"${cosmicSample.ethnicity}\"," +
                     " cs.environmental_variables=\"${cosmicSample.environmentalVariables}\"," +
                     " cs.germline_mutation=\"${cosmicSample.germlineMutation}\", " +

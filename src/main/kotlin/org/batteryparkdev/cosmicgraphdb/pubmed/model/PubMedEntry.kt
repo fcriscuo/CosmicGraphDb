@@ -1,12 +1,16 @@
-package org.batteryparkdev.cosmicgraphdb.cosmic.model.pubmed
+package org.batteryparkdev.cosmicgraphdb.pubmed.model
 
 import ai.wisecube.pubmed.*
-import org.batteryparkdev.cosmicgraphdb.service.PubMedRetrievalService
+import arrow.core.Either
+import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
+import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.cosmicgraphdb.pubmed.service.PubMedRetrievalService
+import java.nio.file.Paths
 
 data class PubMedEntry(
     val label: String,
     val pubmedId: Int,
-    val parentPubMedId: String,
+    val parentPubMedId: Int,
     val pmcId: String = "",
     val doiId: String = "",
     val journalName: String,
@@ -25,7 +29,7 @@ data class PubMedEntry(
          */
         fun parsePubMedArticle(
             pubmedArticle: PubmedArticle, label: String = "Origin",
-            parentId: String = ""
+            parentId: Int = 0
         ): PubMedEntry {
             val pmid = pubmedArticle.medlineCitation.pmid.getvalue().toInt()
             val pmcid = resolveArticleIdByType(pubmedArticle, "pmc")
@@ -52,7 +56,10 @@ data class PubMedEntry(
                     if (ref.articleIdList != null) {
                         for (articleId in ref.articleIdList.articleId.stream()
                         ) {
-                            refSet.add(articleId.getvalue().toInt())
+                            if (//null != articleId.getvalue() &&
+                                null !=articleId.getvalue().toIntOrNull() ) {
+                                refSet.add(articleId.getvalue().toInt())
+                            }
                         }
                     }
                 }
@@ -80,16 +87,19 @@ data class PubMedEntry(
         e.g.  Smith, Robert; Jones, Mary, et al
          */
         private fun generateAuthorCaption(pubmedArticle: PubmedArticle): String {
-            val authorList = pubmedArticle.medlineCitation.article.authorList.author
-            val ret = when (authorList.size) {
-                0 -> ""
-                1 -> processAuthorName(authorList[0])
-                2 -> processAuthorName(authorList[0]) + "; " +
-                        processAuthorName(authorList[1])
-                else -> processAuthorName(authorList[0]) + "; " +
-                        processAuthorName(authorList[1]) + "; et al"
+            val authorList = pubmedArticle.medlineCitation.article?.authorList?.author
+            if (authorList != null) {
+                val ret = when (authorList.size) {
+                    0 -> ""
+                    1 -> processAuthorName(authorList[0])
+                    2 -> processAuthorName(authorList[0]) + "; " +
+                            processAuthorName(authorList[1])
+                    else -> processAuthorName(authorList[0]) + "; " +
+                            processAuthorName(authorList[1]) + "; et al"
+                }
+                return ret
             }
-            return ret
+            return ""
         }
 
         private fun processAuthorName(author: Author): String {
@@ -101,13 +111,14 @@ data class PubMedEntry(
             val lastName: LastName = authorNameList[0] as LastName
             name = lastName.getvalue()
             if (authorNameList.size > 1) {
-                val firstName = authorNameList[1] as ForeName
-                name = "$name, ${firstName.getvalue()}"
+                val name1  = when (authorNameList[1]) {
+                    is ForeName -> (authorNameList[1] as ForeName).getvalue()
+                    is Initials -> (authorNameList[1] as Initials).getvalue()
+                    else -> (authorNameList[1] as Suffix).getvalue()
+                }
+                name = "$name, $name1"
             }
-            if (authorNameList.size > 2) {
-                val initials = authorNameList[2] as Initials
-                name = "$name ${initials.getvalue()}"
-            }
+
             return name
         }
 
@@ -152,5 +163,32 @@ data class PubMedEntry(
             return ret
         }
     }
+}
 
+/* scan the sample tumor file to validate PubMed parsing and retrieval*/
+fun main() {
+    val path = Paths.get("./data/sample_CosmicMutantExportCensus.tsv")
+    println("Processing the sample export census file ${path.fileName} for PubMed Ids")
+    var recordCount = 0
+    TsvRecordSequenceSupplier(path).get().chunked(500)
+        .forEach { it ->
+            it.stream()
+                .map { CosmicTumor.parseCsvRecord(it) }
+                .filter { it.pubmedId >0 }  // ignore records w/o pubmedId value
+                .forEach { tumor ->
+                    when (val retEither = PubMedRetrievalService.retrievePubMedArticle(tumor.pubmedId)) {
+                        is Either.Right -> {
+                            val pubmedArticle = retEither.value
+                            val pubmedEntry = PubMedEntry.parsePubMedArticle(pubmedArticle, "TEST", 0)
+                            println("PubMed id = ${pubmedEntry.pubmedId}   Title = ${pubmedEntry.articleTitle}")
+                        }
+                        is Either.Left -> {
+                            println("Unable to retrieve PubMed Id: ${tumor.pubmedId}")
+                        }
+                    }
+                    Thread.sleep(300L) // required NCBI delay
+                    recordCount += 1
+                }
+            println("Record count = $recordCount")
+        }
 }

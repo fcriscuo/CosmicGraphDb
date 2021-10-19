@@ -1,4 +1,4 @@
-package org.batteryparkdev.cosmicgraphdb.service
+package org.batteryparkdev.cosmicgraphdb.pubmed.service
 
 import ai.wisecube.pubmed.PubmedArticle
 import ai.wisecube.pubmed.PubmedParser

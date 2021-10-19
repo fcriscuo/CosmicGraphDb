@@ -7,11 +7,12 @@ import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 object CosmicTypeLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass();
 
-    fun processCosmicTypeNode(cosmicType: CosmicType) {
+    fun processCosmicTypeNode(cosmicType: CosmicType):Int {
         val id = loadCosmicTypeNode(cosmicType)
         addCosmicTypeLabel(id, cosmicType.label)
-        logger.atInfo().log("CosmicType: ${cosmicType.label})   primary: ${cosmicType.primary} " +
+        logger.atFine().log("CosmicType: ${cosmicType.label})   primary: ${cosmicType.primary} " +
                 " loaded into Neo4j")
+        return id
     }
 
     private fun loadCosmicTypeNode(cosmicType: CosmicType): Int {

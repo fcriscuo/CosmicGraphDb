@@ -8,7 +8,7 @@ data class CosmicTumor(
     val tumorId: Int, val sampleId: Int, val mutationId: Int,
     val site: CosmicType, val histology: CosmicType,
     val genomeWideScreen: Boolean,
-    val pubmedId: String, val studyId: String, val sampleType: String,
+    val pubmedId: Int, val studyId: String, val sampleType: String,
     val tumorOrigin: String, val age: Int,
     val cosmicMutation: CosmicMutation
 ) {
@@ -20,7 +20,7 @@ data class CosmicTumor(
                 CosmicType.resolveSiteTypeBySource(record, "CosmicTumor"),
                 CosmicType.resolveHistologyTypeBySource(record, "CosmicTumor"),
                 record.get("Genome-wide screen").lowercase() == "y",
-                record.get("Pubmed_PMID"), record.get("ID_STUDY"),
+                parseValidIntegerFromString(record.get("Pubmed_PMID")), record.get("ID_STUDY"),
                 record.get("Sample Type"), record.get("Tumour origin"),
                 parseValidIntegerFromString(record.get("Age")),
                 CosmicMutation.parseCsvRecord(record)
@@ -41,6 +41,7 @@ fun main() {
                         "Tumor Id= ${tumor.tumorId}  Mutation id= ${tumor.mutationId}" +
                                 "  Tumor origin = ${tumor.tumorOrigin} " +
                                 "  gene = ${tumor.cosmicMutation.geneName} " +
+                                "   pubmed id = ${tumor.pubmedId}" +
                                 "  sample id = ${tumor.sampleId}" +
                                 "  mutation id = ${tumor.cosmicMutation.mutationId} " +
                                 "  mutation AA = ${tumor.cosmicMutation.mutationAA} " +

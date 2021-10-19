@@ -1,11 +1,11 @@
 package org.batteryparkdev.cosmicgraphdb.neo4j.loader
 
 import com.google.common.flogger.FluentLogger
-import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicMutation
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
+import org.batteryparkdev.cosmicgraphdb.pubmed.loader.PubMedLoader
 import java.nio.file.Paths
 
 object CosmicTumorLoader
@@ -23,6 +23,23 @@ object CosmicTumorLoader
         createCosmicSampleRelationship(cosmicTumor)
         // tumor -> mutation relationship
         createCosmicMutationRelationship(cosmicTumor)
+        // tumor -> pubmed relationship
+        createPubMedRelationship(cosmicTumor)
+    }
+
+    private fun createPubMedRelationship(cosmicTumor: CosmicTumor) {
+        if(cosmicTumor.pubmedId > 0 ) {
+           // if (!PubMedLoader.pubMedNodeExistsPredicate(cosmicTumor.pubmedId)){
+                PubMedLoader.loadPubMedEntryById(cosmicTumor.pubmedId)
+                PubMedLoader.addPubMedLabel(cosmicTumor.pubmedId, "CosmicArticle")
+           // }
+            Neo4jConnectionService.executeCypherCommand(
+                "MATCH (ct:CosmicTumor), (pma:PubMedArticle) " +
+                        " WHERE ct.tumor_id = ${cosmicTumor.tumorId} AND " +
+                        " pma.pubmed_id = ${cosmicTumor.pubmedId} MERGE " +
+                        " (ct) -[r:HAS_PUBMED_ARTICLE] ->(pma)"
+            )
+        }
     }
 
     private fun createCosmicMutationRelationship(cosmicTumor: CosmicTumor) =
@@ -47,7 +64,7 @@ object CosmicTumorLoader
         Neo4jConnectionService.executeCypherCommand(
             "MERGE (ct:CosmicTumor{tumor_id: ${cosmicTumor.tumorId}}) " +
                     "SET ct.genome_wide_screen = ${cosmicTumor.genomeWideScreen}," +
-                    " ct.pubmed_id = \"${cosmicTumor.pubmedId}\", ct.study_id = \"${cosmicTumor.studyId}\", " +
+                    " ct.pubmed_id = ${cosmicTumor.pubmedId}, ct.study_id = \"${cosmicTumor.studyId}\", " +
                     " ct.sample_type =\"${cosmicTumor.sampleType}\", ct.tumor_origin = \"${cosmicTumor.tumorOrigin}\", " +
                     " ct.age = ${cosmicTumor.age}  RETURN ct.tumor_id"
         ).toInt()

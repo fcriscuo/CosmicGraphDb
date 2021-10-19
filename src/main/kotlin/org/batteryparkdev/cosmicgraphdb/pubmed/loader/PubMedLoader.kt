@@ -1,37 +1,75 @@
-package org.batteryparkdev.cosmicgraphdb.neo4j.loader.pubmed
+package org.batteryparkdev.cosmicgraphdb.pubmed.loader
 
 import arrow.core.Either
 import com.google.common.flogger.FluentLogger
-import org.batteryparkdev.cosmicgraphdb.cosmic.model.pubmed.PubMedEntry
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
-import org.batteryparkdev.cosmicgraphdb.service.PubMedRetrievalService
+import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedEntry
+import org.batteryparkdev.cosmicgraphdb.pubmed.service.PubMedRetrievalService
+
 import java.util.*
 
-object PubMedArticleLoader {
+object PubMedLoader {
 
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass();
+    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
-    // Function to retrieve data for a specified PubMed Id and load it into a PubMed node
-    // will also process PubMed Ids referenced in the specified atrical as well as
-    // PubMed articles that cite the specified article
-
-    fun retrieveCosmicPubMedReference(pubmedId: Int, label: String = "CosmicReference", parentId: String = ""):Boolean {
-         return when (val retEither = PubMedRetrievalService.retrievePubMedArticle(pubmedId)) {
+    fun loadPubMedEntryById(pubmedId: Int, label: String = "Origin", parentId: Int = 0):PubMedEntry? {
+        return when (val retEither = PubMedRetrievalService.retrievePubMedArticle(pubmedId)) {
             is Either.Right -> {
-                deleteExistingPubMedNode(pubmedId)
                 val pubmedArticle = retEither.value
                 val pubmedEntry = PubMedEntry.parsePubMedArticle(pubmedArticle, label, parentId)
                 loadPubMedEntry(pubmedEntry)
-               true
+                loadReferenceNodes(pubmedEntry)
+                loadCitationNodes(pubmedEntry)
+                pubmedEntry
             }
             is Either.Left -> {
                 logger.atSevere().log(retEither.value.message)
-                false
+                null
             }
         }
     }
 
-    private fun loadPubMedEntry(pubMedEntry: PubMedEntry) {
+    fun loadCitationNodes(pubMedEntry: PubMedEntry){
+        logger.atInfo().log("Processing Citations for PubMed Id ${pubMedEntry.pubmedId}")
+        val parentId = pubMedEntry.pubmedId
+        val label = "Citation"
+        pubMedEntry.citationSet.stream().forEach { id ->
+            run {
+                logger.atFine().log("  Citation id: $id")
+                /*
+                Only fetch the PubMed data from NCBI if the database does not
+                contain a PubMedReference node for this citation id
+                 */
+                if (!pubMedNodeExistsPredicate(id)) {
+                    logger.atFine().log("  Fetching citation  id: $id from NCBI")
+                    val citEntry = loadPubMedEntryById(id, label, parentId)
+                } else {
+                    createPubMedRelationshipByEntry(label, parentId, id)
+                    addPubMedLabel(id,label)
+                }
+            }
+        }
+    }
+
+    fun loadReferenceNodes(pubMedEntry: PubMedEntry) {
+        logger.atInfo().log("Processing References for PubMed Id ${pubMedEntry.pubmedId}")
+        val parentId = pubMedEntry.pubmedId  // id of origin node
+        val label = "Reference"
+        pubMedEntry.referenceSet.stream().forEach { id ->
+            run {
+                logger.atFine().log("  Reference id: $id")
+                if (!pubMedNodeExistsPredicate(id)) {
+                    logger.atFine().log("  Fetching reference id: $id from NCBI")
+                    val refEntry = loadPubMedEntryById(id, label, parentId)
+                } else {
+                    createPubMedRelationshipByEntry(label, parentId, id)
+                    addPubMedLabel(id, label)
+                }
+            }
+        }
+    }
+
+    fun loadPubMedEntry(pubMedEntry: PubMedEntry) {
         /*
         Test if this PubMed Id is already represented
         If so, don't attempt to create another one,
@@ -40,20 +78,21 @@ object PubMedArticleLoader {
          */
         if (!pubMedNodeExistsPredicate(pubMedEntry.pubmedId)) {
             val newPubMedId = mergePubMedEntry(pubMedEntry)
-            logger.atInfo().log("PubMed Id $newPubMedId  loaded into Neo4j")
+            logger.atFine().log("PubMed Id $newPubMedId  loaded into Neo4j")
         } else {
-            logger.atInfo().log("PubMed Id ${pubMedEntry.pubmedId}  already loaded into Neo4j")
+            logger.atFine().log("PubMed Id ${pubMedEntry.pubmedId}  already loaded into Neo4j")
         }
-        if (pubMedEntry.parentPubMedId.isNotEmpty()) {
-            val r = createPubMedRelationship(pubMedEntry)
-            logger.atInfo().log(
+        if (pubMedEntry.parentPubMedId > 0) {
+            val r = createPubMedRelationshipByEntry(pubMedEntry)
+            logger.atFine().log(
                 "${pubMedEntry.label} relationship between ids ${pubMedEntry.parentPubMedId} " +
                         " and ${pubMedEntry.pubmedId} created"
             )
-        }
-        val l = addLabel(pubMedEntry.pubmedId, pubMedEntry.label)
-        if (l.isNotEmpty()) {
-            logger.atFine().log("Added label: ${pubMedEntry.label} to PubMedArticle node for ${pubMedEntry.pubmedId}")
+            val l = addPubMedLabel(pubMedEntry.pubmedId, pubMedEntry.label)
+            if (l.isNotEmpty()) {
+                logger.atFine()
+                    .log("Added label: ${pubMedEntry.label} to PubMedArticle node for ${pubMedEntry.pubmedId}")
+            }
         }
     }
 
@@ -79,11 +118,25 @@ object PubMedArticleLoader {
         return Neo4jConnectionService.executeCypherCommand(merge)
     }
 
+    fun createPubMedRelationshipByEntry(label:String, parentPubMedId:Int, pubmedId: Int): String {
+        val command = when (label.uppercase()) {
+            "REFERENCE" -> "MATCH (parent:PubMedArticle), (child:PubMedArticle) WHERE " +
+                    "parent.pubmed_id = $parentPubMedId AND child.pubmed_id = $pubmedId " +
+                    "MERGE (parent) - [r:HAS_REFERENCE] -> (child) " +
+                    "ON CREATE SET parent.reference_count = parent.reference_count +1 RETURN r"
+            "CITATION" -> "MATCH (parent:PubMedArticle), (child:PubMedArticle) WHERE " +
+                    "parent.pubmed_id = $parentPubMedId AND child.pubmed_id = $pubmedId " +
+                    "MERGE (parent) - [r:CITED_BY] -> (child) RETURN r"
+            else -> ""
+        }
+        return Neo4jConnectionService.executeCypherCommand(command)
+    }
+
     /*
     Create a relationship between the origin node and either a reference node or a citation node
     Increment appropriate count in the origin node
      */
-    private fun createPubMedRelationship(pubMedEntry: PubMedEntry): String {
+    private fun createPubMedRelationshipByEntry(pubMedEntry: PubMedEntry): String {
         val command = when (pubMedEntry.label.uppercase()) {
             "REFERENCE" -> "MATCH (parent:PubMedArticle), (child:PubMedArticle) WHERE " +
                     "parent.pubmed_id = ${pubMedEntry.parentPubMedId} AND child.pubmed_id = ${pubMedEntry.pubmedId} " +
@@ -100,7 +153,7 @@ object PubMedArticleLoader {
     /*
     Function to determine if the PubMed data is already in the database
      */
-    fun pubMedNodeExistsPredicate(pubmedId: Int): Boolean {
+   fun pubMedNodeExistsPredicate(pubmedId: Int): Boolean {
         val cypher = "OPTIONAL MATCH (p:PubMedArticle{pubmed_id: $pubmedId }) " +
                 " RETURN p IS NOT NULL AS Predicate"
         try {
@@ -116,21 +169,8 @@ object PubMedArticleLoader {
         return false
     }
 
-    private fun deleteExistingPubMedNode(pubMedId:Int) {
-        if(pubMedNodeExistsPredicate(pubMedId)) {
-            Neo4jConnectionService.executeCypherCommand(
-                "MATCH (p:PubMedArticle{pubmed_id:$pubMedId}) DETACH DELETE p;")
-            logger.atInfo().log("PubMedArticle id $pubMedId removed from Neo4j database")
-        }
-    }
-
-    /*
-    Function to add a second  or third label to a PubMedArticle node if it represents
-    either a reference and/or a citation
-    Ensure that labels are not duplicated
-     */
-    private fun addLabel(pubmedId: Int, label: String): String {
-        // confirm that labels are novel
+    fun addPubMedLabel(pubmedId: Int, label: String): String {
+        // confirm that label is novel
         val labelExistsQuery = "MATCH (pma:PubMedArticle{pubmed_id: $pubmedId }) " +
                 "RETURN apoc.label.exists(pma, \"$label\") AS output;"
         val addLabelCypher = "MATCH (pma:PubMedArticle{pubmed_id: $pubmedId }) " +
@@ -138,10 +178,9 @@ object PubMedArticleLoader {
         if (Neo4jConnectionService.executeCypherCommand(labelExistsQuery).uppercase() == "FALSE") {
             return Neo4jConnectionService.executeCypherCommand(addLabelCypher)
         }
-        logger.atWarning().log("PubMedArticle node $pubmedId  already has label $label")
+       logger.atWarning().log("PubMedArticle node $pubmedId  already has label $label")
         return ""
     }
-
     /*
     Double quotes (i.e. ") inside a text field causes Cypher
     processing errors
