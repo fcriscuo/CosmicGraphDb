@@ -1,9 +1,16 @@
+@file:JvmName("CosmicMutantExportCensusKt")
+
 package org.batteryparkdev.cosmicgraphdb.cosmic.model
 
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
+
+/*
+This class can be used to process data from either the
+CosmicMutantExport.tsv file or the CosmicMutantExportCensus.tsv file
+ */
 data class CosmicMutantExport(
     val gene: CosmicGene,
     val sample: CosmicSample, val tumor: CosmicTumor,

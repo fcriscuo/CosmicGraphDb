@@ -18,7 +18,7 @@ n.b. This application deletes all existing COSMIC nodes and relationships from t
  */
 
 class CosmicDatabaseLoader(fileDirectory: String) {
-    private val dataDirectory = fileDirectory
+
     private val logger: FluentLogger = FluentLogger.forEnclosingClass();
     private val cosmicGeneFile = fileDirectory +
         DatafilePropertiesService.resolvePropertyAsString("file.cosmic.gene")

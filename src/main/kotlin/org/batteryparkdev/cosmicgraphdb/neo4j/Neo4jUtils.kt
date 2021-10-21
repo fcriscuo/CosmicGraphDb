@@ -25,4 +25,59 @@ object Neo4jUtils {
         return false
     }
 
+    /*
+    Function to delete a Neo4j relationship
+     */
+     fun deleteNodeRelationshipByName(parentNode: String, childNode: String, relName: String) {
+        val deleteTemplate = "MATCH (:PARENT) -[r:RELATIONSHIP_NAME] ->(:CHILD) DELETE r;"
+        val countTemplate = "MATCH (:PubMedArticle) -[:RELATIONSHIP_NAME] -> (:PubMedArticle) RETURN COUNT(*)"
+        val delCommand = deleteTemplate
+            .replace("PARENT", parentNode)
+            .replace("CHILD", childNode)
+            .replace("RELATIONSHIP_NAME", relName)
+        val countCommand = countTemplate
+            .replace("PARENT", parentNode)
+            .replace("CHILD", childNode)
+            .replace("RELATIONSHIP_NAME", relName)
+        val beforeCount = Neo4jConnectionService.executeCypherCommand(countCommand)
+        logger.atInfo().log("Deleting $parentNode $relName $childNode relationships, before count = $beforeCount")
+        Neo4jConnectionService.executeCypherCommand(delCommand)
+        val afterCount = Neo4jConnectionService.executeCypherCommand(countCommand)
+        logger.atInfo().log("After deletion command count = $afterCount")
+    }
+
+    /*
+    Function to delete a specified label from a specified node type
+     */
+    fun removeNodeLabel(nodeName: String, label: String) {
+        val removeLabelTemplate = "MATCH (n:NODENAME) REMOVE n:LABEL RETURN COUNT(n)"
+        val countLabelTemplate = "MATCH(l:LABEL) RETURN COUNT(l)"
+        val removeLabelCommand = removeLabelTemplate
+            .replace("NODENAME", nodeName)
+            .replace("LABEL", label)
+        val countLabelCommand = countLabelTemplate.replace("LABEL", label)
+        val beforeCount = Neo4jConnectionService.executeCypherCommand(countLabelCommand)
+        logger.atInfo().log("Node type: $nodeName, removing label: $label before count = $beforeCount")
+        Neo4jConnectionService.executeCypherCommand(removeLabelCommand)
+        val afterCount = Neo4jConnectionService.executeCypherCommand(countLabelCommand)
+        logger.atInfo().log("Node type: $nodeName, after label removal command count = $afterCount")
+    }
+
+    // detach and delete specified nodes in database
+    fun detachAndDeleteNodesByName(nodeName: String) {
+        val beforeCount = Neo4jConnectionService.executeCypherCommand(
+            "MATCH (n: $nodeName) RETURN COUNT (n)"
+        )
+        Neo4jConnectionService.executeCypherCommand(
+            "MATCH (n: $nodeName) DETACH DELETE (n);")
+        val afterCount = Neo4jConnectionService.executeCypherCommand(
+            "MATCH (n: $nodeName) RETURN COUNT (n)"
+        )
+        logger.atInfo().log("Deleted $nodeName nodes, before count=${beforeCount.toString()}" +
+                "  after count=$afterCount")
+    }
+
+
+
+
 }

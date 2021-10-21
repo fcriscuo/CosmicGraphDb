@@ -54,7 +54,7 @@ fun main() {
                     println(
                         "Tumor Id: ${methyl.tumorId}  Gene name: ${methyl.geneName} " +
                                 " Chromosome: ${methyl.chromosome}   Position: ${methyl.position}" +
-                                " SampleName: ${methyl.sampleId}  Histology: ${methyl.histology.primary}" +
+                                " Sample Id: ${methyl.sampleId}  Histology: ${methyl.histology.primary}" +
                                 " Methylation: ${methyl.methylation} "
                     )
                     recordCount += 1

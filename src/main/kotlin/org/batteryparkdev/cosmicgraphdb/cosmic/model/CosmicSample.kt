@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.cosmic.model
 
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.cosmicgraphdb.property.DatafilePropertiesService
 import java.nio.file.Paths
 
 data class CosmicSample(
@@ -42,6 +43,13 @@ data class CosmicSample(
 {
     companion object : AbstractModel {
 
+        /*
+
+        Sample name	ID_sample
+        ID_tumour
+
+         */
+
         fun parseCsvRecord(record: CSVRecord): CosmicSample =
             CosmicSample(
                 record.get("sample_id").toInt(), record.get("sample_name"), record.get("id_tumour").toInt(),
@@ -49,11 +57,13 @@ data class CosmicSample(
                 CosmicType.resolveHistologyTypeBySource(record,"CosmicSample"),
                 record.get("therapy_relationship"), record.get("sample_differentiator"),
                 record.get("mutation_allele_specification"), record.get("msi"), record.get("average_ploidy"),
-                record.get("whole_genome_screen"),record.get("whole_exome_screen"), record.get("sample_remark"),
+                record.get("whole_genome_screen"),record.get("whole_exome_screen"),
+                removeInternalQuotes(record.get("sample_remark")),
                 record.get("drug_response"), record.get("grade"),
                 parseValidIntegerFromString(record.get("age_at_tumour_recurrence")),
                 record.get("stage"), record.get("cytogenetics"), record.get("metastatic_site"),
-                record.get("tumour_source"), record.get("tumour_remark"),
+                record.get("tumour_source"),
+                removeInternalQuotes(record.get("tumour_remark")),
                 parseValidIntegerFromString(record.get("age")),
                 record.get("ethnicity"), record.get("environmental_variables"), record.get("germline_mutation"),
                 record.get("therapy"), record.get("family"), record.get("normal_tissue_tested"),
@@ -64,8 +74,12 @@ data class CosmicSample(
 }
 
 fun main() {
-    val path = Paths.get("./data/sample_CosmicSample.tsv")
-    println("Processing csv file ${path.fileName}")
+    /* scan complete file to diagnose any data parsing issues */
+   val dataDirectory =  DatafilePropertiesService.resolvePropertyAsString("cosmic.data.directory")
+    val cosmicSampleFile = dataDirectory +
+            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.sample")
+    val path = Paths.get(cosmicSampleFile)
+    println("Processing COSMIC sample file ${path.fileName}")
     var recordCount = 0
     TsvRecordSequenceSupplier(path).get().chunked(500)
         .forEach { it ->

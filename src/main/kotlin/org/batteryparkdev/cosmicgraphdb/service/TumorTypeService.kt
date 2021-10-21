@@ -22,7 +22,7 @@ object TumorTypeService {
     fun resolveTumorType(abbreviation:String): String =
         when(abbreviationsMap.containsKey(abbreviation)) {
             true -> abbreviationsMap.get(abbreviation) ?: ""
-            false ->""
+            false -> abbreviation  // return the input
         }
 
 }
