@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.cosmic.model
 
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.CsvRecordSequenceSupplier
+import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
 import java.nio.file.Paths
 
 /*
@@ -37,8 +38,8 @@ data class CosmicGeneCensus(
                     record.get("Somatic").lowercase() == "yes")
             val germline = (!record.get("Germline").isNullOrEmpty() &&
                     record.get("Germline").lowercase() == "yes")
-            val somaticTumorTypeList = parseStringOnComma(record.get("Tumour Types(Somatic)"))
-            val germlineTumorTypeList = parseStringOnComma(record.get("Tumour Types(Germline)"))
+            val somaticTumorTypeList = processTumorTypes(record.get("Tumour Types(Somatic)"))
+            val germlineTumorTypeList = processTumorTypes(record.get("Tumour Types(Germline)"))
             val cancerSyndrome = record.get("Cancer Syndrome")?: ""
             val tissueTypeList = parseStringOnComma(record.get("Tissue Type"))
             val molecularGenetics = record.get("Molecular Genetics") ?: ""
@@ -55,7 +56,19 @@ data class CosmicGeneCensus(
                 otherGermlineMut, otherSyndromeList,synonymList
             )
         }
+        /*
+    Function to resolve a tumor type abbeviationd
+     */
+        fun processTumorTypes(tumorTypes:String):List<String>  {
+            val tumorTypeList = mutableListOf<String>()
+            parseStringOnComma(tumorTypes).forEach {
+                tumorTypeList.add(TumorTypeService.resolveTumorType(it))
+            }
+            return tumorTypeList.toList()  // make List immutable
+        }
     }
+
+
 }
 
 fun main() {

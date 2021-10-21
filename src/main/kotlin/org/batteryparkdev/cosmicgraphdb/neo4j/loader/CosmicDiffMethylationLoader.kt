@@ -10,14 +10,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicDiffMethylation
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.neo4j.loader.CosmicTypeLoader
-import org.batteryparkdev.cosmicgraphdb.neo4j.dao.*
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createHistologyTypeRelationship
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createSampleRelationship
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.loadCosmicDiffMethylation
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 
 object CosmicDiffMethylationLoader {
-    val logger: FluentLogger = FluentLogger.forEnclosingClass();
+    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
 /*
 Coroutine function to produce a channel of CosmicDiffMethylation model objects
@@ -25,7 +26,7 @@ Input is the full file name
 Output is channel of model objects
 */
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.parseCosmicDiffMethylationChannel(cosmicDiffMethylFile: String) =
+   private  fun CoroutineScope.parseCosmicDiffMethylationChannel(cosmicDiffMethylFile: String) =
         produce<CosmicDiffMethylation> {
             val path = Paths.get(cosmicDiffMethylFile)
             TsvRecordSequenceSupplier(path).get()
@@ -41,7 +42,7 @@ Output is channel of model objects
    connected Neo4j database
     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.loadCosmicDiffMethylationChannel(methyls: ReceiveChannel<CosmicDiffMethylation>) = produce {
+    private fun CoroutineScope.loadCosmicDiffMethylationChannel(methyls: ReceiveChannel<CosmicDiffMethylation>) = produce {
         for (methyl in methyls) {
             loadCosmicDiffMethylation(methyl)
             send(methyl)
@@ -53,7 +54,7 @@ Output is channel of model objects
    Coroutine function to create a CosmicSample to CosmicDiffMethylation relationship
     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.createRelationshipToSampleChannel(methyls: ReceiveChannel<CosmicDiffMethylation>) = produce {
+    private fun CoroutineScope.createRelationshipToSampleChannel(methyls: ReceiveChannel<CosmicDiffMethylation>) = produce {
         for (methyl in methyls) {
             createSampleRelationship(methyl.sampleId, methyl.fragmentId)
             delay(30)
@@ -62,7 +63,7 @@ Output is channel of model objects
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.loadHistologyTypeChannel(methyls: ReceiveChannel<CosmicDiffMethylation>) = produce {
+    private fun CoroutineScope.loadHistologyTypeChannel(methyls: ReceiveChannel<CosmicDiffMethylation>) = produce {
         for (methyl in methyls) {
             val type = CosmicTypeLoader.processCosmicTypeNode(methyl.histology)
             // val type = processCosmicTypeNode(methyl.histology)
@@ -72,7 +73,7 @@ Output is channel of model objects
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.createHistologyTypeRelationshipChannel(fragTypePairs: ReceiveChannel<Pair<String, Int>>) =
+  private   fun CoroutineScope.createHistologyTypeRelationshipChannel(fragTypePairs: ReceiveChannel<Pair<String, Int>>) =
         produce {
             for (fragTypePair in fragTypePairs) {
                 createHistologyTypeRelationship(fragTypePair.first, fragTypePair.second)
@@ -80,8 +81,13 @@ Output is channel of model objects
             }
         }
 
-    fun loadCosmicDiffMethylationData(filename: String) = runBlocking {
+    /*
+    Public function to load Cosmic Differential Methylation from a specified file
+     */
+    fun loadCosmicDiffMethylationData(filename: String)  = runBlocking {
         logger.atInfo().log("Loading CosmicDiffMethylation data from file: $filename")
+       var nodeCount = 0
+        val stopwatch = Stopwatch.createStarted()
         val ids =
             createHistologyTypeRelationshipChannel(
                 loadHistologyTypeChannel(
@@ -94,18 +100,17 @@ Output is channel of model objects
             )
         for (id in ids) {
             // pipeline stream is lazy - need to consume output
-            println("Fragment Id $id")
+            nodeCount += 1
         }
+        logger.atInfo().log(
+            "CosmicDifferentialMethylation data loaded " +
+                    " $nodeCount nodes in " +
+                    " ${stopwatch.elapsed(TimeUnit.SECONDS)} seconds"
+        )
     }
 }
 
 fun main(args: Array<String>) {
-    val stopwatch = Stopwatch.createStarted()
     val filename = if (args.size > 0) args[0] else "data/sample_CosmicCompleteDifferentialMethylation.tsv"
     CosmicDiffMethylationLoader.loadCosmicDiffMethylationData(filename)
-    CosmicDiffMethylationLoader.logger.atInfo().log(
-        "CosmicDifferentialMethylation data loaded in " +
-                " ${stopwatch.elapsed(TimeUnit.SECONDS)} seconds"
-    )
-
 }

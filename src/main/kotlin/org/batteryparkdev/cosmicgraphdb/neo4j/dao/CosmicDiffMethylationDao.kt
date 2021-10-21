@@ -41,7 +41,6 @@ fun loadCosmicDiffMethylation(methyl: CosmicDiffMethylation): String =
 
 fun createSampleRelationship(sampleId: Int, fragmentId: String) =
     Neo4jConnectionService.executeCypherCommand(
-        "" +
                 "MATCH (cs:CosmicSample), (cm:CosmicDiffMethylation)" +
                 " WHERE cs.sample_id=$sampleId AND " +
                 "  cm.fragment_id = \"$fragmentId\" " +
