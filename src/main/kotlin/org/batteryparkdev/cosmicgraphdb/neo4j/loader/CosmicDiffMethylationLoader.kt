@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicDiffMethylation
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicTypeDao
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createHistologyTypeRelationship
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createSampleRelationship
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.loadCosmicDiffMethylation
@@ -65,7 +66,7 @@ Output is channel of model objects
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.loadHistologyTypeChannel(methyls: ReceiveChannel<CosmicDiffMethylation>) = produce {
         for (methyl in methyls) {
-            val type = CosmicTypeLoader.processCosmicTypeNode(methyl.histology)
+            val type = CosmicTypeDao.processCosmicTypeNode(methyl.histology)
             // val type = processCosmicTypeNode(methyl.histology)
             val fragTypePair = Pair(methyl.fragmentId, type)
             send(fragTypePair)

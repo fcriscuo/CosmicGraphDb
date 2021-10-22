@@ -3,7 +3,9 @@ package org.batteryparkdev.cosmicgraphdb.neo4j.loader
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicClassification
 import org.batteryparkdev.cosmicgraphdb.io.CsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicTypeDao
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createCosmicTypeRelationships
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.loadCosmicClassification
 import java.nio.file.Paths
 
 object CosmicClassificationLoader {
@@ -16,53 +18,11 @@ object CosmicClassificationLoader {
         logger.atInfo().log("Loaded CosmicClassification id = ${cosmicClassification.cosmicPhenotypeId}")
     }
 
-   private fun loadCosmicClassification(cosmicClassification: CosmicClassification): String =
-        Neo4jConnectionService.executeCypherCommand(
-            "MERGE (cc:CosmicClassification{phenotype_id:\"${cosmicClassification.cosmicPhenotypeId}\"}) " +
-                    "SET cc.nci_code =\"${cosmicClassification.nciCode}\", cc.efo_url= \"${cosmicClassification.efoUrl}\"" +
-                    " RETURN cc.phenotype_id"
-        )
-
    private fun loadCosmicSites(cosmicClassification: CosmicClassification) {
-        CosmicTypeLoader.processCosmicTypeNode(cosmicClassification.siteType)
-        CosmicTypeLoader.processCosmicTypeNode(cosmicClassification.histologyType)
-        if (cosmicClassification.cosmicSiteType != null) {
-            CosmicTypeLoader.processCosmicTypeNode(cosmicClassification.cosmicSiteType)
-        }
-        if (cosmicClassification.cosmicHistologyType != null) {
-            CosmicTypeLoader.processCosmicTypeNode(cosmicClassification.cosmicHistologyType)
-        }
-    }
-
-    private fun createCosmicTypeRelationships(cosmicClassification: CosmicClassification) {
-        Neo4jConnectionService.executeCypherCommand(
-            "MATCH (cc:CosmicClassification), (ct:CosmicType) WHERE cc.phenotype_id = " +
-                    " \"${cosmicClassification.cosmicPhenotypeId}\" AND ct.type_id = " +
-                    "${cosmicClassification.siteType.generateIdentifier()} MERGE " +
-                    "(cc) - [r:HAS_SITE] -> (ct)"
-        )
-        Neo4jConnectionService.executeCypherCommand(
-            "MATCH (cc:CosmicClassification), (ct:CosmicType) WHERE cc.phenotype_id = " +
-                    " \"${cosmicClassification.cosmicPhenotypeId}\" AND ct.type_id = " +
-                    "${cosmicClassification.histologyType.generateIdentifier()} MERGE " +
-                    "(cc) - [r:HAS_HISTOLOGY] -> (ct)"
-        )
-        if (cosmicClassification.cosmicSiteType != null) {
-            Neo4jConnectionService.executeCypherCommand(
-                "MATCH (cc:CosmicClassification), (ct:CosmicType) WHERE cc.phenotype_id = " +
-                        " \"${cosmicClassification.cosmicPhenotypeId}\" AND ct.type_id = " +
-                        "${cosmicClassification.cosmicSiteType.generateIdentifier()} MERGE " +
-                        "(cc) - [r:HAS_COSMIC_SITE] -> (ct)"
-            )
-        }
-        if (cosmicClassification.cosmicHistologyType != null) {
-            Neo4jConnectionService.executeCypherCommand(
-                "MATCH (cc:CosmicClassification), (ct:CosmicType) WHERE cc.phenotype_id = " +
-                        " \"${cosmicClassification.cosmicPhenotypeId}\" AND ct.type_id = " +
-                        "${cosmicClassification.cosmicHistologyType.generateIdentifier()} MERGE " +
-                        "(cc) - [r:HAS_COSMIC_HISTOLOGY] -> (ct)"
-            )
-        }
+        CosmicTypeDao.processCosmicTypeNode(cosmicClassification.siteType)
+        CosmicTypeDao.processCosmicTypeNode(cosmicClassification.histologyType)
+       CosmicTypeDao.processCosmicTypeNode(cosmicClassification.cosmicSiteType)
+       CosmicTypeDao.processCosmicTypeNode(cosmicClassification.cosmicHistologyType)
     }
 }
 fun main() {
