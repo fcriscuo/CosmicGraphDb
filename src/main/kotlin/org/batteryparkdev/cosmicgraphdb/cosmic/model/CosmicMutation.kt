@@ -5,8 +5,8 @@ import java.nio.file.Paths
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 
 data class CosmicMutation(
-    val geneName: String,
-    val genomicMutationId: String, val mutationId: String, val mutationCds: String,
+    val geneSymbol: String,
+    val genomicMutationId: String, val mutationId: Int, val mutationCds: String,
     val mutationAA: String, val mutationDescription: String, val mutationZygosity: String,
     val LOH: String, val GRCh: String, val mutationGenomePosition: String,
     val mutationStrand: String, val SNP: String, val resistanceMutation: String,
@@ -17,8 +17,8 @@ data class CosmicMutation(
     companion object : AbstractModel {
         fun parseCsvRecord(record: CSVRecord): CosmicMutation =
             CosmicMutation(
-                record.get("Gene name"),
-                record.get("GENOMIC_MUTATION_ID"), record.get("MUTATION_ID"),
+                record.get("Gene name"),   // actually HGNC approved symbol
+                record.get("GENOMIC_MUTATION_ID"), record.get("MUTATION_ID").toInt(),
                 record.get("Mutation CDS"),
                 record.get("Mutation AA"),
                 record.get("Mutation Description"),
@@ -40,7 +40,7 @@ data class CosmicMutation(
         fun parseResistanceMutationCsvRecord(record: CSVRecord): CosmicMutation =
             CosmicMutation(
                 record.get("Gene Name"),
-                record.get("GENOMIC_MUTATION_ID"), record.get("MUTATION_ID"),
+                record.get("GENOMIC_MUTATION_ID"), record.get("MUTATION_ID").toInt(),
                 record.get("CDS Mutation"),
                 record.get("AA Mutation"), "",
                 record.get("Zygosity") ?: "",
@@ -75,7 +75,7 @@ fun main() {
                         "Cosmic Muattaion Id= ${mut.genomicMutationId}  location= ${mut.mutationGenomePosition}" +
                                 "  mutation AA = ${mut.mutationAA} " +
                                 "  description = ${mut.mutationDescription} " +
-                                "  gene = ${mut.geneName}"
+                                "  gene = ${mut.geneSymbol}"
                     )
                     recordCount += 1
                 }

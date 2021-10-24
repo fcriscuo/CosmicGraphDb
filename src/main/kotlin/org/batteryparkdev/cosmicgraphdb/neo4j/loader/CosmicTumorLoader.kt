@@ -9,7 +9,7 @@ import java.nio.file.Paths
 object CosmicTumorLoader
 
 {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass();
+    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
     fun processCosmicTumor(cosmicTumor: CosmicTumor) {
         if (!cosmicTumorIdLoaded(cosmicTumor.tumorId)) {

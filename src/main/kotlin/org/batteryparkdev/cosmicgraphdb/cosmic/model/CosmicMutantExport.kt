@@ -12,7 +12,7 @@ This class can be used to process data from either the
 CosmicMutantExport.tsv file or the CosmicMutantExportCensus.tsv file
  */
 data class CosmicMutantExport(
-    val gene: CosmicGene,
+    val gene: CosmicMutationGene,
     val sample: CosmicSample, val tumor: CosmicTumor,
     val genomicMutation: CosmicMutation
 ) {
@@ -20,7 +20,7 @@ data class CosmicMutantExport(
     companion object: AbstractModel {
         fun parseCsvRecord(record: CSVRecord): CosmicMutantExport =
             CosmicMutantExport(
-                CosmicGene.parseCsvRecord(record),
+                CosmicMutationGene.parseCsvRecord(record),
                 CosmicSample.parseCsvRecord(record),
                 CosmicTumor.parseCsvRecord(record),
                 CosmicMutation.parseCsvRecord(record)
@@ -38,7 +38,7 @@ fun main() {
                 .map { CosmicMutantExport.parseCsvRecord(it) }
                 .forEach { export ->
                     println(
-                        "Tumor Id: ${export.tumor.tumorId}  Gene name: ${export.gene.geneName} " +
+                        "Tumor Id: ${export.tumor.tumorId}  Gene symbol: ${export.gene.geneSymbol} " +
                                 " AA Mut: ${export.genomicMutation.mutationAA}   Position: ${export.genomicMutation.mutationGenomePosition}" +
                                 " Primary Site: ${export.tumor.site.primary} " +
                                 " SampleName: ${export.sample.sampleName}  Histology: ${export.tumor.histology.primary}" +

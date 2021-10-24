@@ -2,9 +2,10 @@ package org.batteryparkdev.cosmicgraphdb.neo4j.dao
 
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicGeneCensus
+import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicMutationGene
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
-import org.batteryparkdev.cosmicgraphdb.neo4j.loader.CosmicGeneLoader
+import org.batteryparkdev.cosmicgraphdb.neo4j.loader.CosmicGeneCensusLoader
 import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
 
 object CosmicGeneDao {
@@ -17,7 +18,6 @@ object CosmicGeneDao {
             "cg.other_germline_mut = \"OTHERMUT\"  RETURN cg.gene_symbol"
 
     fun loadCosmicGeneNode(cosmicGene: CosmicGeneCensus): String {
-        if (!CosmicGeneLoader.cancerGeneSymbolLoaded(cosmicGene.geneSymbol)) {
             val merge = cypherLoadTemplate.replace("GENESYMBOL", cosmicGene.geneSymbol)
                 .replace("GENENAME", cosmicGene.geneName)
                 .replace("ENTREZ", cosmicGene.entrezGeneId)
@@ -31,8 +31,6 @@ object CosmicGeneDao {
                 .replace("MOLGEN", cosmicGene.molecularGenetics)
                 .replace("OTHERMUT", cosmicGene.otherGermlineMut)
             return Neo4jConnectionService.executeCypherCommand(merge)
-        }
-        return "CosmicGene: ${cosmicGene.cancerSyndrome} has already been loaded"
     }
 
     fun loadTranslocPartnerList(geneSymbol: String, transPartnerList: List<String>) {
@@ -147,6 +145,22 @@ object CosmicGeneDao {
                     )
                 }
             }
+    }
+
+    /*
+  The CosmicMutantExport & CosmicMutantExportCensus files contain some
+  additional gene properties and identifiers
+  Use this function to merge these data into CosmicGene nodes
+  Also, allowing this function to create new CosmicGene nodes, removes
+  the necessity of loading genes before loading mutations
+     */
+    fun loadCosmicMutationGene(mutGene: CosmicMutationGene) {
+        //createCosmicGeneNode(mutGene.geneSymbol)
+        Neo4jConnectionService.executeCypherCommand(
+            "MERGE (cg:CosmicGene{gene_symbol: \"${mutGene.geneSymbol}\" }) " +
+                    "SET cg.accession_number = \"${mutGene.accessionNumber}\", " +
+                    " cg.cds_length =${mutGene.cdsLength}, cg.hgnc_id = \"${mutGene.hgncId}\" "
+        )
     }
 
     /*
