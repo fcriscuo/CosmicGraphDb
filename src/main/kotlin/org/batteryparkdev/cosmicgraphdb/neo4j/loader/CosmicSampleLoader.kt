@@ -1,44 +1,117 @@
 package org.batteryparkdev.cosmicgraphdb.neo4j.loader
 
+import com.google.common.base.Stopwatch
 import com.google.common.flogger.FluentLogger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicSample
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicTypeDao
-import org.batteryparkdev.cosmicgraphdb.neo4j.dao.addCosmicSampleTypeLabel
-import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createCosmicSampleRelationships
-import org.batteryparkdev.cosmicgraphdb.neo4j.dao.loadCosmicSample
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.*
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 
+/*
+Responsible for loading data from the CosmicSample file into a Neo4j database
+Creates noses, labels, and relationships
+ */
 object CosmicSampleLoader {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass();
+    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
-    fun processCosmicSampleNode(cosmicSample: CosmicSample){
-        val id = loadCosmicSample(cosmicSample)
-        if (cosmicSample.sampleType.isNotEmpty()) {
-            addCosmicSampleTypeLabel(id, cosmicSample.sampleName)
-        }
-        loadCosmicSampleTypes(cosmicSample)
-        createCosmicSampleRelationships(cosmicSample)
-    }
-
-    private fun loadCosmicSampleTypes(cosmicSample: CosmicSample){
-        CosmicTypeDao.processCosmicTypeNode(cosmicSample.site)
-        CosmicTypeDao.processCosmicTypeNode(cosmicSample.histology)
-    }
-}
-
-fun main() {
-    val path = Paths.get("./data/sample_CosmicSample.tsv")
-    println("Processing tsv file ${path.fileName}")
-    var recordCount = 0
-    TsvRecordSequenceSupplier(path).get().chunked(500)
-        .forEach { it ->
-            it.stream()
-                .map { CosmicSample.parseCsvRecord(it) }
-                .forEach { sample ->
-                    CosmicSampleLoader.processCosmicSampleNode(sample)
-                    recordCount += 1
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.parseCosmicSampleFile(cosmicSampleFile: String) =
+        produce<CosmicSample> {
+            val path = Paths.get(cosmicSampleFile)
+            TsvRecordSequenceSupplier(path).get()
+                .forEach {
+                    send(CosmicSample.parseCsvRecord(it))
+                    delay(20)
                 }
         }
-    println("Record count = $recordCount")
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.loadCosmicSamples(samples: ReceiveChannel<CosmicSample>) =
+        produce<CosmicSample> {
+            for (sample in samples) {
+                loadCosmicSample(sample)
+                send(sample)
+                delay(20)
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.addSampleLabel(samples: ReceiveChannel<CosmicSample>) =
+        produce<CosmicSample> {
+            for (sample in samples) {
+                if (sample.sampleType.isNotEmpty()) {
+                    addCosmicSampleTypeLabel(sample.sampleId, sample.sampleName)
+                }
+                send(sample)
+                delay(20)
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.loadSampleSiteType(samples: ReceiveChannel<CosmicSample>) =
+        produce<CosmicSample> {
+            for (sample in samples) {
+                CosmicTypeDao.processCosmicTypeNode(sample.site)
+                send(sample)
+                delay(20)
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.loadSampleHistologyType(samples: ReceiveChannel<CosmicSample>) =
+        produce<CosmicSample> {
+            for (sample in samples) {
+                CosmicTypeDao.processCosmicTypeNode(sample.histology)
+                send(sample)
+                delay(20)
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.createSampleRelationships(samples: ReceiveChannel<CosmicSample>) =
+        produce<Int> {
+            for (sample in samples) {
+                createCosmicSampleRelationships(sample)
+                send(sample.sampleId)
+                delay(20)
+            }
+        }
+
+    fun processCosmicSampleData(filename: String) = runBlocking {
+        logger.atInfo().log("Loading CosmicSample data from file $filename")
+        var nodeCount = 0
+        val stopwatch = Stopwatch.createStarted()
+        val ids = createSampleRelationships(
+            loadSampleHistologyType(
+                loadSampleSiteType(
+                    addSampleLabel(
+                        loadCosmicSamples(
+                            parseCosmicSampleFile(filename)
+                        )
+                    )
+                )
+            )
+        )
+        for (id in ids) {
+            // pipeline stream is lazy - need to consume output
+            nodeCount += 1
+        }
+        logger.atInfo().log(
+            "CosmicSample data loaded " +
+                    " $nodeCount nodes in " +
+                    " ${stopwatch.elapsed(TimeUnit.SECONDS)} seconds"
+        )
+    }
+}
+// integration test using truncated sample file
+fun main(args: Array<String>) {
+    val filename = if (args.isNotEmpty()) args[0] else "./data/sample_CosmicSample.tsv"
+    CosmicSampleLoader.processCosmicSampleData(filename)
 }
