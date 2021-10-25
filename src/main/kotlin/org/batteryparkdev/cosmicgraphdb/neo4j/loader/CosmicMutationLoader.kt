@@ -23,7 +23,7 @@ Creates a  CosmicMutation -> CosmicGene relationship
 
 object CosmicMutationLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
-
+    
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.parseCosmicMutationFile(cosmicMutationFile: String) =
         produce<CosmicMutation> {
@@ -35,7 +35,6 @@ object CosmicMutationLoader {
                 }
         }
 
-
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.loadCosmicMutations(mutations: ReceiveChannel<CosmicMutation>) =
         produce<CosmicMutation> {
@@ -45,6 +44,7 @@ object CosmicMutationLoader {
                 delay(20)
             }
         }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.createCosmicGeneRelationships(mutations: ReceiveChannel<CosmicMutation>) =
         produce<Int> {
