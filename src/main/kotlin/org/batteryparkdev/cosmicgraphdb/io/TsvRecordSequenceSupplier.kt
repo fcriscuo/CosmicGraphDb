@@ -15,7 +15,7 @@ import java.util.stream.Stream
 import kotlin.streams.asSequence
 
 class TsvRecordSequenceSupplier : Supplier<Sequence<CSVRecord>> {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass();
+    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
     private var recordSequence: Sequence<CSVRecord> = Stream.empty<CSVRecord?>().asSequence()
 
     constructor (aPath: Path) {

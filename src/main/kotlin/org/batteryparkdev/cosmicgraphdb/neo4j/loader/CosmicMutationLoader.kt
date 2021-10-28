@@ -23,7 +23,7 @@ Creates a  CosmicMutation -> CosmicGene relationship
 
 object CosmicMutationLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
-    
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.parseCosmicMutationFile(cosmicMutationFile: String) =
         produce<CosmicMutation> {
