@@ -4,7 +4,7 @@ import com.google.common.flogger.FluentLogger
 import java.util.*
 
 object Neo4jUtils {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass();
+    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
     /*
     Function to determine if a node has already been loaded into Neo4j

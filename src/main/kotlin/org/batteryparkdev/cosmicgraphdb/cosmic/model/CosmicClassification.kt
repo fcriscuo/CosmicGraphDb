@@ -4,7 +4,7 @@ import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.CsvRecordSequenceSupplier
 import java.nio.file.Paths
 
-data class CosmicClassification(
+ data class CosmicClassification(
     val cosmicPhenotypeId: String,
     val siteType: CosmicType,
     val histologyType: CosmicType,

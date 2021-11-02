@@ -1,7 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.neo4j.dao
 
 import com.google.common.flogger.FluentLogger
-import kotlinx.coroutines.CoroutineScope
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicCompleteCNA
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.createCosmicGeneNode

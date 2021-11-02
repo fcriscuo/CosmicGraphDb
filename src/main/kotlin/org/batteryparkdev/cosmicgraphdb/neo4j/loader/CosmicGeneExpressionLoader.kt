@@ -67,6 +67,7 @@ object CosmicGeneExpressionLoader {
             delay(50)
         }
     }
+
     /*
     Public function to initiate loading CosmicCompleteGeneExpression data
      */
@@ -86,7 +87,6 @@ object CosmicGeneExpressionLoader {
                     " $nodeCount nodes in " +
                     " ${stopwatch.elapsed(java.util.concurrent.TimeUnit.SECONDS)} seconds"
         )
-
     }
 }
 

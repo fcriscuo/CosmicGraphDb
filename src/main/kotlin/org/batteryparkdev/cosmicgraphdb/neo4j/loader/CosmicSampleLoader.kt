@@ -1,88 +1,117 @@
 package org.batteryparkdev.cosmicgraphdb.neo4j.loader
 
+import com.google.common.base.Stopwatch
 import com.google.common.flogger.FluentLogger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicSample
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.*
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 
+/*
+Responsible for loading data from the CosmicSample file into a Neo4j database
+Creates noses, labels, and relationships
+ */
 object CosmicSampleLoader {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass();
+    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
-    fun processCosmicSampleNode(cosmicSample: CosmicSample){
-        val id = loadCosmicSample(cosmicSample)
-        if (cosmicSample.sampleType.isNotEmpty()) {
-            addCosmicSampleTypeLabel(id, cosmicSample.sampleName)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.parseCosmicSampleFile(cosmicSampleFile: String) =
+        produce<CosmicSample> {
+            val path = Paths.get(cosmicSampleFile)
+            TsvRecordSequenceSupplier(path).get()
+                .forEach {
+                    send(CosmicSample.parseCsvRecord(it))
+                    delay(20)
+                }
         }
-        loadCosmicSampleTypes(cosmicSample)
-        createCosmicSampleRelationships(cosmicSample)
-    }
 
-    private fun loadCosmicSample(cosmicSample:CosmicSample):Int =
-        Neo4jConnectionService.executeCypherCommand(
-            "MERGE (cs:CosmicSample{sample_id: ${cosmicSample.sampleId}}) " +
-                    " SET cs.sample_name = \"${cosmicSample.sampleName}\", " +
-                    " cs.tumor_id  = ${cosmicSample.tumorId}, " +
-                    " cs.therapy_relationship = \"${cosmicSample.therapyRelationship}\", " +
-                    " cs.sample_differentiation = \"${cosmicSample.sampleDifferentiator}\", " +
-                    " cs.mutation_allele_specification = \"${cosmicSample.mutationAlleleSpecification}\", " +
-                    " cs.msi = \"${cosmicSample.msi}\", cs.average_ploidy = \"${cosmicSample.averagePloidy}\", " +
-                    " cs.whole_genome_screen = \"${cosmicSample.wholeGeneomeScreen}\", " +
-                    " cs.whole_exome_screen = \"${cosmicSample.wholeExomeScreen}\", " +
-                    " cs.sample_remark = \"${cosmicSample.sampleRemark}\", " +
-                    " cs.drug_response = \"${cosmicSample.drugResponse}\", cs.grade= \"${cosmicSample.grade}\", " +
-                    " cs.age_at_tumor_recurrennce = ${cosmicSample.ageAtTumorRecurrence}, " +
-                    " cs.stage=\"${cosmicSample.stage}\", cs.cytogenetics= \"${cosmicSample.cytogenetics}\", " +
-                    " cs.metastatic_site = \"${cosmicSample.metastaticSite}\", " +
-                    " cs.tumor_source= \"${cosmicSample.tumorSource}\"," +
-                    " cs.tumor_remark=\"${cosmicSample.tumorRemark}\"," +
-                    " cs.age=${cosmicSample.age}, cs.ethnicity=\"${cosmicSample.ethnicity}\"," +
-                    " cs.environmental_variables=\"${cosmicSample.environmentalVariables}\"," +
-                    " cs.germline_mutation=\"${cosmicSample.germlineMutation}\", " +
-                    " cs.therapy=\"${cosmicSample.therapy}\",cs.family=\"${cosmicSample.family}\", " +
-                    " cs.normal_tissue_tested=\"${cosmicSample.normalTissueTested}\", " +
-                    " cs.gender=\"${cosmicSample.gender}\", cs.individual_remark=\"${cosmicSample.individualRemark}\"," +
-                    " cs.nci_code=\"${cosmicSample.nciCode}\", cs.sample_type=\"${cosmicSample.sampleType}\" " +
-                    " RETURN cs.sample_id").toInt()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.loadCosmicSamples(samples: ReceiveChannel<CosmicSample>) =
+        produce<CosmicSample> {
+            for (sample in samples) {
+                loadCosmicSample(sample)
+                send(sample)
+                delay(20)
+            }
+        }
 
-    private fun addCosmicSampleTypeLabel(id: Int, label: String) {
-        val labelExistsQuery = "MERGE (cs:CosmicSample{sample_id:$id}) " +
-                "RETURN apoc.label.exists(cs, \"$label\") AS output;"
-        if (Neo4jConnectionService.executeCypherCommand(labelExistsQuery).uppercase() == "FALSE") {
-            Neo4jConnectionService.executeCypherCommand(
-                "MATCH (cs:CosmicSample{sample_id:$id}) " +
-                        "CALL apoc.create.addLabels(cs,[\"$label\"]) YIELD node RETURN node"
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.addSampleLabel(samples: ReceiveChannel<CosmicSample>) =
+        produce<CosmicSample> {
+            for (sample in samples) {
+                if (sample.sampleType.isNotEmpty()) {
+                    addCosmicSampleTypeLabel(sample.sampleId, sample.sampleName)
+                }
+                send(sample)
+                delay(20)
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.loadSampleSiteType(samples: ReceiveChannel<CosmicSample>) =
+        produce<CosmicSample> {
+            for (sample in samples) {
+                CosmicTypeDao.processCosmicTypeNode(sample.site)
+                send(sample)
+                delay(20)
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.loadSampleHistologyType(samples: ReceiveChannel<CosmicSample>) =
+        produce<CosmicSample> {
+            for (sample in samples) {
+                CosmicTypeDao.processCosmicTypeNode(sample.histology)
+                send(sample)
+                delay(20)
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.createSampleRelationships(samples: ReceiveChannel<CosmicSample>) =
+        produce<Int> {
+            for (sample in samples) {
+                createCosmicSampleRelationships(sample)
+                send(sample.sampleId)
+                delay(20)
+            }
+        }
+
+    fun processCosmicSampleData(filename: String) = runBlocking {
+        logger.atInfo().log("Loading CosmicSample data from file $filename")
+        var nodeCount = 0
+        val stopwatch = Stopwatch.createStarted()
+        val ids = createSampleRelationships(
+            loadSampleHistologyType(
+                loadSampleSiteType(
+                    addSampleLabel(
+                        loadCosmicSamples(
+                            parseCosmicSampleFile(filename)
+                        )
+                    )
+                )
             )
+        )
+        for (id in ids) {
+            // pipeline stream is lazy - need to consume output
+            nodeCount += 1
         }
-    }
-    private fun loadCosmicSampleTypes(cosmicSample: CosmicSample){
-        CosmicTypeLoader.processCosmicTypeNode(cosmicSample.site)
-        CosmicTypeLoader.processCosmicTypeNode(cosmicSample.histology)
-    }
-
-    private fun createCosmicSampleRelationships(cosmicSample: CosmicSample){
-        // CosmicSample to CosmicClassification relationship
-        Neo4jConnectionService.executeCypherCommand(
-            "MATCH (cs:CosmicSample), (cc:CosmicClassification) WHERE " +
-                    " cs.sample_id=${cosmicSample.sampleId} AND cc.phenotype_id = " +
-                    "\"${cosmicSample.cosmicPhenotypeId}\" " +
-                    " MERGE (cs) - [r:HAS_CLASSIFICATION] -> (cc)"
+        logger.atInfo().log(
+            "CosmicSample data loaded " +
+                    " $nodeCount nodes in " +
+                    " ${stopwatch.elapsed(TimeUnit.SECONDS)} seconds"
         )
     }
 }
-
-fun main() {
-    val path = Paths.get("./data/sample_CosmicSample.tsv")
-    println("Processing tsv file ${path.fileName}")
-    var recordCount = 0
-    TsvRecordSequenceSupplier(path).get().chunked(500)
-        .forEach { it ->
-            it.stream()
-                .map { CosmicSample.parseCsvRecord(it) }
-                .forEach { sample ->
-                    CosmicSampleLoader.processCosmicSampleNode(sample)
-                    recordCount += 1
-                }
-        }
-    println("Record count = $recordCount")
+// integration test using truncated sample file
+fun main(args: Array<String>) {
+    val filename = if (args.isNotEmpty()) args[0] else "./data/sample_CosmicSample.tsv"
+    CosmicSampleLoader.processCosmicSampleData(filename)
 }

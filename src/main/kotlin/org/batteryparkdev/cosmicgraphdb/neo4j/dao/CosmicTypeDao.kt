@@ -1,10 +1,10 @@
-package org.batteryparkdev.cosmicgraphdb.neo4j.loader
+package org.batteryparkdev.cosmicgraphdb.neo4j.dao
 
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicType
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 
-object CosmicTypeLoader {
+object CosmicTypeDao {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass();
 
     fun processCosmicTypeNode(cosmicType: CosmicType):Int {

@@ -40,7 +40,7 @@ fun main() {
                     println(
                         "Tumor Id= ${tumor.tumorId}  Mutation id= ${tumor.mutationId}" +
                                 "  Tumor origin = ${tumor.tumorOrigin} " +
-                                "  gene = ${tumor.cosmicMutation.geneName} " +
+                                "  gene = ${tumor.cosmicMutation.geneSymbol} " +
                                 "   pubmed id = ${tumor.pubmedId}" +
                                 "  sample id = ${tumor.sampleId}" +
                                 "  mutation id = ${tumor.cosmicMutation.mutationId} " +
