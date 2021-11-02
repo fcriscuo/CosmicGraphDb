@@ -19,7 +19,8 @@ object PubMedLoader {
                 val pubmedEntry = PubMedEntry.parsePubMedArticle(pubmedArticle, label, parentId)
                 loadPubMedEntry(pubmedEntry)
                 loadReferenceNodes(pubmedEntry)
-                loadCitationNodes(pubmedEntry)
+                // skip loading Citations
+               // loadCitationNodes(pubmedEntry)
                 pubmedEntry
             }
             is Either.Left -> {
@@ -110,7 +111,7 @@ object PubMedLoader {
             .replace("DOIID", pubMedEntry.doiId)
             .replace("JOURNAL_NAME", pubMedEntry.journalName)
             .replace("JOURNAL_ISSUE", pubMedEntry.journalIssue)
-            .replace("TITLE", pubMedEntry.articleTitle)
+            .replace("TITLE",  modifyInternalQuotes(pubMedEntry.articleTitle))
             .replace("ABSTRACT", modifyInternalQuotes(pubMedEntry.abstract))
             .replace("AUTHOR", pubMedEntry.authorCaption)
             .replace("REFCOUNT", pubMedEntry.referenceSet.size.toString())

@@ -27,10 +27,8 @@ data class PubMedEntry(
         Function to parse attributes from the PubMedArticle JaXB model object
         label should be one of (Origin, Reference, Citation)
          */
-        fun parsePubMedArticle(
-            pubmedArticle: PubmedArticle, label: String = "Origin",
-            parentId: Int = 0
-        ): PubMedEntry {
+        fun parsePubMedArticle(pubmedArticle: PubmedArticle,
+                               label: String = "Origin", parentId: Int = 0): PubMedEntry {
             val pmid = pubmedArticle.medlineCitation.pmid.getvalue().toInt()
             val pmcid = resolveArticleIdByType(pubmedArticle, "pmc")
             val doiid = resolveArticleIdByType(pubmedArticle, "doi")

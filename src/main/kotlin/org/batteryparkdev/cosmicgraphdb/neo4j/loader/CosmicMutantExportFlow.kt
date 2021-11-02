@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.neo4j.loader
 
+import com.google.common.base.Stopwatch
 import com.google.common.flogger.FluentLogger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -11,6 +12,7 @@ import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.*
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 
 /*
 Responsible for loading data from a CosmicMutantExport or CosmicMutantExportCensus file
@@ -151,11 +153,21 @@ class TumorReceiver(
     }
 }
 
+/*
+main function for Neo4j integration testing
+ */
 fun main(args: Array<String>) = runBlocking {
     val scope = CoroutineScope(Dispatchers.IO)
-    val filename = if (args.isNotEmpty()) args[0] else "./data/sample_CosmicMutantExportCensus.tsv"
+    val filename = when (args.isNotEmpty()) {
+        true -> args[0]
+        false -> "./data/sample_CosmicMutantExportCensus.tsv"
+    }
+    val stopwatch = Stopwatch.createStarted()
     val recordFlow = CosmicMutantExportFlow(scope, filename)
     val tr = TumorReceiver(recordFlow, scope)
     val mr = MutationReceiver(recordFlow, scope)
-    delay(900_000L)
+    stopwatch.elapsed(TimeUnit.SECONDS)
+    println("Elapsed time: ${stopwatch.elapsed(java.util.concurrent.TimeUnit.SECONDS)} seconds")
+    println("Cancelling children")
+    coroutineContext.cancelChildren()
 }
