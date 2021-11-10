@@ -1,14 +1,13 @@
 package org.batteryparkdev.cosmicgraphdb.app
 
+import com.google.common.base.Stopwatch
 import com.google.common.flogger.FluentLogger
-import org.batteryparkdev.cosmicgraphdb.cosmic.model.*
-import org.batteryparkdev.cosmicgraphdb.io.CsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
+import kotlinx.coroutines.*
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
 import org.batteryparkdev.cosmicgraphdb.neo4j.loader.*
+import org.batteryparkdev.cosmicgraphdb.property.ApplicationPropertiesService
 import org.batteryparkdev.cosmicgraphdb.property.DatafilePropertiesService
-import java.nio.file.Paths
+import org.batteryparkdev.cosmicgraphdb.pubmed.loader.CosmicPubMedArticleLoader
 
 /*
 Primary COSMIC data loader
@@ -44,6 +43,24 @@ class CosmicDatabaseLoader(fileDirectory: String) {
         "CosmicSample", "CosmicClassification", "CosmicGene", "CosmicType",
         "CosmicCompleteDNA", "CosmicGeneExpression", "CosmicDiffMethylation"
     )
+    @OptIn(DelicateCoroutinesApi::class)
+    val job = GlobalScope.launch() {
+        delay(2000)
+    }
+
+    // extension function
+    // source:source https://stackoverflow.com/questions/53921470/how-to-run-two-jobs-in-parallel-but-wait-for-another-job-to-finish-using-kotlin
+    fun <T> CoroutineScope.asyncIO(ioFun: () -> T) = async(Dispatchers.IO) { ioFun() }
+
+    fun loadCosmicDatabase() = runBlocking{
+        // load order is import for establishing parent to child relationships
+        val stopwatch = Stopwatch.createStarted()
+        deleteCosmicNodes()
+        loadData()
+        logger.atInfo().log("All currently supported COSMIC data have been loaded into Neo4j")
+        logger.atInfo().log("Elapsed time = ${stopwatch.elapsed(java.util.concurrent.TimeUnit.MINUTES)} " +
+                " minutes")
+    }
 
     /*
     Function to delete all Cosmic-related nodes and relationships
@@ -54,21 +71,108 @@ class CosmicDatabaseLoader(fileDirectory: String) {
         nodeNameList.forEach { nodeName -> Neo4jUtils.detachAndDeleteNodesByName(nodeName) }
     }
 
-    fun loadCosmicDatabase() {
-        // load order is import for establishing parent to child relationships
-        deleteCosmicNodes()
-        CosmicGeneCensusLoader.loadCosmicGeneCensusData(cosmicGeneCensusFile)
+    /*
+    Function to define the asynchronous workflow
+     */
+    @OptIn(DelicateCoroutinesApi::class)
+    fun loadData() {
+        // launch coroutine
+        GlobalScope.launch {
+            // run Job1, Job2, and Job4 in parallel, asyncIO - is an extension function on CoroutineScope
+            val task01 = asyncIO { loadPubmedJob() }
+            val task04 = asyncIO { loadClassificationJob() }
+            val task02 = asyncIO { loadHallmarkJob() }
+            // waiting for result of Job1 , Job2, & Job4
+            val job4Result = task04.await()
+            val job2Result = task02.await()
+            // Job 5 waits for Job4
+            val task05 = asyncIO { loadSampleJob(job4Result) }
+            val job5Result = task05.await()
+            // Job3 waits for Job2 to complete
+            val task03 = asyncIO { loadGeneCensusJob(job2Result) }
+            // Job6 waits for Job5
+            val task06 = asyncIO { loadMutantExportJob( job5Result) }
+            // Job8 waits for Job5
+            val task08 = asyncIO { loadDiffMethylationJob(job5Result) }
+            val job3Result = task03.await()
+            val job6Result = task06.await()
+            // Job7 and Job9 depend on Job3 & Job6
+            val task07 = asyncIO{ loadCompleteCNAJob(job3Result, job6Result)}
+            val task09 = asyncIO{ loadGeneExpressionJob(job3Result, job6Result)}
+            // wait for last tier of jobs to complete
+            onDone(task01.await(),task07.await(), task08.await(), task09.await())
+        }
+    }
+    fun onDone(job1Result:String, job7Result: String, job8Result: String, job9Result: String) {
+        logger.atInfo().log("Executing onDone function")
+        logger.atInfo().log("task01 = $job1Result   task07 = $job7Result   task08 = $job8Result   task09 = $job9Result")
+        job.cancel()
+    }
+
+  /*
+  Loading PubMed data into Neo4j is performed on a periodic basis concurrently with the other specialized
+  loaders. The PubMed loader queries the database for placeholder nodes created by other loaders and
+  queries NCBI to complete them. 
+   */
+    fun loadPubmedJob(): String {  // job 1
+        logger.atInfo().log("1 - Starting PubMed loader")
+        val taskDuration = ApplicationPropertiesService.resolvePropertyAsLong("pubmed.task.duration")
+        val timerInterval = ApplicationPropertiesService.resolvePropertyAsLong("pubmed.timer.interval")
+        val scanTimer = CosmicPubMedArticleLoader.scheduledPlaceHolderNodeScan(timerInterval)
+        try {
+            Thread.sleep(taskDuration)
+        } finally {
+            scanTimer.cancel();
+        }
+        return "PubMed loaded"
+    }
+
+    fun loadHallmarkJob(): String {  // job 2
+        logger.atInfo().log("2 - Starting Hallmark loader")
         CosmicHallmarkLoader.processCosmicHallmarkData(cosmicHallmarkFile)
+        return "Hallmark loaded"
+    }
+
+    fun loadGeneCensusJob(job2Result: String): String {  // job 3
+        logger.atInfo().log("3 - Starting GeneCensus loader")
+        CosmicGeneCensusLoader.loadCosmicGeneCensusData(cosmicGeneCensusFile)
+        return "GeneCensus loaded"
+    }
+
+    fun loadClassificationJob(): String {   // job 4
+        logger.atInfo().log("4 - Starting Classification loader")
         CosmicClassificationLoader.loadCosmicClassificationData(cosmicClassificationFile)
+        return "Classifications loaded"
+    }
+
+    fun loadSampleJob( job4Result: String): String { // job 5
+        logger.atInfo().log("5 - Starting Sample loader")
         CosmicSampleLoader.processCosmicSampleData(cosmicSampleFile)
-        // mutation and tumor data are loaded from the same file
-        //TODO: refactor to use a common channel for CSVRecords
-        CosmicMutationLoader.processCosmicMutationData(cosmicMutationExportCensusFile)
-        CosmicTumorLoader.processCosmicTumorData(cosmicMutationExportCensusFile)
+        return "Result of sampleJob"
+    }
+
+    fun loadMutantExportJob(job5Result: String): String {  //job 6
+        logger.atInfo().log("6 - Starting MutantExport loader")
+        CosmicMutantExportLoader.loadMutantExportFile(cosmicMutationExportCensusFile)
+        return "MutantExport loaded"
+    }
+
+    fun loadCompleteCNAJob(job3Result: String, job6Result: String): String {  // job 7
+        logger.atInfo().log("7 - Starting CompleteCNA loader")
         CosmicCompleteCNALoader.loadCosmicCompleteCNAData(cosmicCompleteCNAFile)
+        return "CompleteCNA"
+    }
+
+    fun loadDiffMethylationJob(job3Result: String): String {  // job 8
+        logger.atInfo().log("8 - Starting DiffMethylation loader")
         CosmicDiffMethylationLoader.loadCosmicDiffMethylationData(cosmicDiffMethylationFile)
+        return "Result of DiffMethylation loaded"
+    }
+
+    fun loadGeneExpressionJob(job3Result: String, job6Result: String): String { // job 9
+        logger.atInfo().log("9 - Starting GeneExpression loader")
         CosmicGeneExpressionLoader.loadCosmicCompleteGeneExpressionData(cosmicGeneExpressionFile)
-        logger.atInfo().log("All currently supported COSMIC data has been loaded into Neo4j")
+        return "Result of GeneExpression loaded"
     }
 }
     fun main(args: Array<String>) {

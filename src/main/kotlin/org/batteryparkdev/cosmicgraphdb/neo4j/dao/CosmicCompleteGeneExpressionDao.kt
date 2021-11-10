@@ -28,12 +28,12 @@ fun createGeneExpressionToGeneRelationship(geneExp: CosmicCompleteGeneExpression
     )
 
 /*
-Function to create a CosmicGeneExpression -[HAS_SAMPLE]-> CosmicSample relationship
+Function to create a CosmicSample -[HAS_Expression]-> CosmicGeneExpression relationship
  */
 fun createGeneExpressionToSampleRelationship(geneExp: CosmicCompleteGeneExpression) =
     Neo4jConnectionService.executeCypherCommand(
         "MATCH (cge:CosmicGeneExpression), (cs:CosmicSample) WHERE " +
                 " cge.key = ${geneExp.key} AND " +
                 " cs.sample_id = ${geneExp.sampleId} " +
-                " MERGE (cge) -[r:HAS_SAMPLE] -> (cs)"
+                " MERGE (cs) -[r:HAS_GENE_EXPRESSION] -> (cge)"
     )

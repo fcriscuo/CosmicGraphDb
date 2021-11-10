@@ -62,19 +62,6 @@ object CosmicCompleteCNALoader {
         }
 
     /*
-    Private function to create CosmicTumor -> CosmicCompleteCNA relationship
-     */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.createTumorRelationships(cnas: ReceiveChannel<CosmicCompleteCNA>) =
-        produce<CosmicCompleteCNA> {
-            for (cna in cnas) {
-                createRelationshipFromTumor(cna.cnvId, cna.tumorId)
-                send(cna)
-                delay(50)
-            }
-        }
-
-    /*
     Private function to create CosmicSample -> CosmicCompleteCNA relationship
      */
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -97,11 +84,9 @@ loaded data into the Neo4j database
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
         val ids = createSampleRelationships(
-            createTumorRelationships(
-                createGeneRelationships(
-                    loadCosmicCompleteCNA(
-                        parseCosmicCompleteCNA(filename)
-                    )
+            createGeneRelationships(
+                loadCosmicCompleteCNA(
+                    parseCosmicCompleteCNA(filename)
                 )
             )
         )
@@ -117,7 +102,7 @@ loaded data into the Neo4j database
     }
 }
 
-fun main (args: Array<String>){
+fun main(args: Array<String>) {
     val filename = if (args.isNotEmpty()) args[0] else "data/sample_CosmicCompleteCNA.tsv"
     CosmicCompleteCNALoader.loadCosmicCompleteCNAData(filename)
 }

@@ -51,9 +51,35 @@ object Neo4jConnectionService {
         }
     }
 
+    /*
+    Function to execute a query that returns multiple results
+    Return type is a List of Records
+     */
+    fun executeCypherQuery(query: String): List<Record> {
+        val retList = mutableListOf<Record>()
+        val session = driver.session()
+        session.use {
+            try {
+                session.readTransaction { tx ->
+                    val result = tx.run(query)
+                    while (result.hasNext()) {
+                        retList.add(result.next())
+                    }
+                }
+            } catch (e: Exception) {
+                logger.atSevere().withStackTrace(StackSize.FULL)
+                    .withCause(e).log(e.message)
+                logger.atSevere().log("Cypher query: $query")
+            }
+
+            return retList.toList()
+        }
+    }
+
     fun executeCypherCommand(command: String): String {
         if (command.uppercase().startsWith("MERGE ") ||
-                command.uppercase().startsWith("CREATE ")) {
+            command.uppercase().startsWith("CREATE ")
+        ) {
             cypherFileWriter.write("$command\n")
         }
         val session = driver.session()
@@ -78,19 +104,19 @@ object Neo4jConnectionService {
     }
 }
 
-fun resolveCurrentTime (): String {
+fun resolveCurrentTime(): String {
     val sdf = SimpleDateFormat("dd-MM-yyyy_hh:mm:ss")
     return sdf.format(Date())
 }
 
 fun resolveCypherLogFileName() =
-    ApplicationPropertiesService.resolvePropertyAsString("neo4j.log.dir") +"/" +
+    ApplicationPropertiesService.resolvePropertyAsString("neo4j.log.dir") + "/" +
             ApplicationPropertiesService.resolvePropertyAsString("neo4j.log.file.prefix") +
-            "_" + resolveCurrentTime()+ ".log"
+            "_" + resolveCurrentTime() + ".log"
 
 
- fun main() {
-     val command = "MATCH (n) RETURN COUNT(n)"
-     val count = Neo4jConnectionService.executeCypherCommand(command)
-     println(count)
- }
+fun main() {
+    val command = "MATCH (n) RETURN COUNT(n)"
+    val count = Neo4jConnectionService.executeCypherCommand(command)
+    println(count)
+}

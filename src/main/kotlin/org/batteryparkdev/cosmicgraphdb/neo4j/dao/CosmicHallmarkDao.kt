@@ -3,6 +3,8 @@ package org.batteryparkdev.cosmicgraphdb.neo4j.dao
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicHallmark
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
+import org.batteryparkdev.cosmicgraphdb.pubmed.dao.PubMedArticleDao
+import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedIdentifier
 
 private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
@@ -17,6 +19,17 @@ fun createCosmicGeneRelationship(hallmark: CosmicHallmark) {
         false -> logger.atWarning().log("Hallmark gene symbol: ${hallmark.geneSymbol} " +
                 " not registered as a CosmicGene node")
     }
+}
+
+fun createPubMedRelationship(hallmark: CosmicHallmark){
+    val identifier = PubMedIdentifier(hallmark.pubmedId.toInt(),0,"CosmicArticle")
+    PubMedArticleDao.createPlaceholderNode(identifier)
+    Neo4jConnectionService.executeCypherCommand(
+        "MATCH (ch:CosmicHallmark), (pma:PubMedArticle) WHERE " +
+                " ch.hallmark_id=${hallmark.hallmarkId}  AND pma.pubmedId =" +
+                " ${hallmark.pubmedId} MERGE (ch) -[HAS_COSMIC_ARTICLE] -> (pma) "
+    )
+
 }
 
 fun loadCosmicHallmark(hallmark: CosmicHallmark): Int =

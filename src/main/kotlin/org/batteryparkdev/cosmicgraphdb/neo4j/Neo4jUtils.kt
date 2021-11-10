@@ -1,6 +1,8 @@
 package org.batteryparkdev.cosmicgraphdb.neo4j
 
 import com.google.common.flogger.FluentLogger
+import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedIdentifier
+import org.neo4j.driver.Record
 import java.util.*
 
 object Neo4jUtils {
@@ -28,7 +30,7 @@ object Neo4jUtils {
     /*
     Function to delete a Neo4j relationship
      */
-     fun deleteNodeRelationshipByName(parentNode: String, childNode: String, relName: String) {
+    fun deleteNodeRelationshipByName(parentNode: String, childNode: String, relName: String) {
         val deleteTemplate = "MATCH (:PARENT) -[r:RELATIONSHIP_NAME] ->(:CHILD) DELETE r;"
         val countTemplate = "MATCH (:PubMedArticle) -[:RELATIONSHIP_NAME] -> (:PubMedArticle) RETURN COUNT(*)"
         val delCommand = deleteTemplate
@@ -69,15 +71,41 @@ object Neo4jUtils {
             "MATCH (n: $nodeName) RETURN COUNT (n)"
         )
         Neo4jConnectionService.executeCypherCommand(
-            "MATCH (n: $nodeName) DETACH DELETE (n);")
+            "MATCH (n: $nodeName) DETACH DELETE (n);"
+        )
         val afterCount = Neo4jConnectionService.executeCypherCommand(
             "MATCH (n: $nodeName) RETURN COUNT (n)"
         )
-        logger.atInfo().log("Deleted $nodeName nodes, before count=${beforeCount.toString()}" +
-                "  after count=$afterCount")
+        logger.atInfo().log(
+            "Deleted $nodeName nodes, before count=${beforeCount.toString()}" +
+                    "  after count=$afterCount"
+        )
     }
 
+    /*
+    Function to find empty (i.e. placholder) PubMedArticle nodes
+    Returns a Sequence of PubMed Ids as Ints
+     */
+    private val emptyNodeQuery = "MATCH (c:PubMedArticle) WHERE c.article_title =\"\" " +
+            " return c.pubmed_id, c.parent_id"
+    /*
+    Private function to map selected items from an
+    empty PubMedArticle node into a PubMedIdentifier
+     */
+    private fun resolvePubMedIdentifier(record: Record): PubMedIdentifier {
+        val recMap = record.asMap()
+        val id = recMap.get("c.pubmed_id").toString().toInt()
+        val parentId = when (record.get("c.parent_id")) {
+            null -> 0
+            else -> record.get("c.parent_id").toString().toInt()
+        }
+        val label = if (parentId > 0) "Reference" else "CosmicArticle"
+        return PubMedIdentifier(id, parentId,label)
+    }
 
-
+    fun resolvePlaceholderPubMedArticleNodes(): Sequence<PubMedIdentifier> =
+        Neo4jConnectionService.executeCypherQuery(emptyNodeQuery)
+            .map{rec -> resolvePubMedIdentifier(rec)}
+            .toList().asSequence()
 
 }
