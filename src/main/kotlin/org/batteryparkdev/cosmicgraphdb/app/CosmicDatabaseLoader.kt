@@ -8,6 +8,8 @@ import org.batteryparkdev.cosmicgraphdb.neo4j.loader.*
 import org.batteryparkdev.cosmicgraphdb.property.ApplicationPropertiesService
 import org.batteryparkdev.cosmicgraphdb.property.DatafilePropertiesService
 import org.batteryparkdev.cosmicgraphdb.pubmed.loader.CosmicPubMedArticleLoader
+import kotlin.coroutines.CoroutineContext
+import kotlin.concurrent.timer
 
 /*
 Primary COSMIC data loader
@@ -17,7 +19,7 @@ n.b. This application deletes all existing COSMIC nodes and relationships from t
      Neo4j database
  */
 
-class CosmicDatabaseLoader(fileDirectory: String) {
+class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass();
     private val cosmicHGNCFile = fileDirectory +
             DatafilePropertiesService.resolvePropertyAsString("file.cosmic.hgnc")
@@ -41,12 +43,17 @@ class CosmicDatabaseLoader(fileDirectory: String) {
     private val nodeNameList = listOf<String>(
         "CosmicHallmark", "CosmicTumor", "CosmicMutation",
         "CosmicSample", "CosmicClassification", "CosmicGene", "CosmicType",
-        "CosmicCompleteDNA", "CosmicGeneExpression", "CosmicDiffMethylation"
+        "CosmicCompleteDNA", "CosmicGeneExpression", "CosmicDiffMethylation",
+        "CosmicArticle","Reference"
     )
     @OptIn(DelicateCoroutinesApi::class)
     val job = GlobalScope.launch() {
         delay(2000)
     }
+
+    // creating local CoroutineContext
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main + job
 
     // extension function
     // source:source https://stackoverflow.com/questions/53921470/how-to-run-two-jobs-in-parallel-but-wait-for-another-job-to-finish-using-kotlin
@@ -58,7 +65,7 @@ class CosmicDatabaseLoader(fileDirectory: String) {
         deleteCosmicNodes()
         loadData()
         logger.atInfo().log("All currently supported COSMIC data have been loaded into Neo4j")
-        logger.atInfo().log("Elapsed time = ${stopwatch.elapsed(java.util.concurrent.TimeUnit.MINUTES)} " +
+        logger.atInfo().log("CosmicDatabase Loader elapsed time = ${stopwatch.elapsed(java.util.concurrent.TimeUnit.MINUTES)} " +
                 " minutes")
     }
 
@@ -67,8 +74,9 @@ class CosmicDatabaseLoader(fileDirectory: String) {
     prior to reloading the database
     n.b. PubMed-related nodes are NOT deleted
      */
-    private fun deleteCosmicNodes() {
+    fun deleteCosmicNodes():String {
         nodeNameList.forEach { nodeName -> Neo4jUtils.detachAndDeleteNodesByName(nodeName) }
+        return "CosmicDatabase nodes deleted"
     }
 
     /*
@@ -81,7 +89,7 @@ class CosmicDatabaseLoader(fileDirectory: String) {
             // run Job1, Job2, and Job4 in parallel, asyncIO - is an extension function on CoroutineScope
             val task01 = asyncIO { loadPubmedJob() }
             val task04 = asyncIO { loadClassificationJob() }
-            val task02 = asyncIO { loadHallmarkJob() }
+            val task02 = asyncIO {  loadGeneCensusJob() }
             // waiting for result of Job1 , Job2, & Job4
             val job4Result = task04.await()
             val job2Result = task02.await()
@@ -89,7 +97,7 @@ class CosmicDatabaseLoader(fileDirectory: String) {
             val task05 = asyncIO { loadSampleJob(job4Result) }
             val job5Result = task05.await()
             // Job3 waits for Job2 to complete
-            val task03 = asyncIO { loadGeneCensusJob(job2Result) }
+            val task03 = asyncIO { loadHallmarkJob(job2Result) }
             // Job6 waits for Job5
             val task06 = asyncIO { loadMutantExportJob( job5Result) }
             // Job8 waits for Job5
@@ -97,8 +105,8 @@ class CosmicDatabaseLoader(fileDirectory: String) {
             val job3Result = task03.await()
             val job6Result = task06.await()
             // Job7 and Job9 depend on Job3 & Job6
-            val task07 = asyncIO{ loadCompleteCNAJob(job3Result, job6Result)}
-            val task09 = asyncIO{ loadGeneExpressionJob(job3Result, job6Result)}
+            val task07 = asyncIO{ loadCompleteCNAJob(job2Result, job6Result)}
+            val task09 = asyncIO{ loadGeneExpressionJob(job2Result, job6Result)}
             // wait for last tier of jobs to complete
             onDone(task01.await(),task07.await(), task08.await(), task09.await())
         }
@@ -112,31 +120,31 @@ class CosmicDatabaseLoader(fileDirectory: String) {
   /*
   Loading PubMed data into Neo4j is performed on a periodic basis concurrently with the other specialized
   loaders. The PubMed loader queries the database for placeholder nodes created by other loaders and
-  queries NCBI to complete them. 
+  queries NCBI to complete them.
    */
     fun loadPubmedJob(): String {  // job 1
         logger.atInfo().log("1 - Starting PubMed loader")
-        val taskDuration = ApplicationPropertiesService.resolvePropertyAsLong("pubmed.task.duration")
-        val timerInterval = ApplicationPropertiesService.resolvePropertyAsLong("pubmed.timer.interval")
-        val scanTimer = CosmicPubMedArticleLoader.scheduledPlaceHolderNodeScan(timerInterval)
-        try {
-            Thread.sleep(taskDuration)
-        } finally {
-            scanTimer.cancel();
-        }
+//        val taskDuration = 172_800_000L
+//        val timerInterval = 60_000L
+//        val scanTimer = CosmicPubMedArticleLoader.scheduledPlaceHolderNodeScan(timerInterval)
+//        try {
+//            Thread.sleep(taskDuration)
+//        } finally {
+//            scanTimer.cancel();
+//        }
         return "PubMed loaded"
     }
 
-    fun loadHallmarkJob(): String {  // job 2
-        logger.atInfo().log("2 - Starting Hallmark loader")
-        CosmicHallmarkLoader.processCosmicHallmarkData(cosmicHallmarkFile)
-        return "Hallmark loaded"
-    }
-
-    fun loadGeneCensusJob(job2Result: String): String {  // job 3
+    fun loadGeneCensusJob(): String {  // job 2
         logger.atInfo().log("3 - Starting GeneCensus loader")
         CosmicGeneCensusLoader.loadCosmicGeneCensusData(cosmicGeneCensusFile)
         return "GeneCensus loaded"
+    }
+
+    fun loadHallmarkJob(job2Result: String): String {  // job 3
+        logger.atInfo().log("2 - Starting Hallmark loader")
+        CosmicHallmarkLoader.processCosmicHallmarkData(cosmicHallmarkFile)
+        return "Hallmark loaded"
     }
 
     fun loadClassificationJob(): String {   // job 4
@@ -175,18 +183,22 @@ class CosmicDatabaseLoader(fileDirectory: String) {
         return "Result of GeneExpression loaded"
     }
 }
-    fun main(args: Array<String>) {
+    fun main(args: Array<String>) = runBlocking {
         val fileDirectory =
-            when (args.size > 0) {
+            when (args.isNotEmpty()) {
                 true -> args[0]
-                false -> DatafilePropertiesService.resolvePropertyAsString("cosmic.data.directory")
+                false -> DatafilePropertiesService.resolvePropertyAsString("cosmic.sample.data.directory")
             }
         println("WARNING: Invoking this application will delete all COSMIC data from the database")
         println("There will be a 20 second delay period to cancel this execution (CTRL-C) if this is not your intent")
-        Thread.sleep(20_000L)
+       // Thread.sleep(20_000L)
         println("Cosmic data will now be loaded from: $fileDirectory")
         if (fileDirectory.isNotEmpty()) {
-            CosmicDatabaseLoader(fileDirectory).loadCosmicDatabase()
+            val loader = CosmicDatabaseLoader(fileDirectory)
+            loader.deleteCosmicNodes()
+            loader.loadData()
+            awaitCancellation()
         }
+        println("CosmicDatabaseLoader has completed")
     }
 

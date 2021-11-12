@@ -40,8 +40,6 @@ class AsyncJobPoc : CoroutineScope {
 
             // Job 5 waits for Job4
             val d5 = asyncIO { sampleJob(job4Result) }
-
-
             val job5Result = d5.await()
 
             // Job3 waits for Job2 to complete
@@ -72,57 +70,57 @@ class AsyncJobPoc : CoroutineScope {
 
 
      fun pubmedJob(): String {
-        logger.atInfo().log("1 - Starting PubMed loader")
-        Thread.sleep(60000)
+        logger.atInfo().log("1 - Starting PubMed timer task")
+         ScheduledTimerPoc().startTimerTask()
         return "PubMed loaded"
     }
 
      fun hallmarkJob(): String {
         logger.atInfo().log("2 - Starting Hallmark loader")
-        Thread.sleep(2000)
+        Thread.sleep(60_000)
         return "Hallmark loaded"
     }
 
      fun geneCensusJob(job2Result: String): String {
         logger.atInfo().log("3 - Starting GeneCensus loader")
-        Thread.sleep(4000)
+        Thread.sleep(45_000)
         return "GeneCensus loaded"
     }
 
      fun classificationJob(): String {
         logger.atInfo().log("4 - Starting Classification loader")
-        Thread.sleep(1000)
+        Thread.sleep(20_000)
         return "Classifications loaded"
     }
 
      fun sampleJob( job4Result: String): String {
         logger.atInfo().log("5 - Starting Sample loader")
-        Thread.sleep(8000)
+        Thread.sleep(80_000)
         return "Result of sampleJob"
     }
 
 
      fun mutantExportJob(job5Result: String): String {
         logger.atInfo().log("6 - Starting MutantExport loader")
-        Thread.sleep(12000)
+        Thread.sleep(120_000)
         return "MutantExport loaded"
     }
 
      fun completeCNAJob(job3Result: String, job6Result: String): String {
         logger.atInfo().log("7 - Starting CompleteCNA loader")
-        Thread.sleep(5000)
+        Thread.sleep(50_000)
         return "CompleteCNA"
     }
 
      fun diffMethylationJob(job3Result: String): String {
         logger.atInfo().log("8 - Starting DiffMethylation loader")
-        Thread.sleep(4000)
+        Thread.sleep(40_000)
         return "Result of DiffMethylation loaded"
     }
 
      fun geneExpressionJob(job3Result: String, job6Result: String): String {
         logger.atInfo().log("9 - Starting GeneExpression loader")
-        Thread.sleep(3000)
+        Thread.sleep(45_000)
         return "Result of GeneExpression loaded"
     }
 

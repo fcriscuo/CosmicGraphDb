@@ -123,12 +123,12 @@ class TumorReceiver(
     var tumorNodeCount = 0
 
     suspend fun parseTumorRecord(record: CSVRecord) {
-        loadCosmicTumor(CosmicTumor.parseCsvRecord(record))
+        loadCosmicTumorData(CosmicTumor.parseCsvRecord(record))
         tumorNodeCount += 1
         delay(20)
     }
 
-    suspend fun loadCosmicTumor(tumor: CosmicTumor) {
+    suspend fun loadCosmicTumorData(tumor: CosmicTumor) {
         loadCosmicTumor(tumor)
         delay(20)
         processTumorSiteType(tumor)

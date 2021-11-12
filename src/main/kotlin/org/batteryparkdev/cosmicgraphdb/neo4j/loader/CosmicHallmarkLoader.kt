@@ -58,7 +58,9 @@ object CosmicHallmarkLoader {
     private fun CoroutineScope.addGeneRelationship(hallmarks: ReceiveChannel<CosmicHallmark>) =
         produce<CosmicHallmark> {
             for (hallmark in hallmarks) {
-                createCosmicGeneRelationship(hallmark)
+                if (hallmark.geneSymbol.isNotEmpty()) {
+                    createCosmicGeneRelationship(hallmark)
+                }
                 send(hallmark)
                 delay(20)
             }
@@ -68,7 +70,9 @@ object CosmicHallmarkLoader {
     private fun CoroutineScope.addPubMedRelationship(hallmarks: ReceiveChannel<CosmicHallmark>) =
         produce<String> {
             for (hallmark in hallmarks) {
-                createPubMedRelationship(hallmark)
+                if (hallmark.pubmedId.isNotEmpty()) {
+                    createPubMedRelationship(hallmark)
+                }
                 send(hallmark.geneSymbol)
                 delay(20)
             }

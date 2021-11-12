@@ -16,7 +16,9 @@ import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedEntry
 import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedIdentifier
 import org.batteryparkdev.cosmicgraphdb.pubmed.service.PubMedRetrievalService
 import java.util.*
-import kotlin.concurrent.fixedRateTimer
+import kotlin.concurrent.scheduleAtFixedRate
+import kotlin.concurrent.timer
+
 
 
 /*
@@ -114,9 +116,8 @@ Private function to resolve a PubMedIdentifier for a Reference node
         }
     }
 
-    fun scheduledPlaceHolderNodeScan(interval: Long = 60_000): Timer {
-        val fixedRateTimer = fixedRateTimer(name = "scan-timer",
-            initialDelay = 5_000, period = interval) {
+       fun scheduledPlaceHolderNodeScan(interval: Long = 60_000): TimerTask {
+        val fixedRateTimer = Timer().scheduleAtFixedRate(delay = 5_000, period = interval) {
            processPlaceholderNodes()
         }
         return fixedRateTimer

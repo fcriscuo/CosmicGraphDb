@@ -27,7 +27,7 @@ fun createPubMedRelationship(hallmark: CosmicHallmark){
     Neo4jConnectionService.executeCypherCommand(
         "MATCH (ch:CosmicHallmark), (pma:PubMedArticle) WHERE " +
                 " ch.hallmark_id=${hallmark.hallmarkId}  AND pma.pubmedId =" +
-                " ${hallmark.pubmedId} MERGE (ch) -[HAS_COSMIC_ARTICLE] -> (pma) "
+                " ${hallmark.pubmedId} MERGE (ch) -[r:HAS_COSMIC_ARTICLE] -> (pma) "
     )
 
 }
