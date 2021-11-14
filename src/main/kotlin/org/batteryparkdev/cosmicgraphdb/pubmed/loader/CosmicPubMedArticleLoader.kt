@@ -52,11 +52,11 @@ object CosmicPubMedArticleLoader {
     private fun CoroutineScope.retrievePubMedData(identifiers: ReceiveChannel<PubMedIdentifier>) =
         produce<PubMedEntry> {
             for(identifier in identifiers){
-                logger.atInfo().log("Retrieving data for ${identifier.pubmedId}")
+               // logger.atInfo().log("Retrieving data for ${identifier.pubmedId}")
                 val entry = retrievePubMedData(identifier)
                 if (entry != null) {
                     send(entry)
-                    delay(100)  // NCBI max request rate with key
+                    delay(333)  // NCBI max request rate with key
                 }
             }
         }
@@ -115,8 +115,7 @@ Private function to resolve a PubMedIdentifier for a Reference node
             }
         }
     }
-
-       fun scheduledPlaceHolderNodeScan(interval: Long = 60_000): TimerTask {
+ fun scheduledPlaceHolderNodeScan(interval: Long = 60_000): TimerTask {
         val fixedRateTimer = Timer().scheduleAtFixedRate(delay = 5_000, period = interval) {
            processPlaceholderNodes()
         }
@@ -124,7 +123,7 @@ Private function to resolve a PubMedIdentifier for a Reference node
     }
 
     fun processPlaceholderNodes() = runBlocking{
-        // load complete the CosmicArticle placeholder nodes and the
+        // load complete the CosmicArticle placeholder nodes and then
         // complete their reference nodes
         var nodeCount = 0
         var cycleCount = 0
@@ -132,17 +131,18 @@ Private function to resolve a PubMedIdentifier for a Reference node
         val stopwatch = Stopwatch.createStarted()
         repeat(2) {
             cycleCount += 1
-            logger.atInfo().log("+++++ Initiating cycle # $cycleCount")
-           val  ids = processArticleReferences(
-               loadPubMedEntries(
-                   retrievePubMedData(
-                       getPlacholders()
-                   )
-               )
-           )
+            //logger.atInfo().log("+++++ Initiating cycle # $cycleCount")
+            val  ids = processArticleReferences(
+                loadPubMedEntries(
+                    retrievePubMedData(
+                        getPlacholders()
+                    )
+                )
+            )
             for (id in ids){
                 nodeCount += 1
             }
+            delay(100)
         }
         logger.atInfo().log("CosmicPubMedArticleLoader data loaded " +
                 " $nodeCount nodes in " +

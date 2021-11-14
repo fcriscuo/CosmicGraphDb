@@ -10,6 +10,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicGeneCensus
 import org.batteryparkdev.cosmicgraphdb.io.CsvRecordSequenceSupplier
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.addGeneCensusLabel
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.loadCosmicGeneNode
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.loadMutationTypeAnnotations
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.loadOtherSyndromeAnnotations
@@ -126,6 +128,15 @@ object CosmicGeneCensusLoader {
                 delay(20)
             }
         }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.addCensusLabel( geneSymbols: ReceiveChannel<String>) =
+        produce<String> {
+            for (geneSymbol in geneSymbols) {
+                addGeneCensusLabel(geneSymbol)
+                send(geneSymbol)
+                delay(10)
+            }
+        }
 /*
 Public function load CosmicGeneCensus nodes and associated annotations
  */
@@ -133,7 +144,8 @@ Public function load CosmicGeneCensus nodes and associated annotations
         logger.atInfo().log("Loading CosmicGeneCensus data from file $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val geneSymbols = loadTranslocPartnerList(
+        val geneSymbols = addCensusLabel(
+            loadTranslocPartnerList(
             loadOtherSyndromeAnnotations(
                 loadTissueTypeAnnotations(
                     loadMutationTypeAnnotations(
@@ -143,7 +155,7 @@ Public function load CosmicGeneCensus nodes and associated annotations
                                     loadSomaticTumors(
                                        loadCosmicGeneCensusData(
                                            parseCosmicGeneCensusFile(filename)
-                                       )))))))))
+                                       ))))))))))
         for (symbol in geneSymbols) {
             // pipeline stream is lazy - need to consume output
             nodeCount += 1

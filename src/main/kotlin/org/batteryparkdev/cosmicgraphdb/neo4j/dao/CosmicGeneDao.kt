@@ -33,6 +33,20 @@ object CosmicGeneDao {
             return Neo4jConnectionService.executeCypherCommand(merge)
     }
 
+    fun addGeneCensusLabel(geneSymbol: String): String {
+        val label = "CensusGene"
+        // confirm that label is novel
+        val labelExistsQuery = "MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
+                "RETURN apoc.label.exists(cg, \"$label\") AS output;"
+        val addLabelCypher = "MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
+                " CALL apoc.create.addLabels(pma, [\"$label\"] ) yield node return node"
+        if (Neo4jConnectionService.executeCypherCommand(labelExistsQuery).uppercase() == "FALSE") {
+            return Neo4jConnectionService.executeCypherCommand(addLabelCypher)
+        }
+        // logger.atWarning().log("CosmicGene $geneSymbol already has label $label")
+        return ""
+    }
+
     fun loadTranslocPartnerList(geneSymbol: String, transPartnerList: List<String>) {
         transPartnerList.forEach { trans ->
             run {

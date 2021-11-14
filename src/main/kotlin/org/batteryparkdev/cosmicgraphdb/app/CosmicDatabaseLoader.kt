@@ -58,7 +58,7 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
     // extension function
     // source:source https://stackoverflow.com/questions/53921470/how-to-run-two-jobs-in-parallel-but-wait-for-another-job-to-finish-using-kotlin
     fun <T> CoroutineScope.asyncIO(ioFun: () -> T) = async(Dispatchers.IO) { ioFun() }
-
+    fun <T> CoroutineScope.asyncDefault(defaultFun: () -> T) = async(Dispatchers.Default) { defaultFun() }
     fun loadCosmicDatabase() = runBlocking{
         // load order is import for establishing parent to child relationships
         val stopwatch = Stopwatch.createStarted()
@@ -87,7 +87,7 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
         // launch coroutine
         GlobalScope.launch {
             // run Job1, Job2, and Job4 in parallel, asyncIO - is an extension function on CoroutineScope
-            val task01 = asyncIO { loadPubmedJob() }
+            val task01 = asyncDefault { loadPubmedJob() }
             val task04 = asyncIO { loadClassificationJob() }
             val task02 = asyncIO {  loadGeneCensusJob() }
             // waiting for result of Job1 , Job2, & Job4
@@ -124,14 +124,14 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
    */
     fun loadPubmedJob(): String {  // job 1
         logger.atInfo().log("1 - Starting PubMed loader")
-//        val taskDuration = 172_800_000L
-//        val timerInterval = 60_000L
-//        val scanTimer = CosmicPubMedArticleLoader.scheduledPlaceHolderNodeScan(timerInterval)
-//        try {
-//            Thread.sleep(taskDuration)
-//        } finally {
-//            scanTimer.cancel();
-//        }
+      val taskDuration = 172_800_000L
+      val timerInterval = 60_000L
+      val scanTimer = CosmicPubMedArticleLoader.scheduledPlaceHolderNodeScan(timerInterval)
+      try {
+          Thread.sleep(taskDuration)
+      } finally {
+          scanTimer.cancel();
+      }
         return "PubMed loaded"
     }
 
