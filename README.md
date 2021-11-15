@@ -7,6 +7,16 @@ load data from the Catalog of Somatic Mutations in Cancer (COSMIC),
 are illustrated below. This 
 design diagram does not specify cardinality (e.g. A tumor may have >1 mutation).
 
+### Application Design
+
+The application takes advantage of Kotkin's native concurrency capabilities (i.e. channels & flows)
+to minimize execution run times. Data from Cosmic files are loaded into Neo4j as soon as parent-child
+dependencies are met. For example, when the application starts, classification and gene census data are 
+loaded concurrently. A separate PubMed data loader, described below, is also initiated. As soon as the
+gene census data are loaded, loading of the gene hallmark data is initiated. As soon as the classification data
+are loaded, loading the sample data begins.  Within each loader, distinct tasks are run concurrently using
+Kotlin channels. This overlap of processing tasks lowers the memory required to process large Cosmic files.
+
 ![](DatabaseDesign.jpg)
 ### Requirements
 The application requires the user to define two (2) system environment properties,
@@ -35,3 +45,9 @@ NCBI enforces a limit of three (3) API requests per second
 (10 with a registered API key). To accommodate that restriction,
 the application pauses for 300 milliseconds after
 each request.
+To avoid impacting the loading of Cosmic data, PubMed retrieval and loading is performed as a concurrent
+task in parallel with Cosmic data loading.
+When a novel PubMed id is encountered in loading Cosmic data, a placeholder (i.e. incomplete) PubMedArticle
+node is created in the Neo4j database.
+The PubMed data loader is invoked on a periodic basis and it scans the database for incomplete nodes.
+PubMed data is retreived from NCBI and loaded into Neo4j to complete the nodes.
