@@ -12,6 +12,7 @@ import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicHallmark
 import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.addCosmicHallmarkLabel
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createCosmicGeneRelationship
+import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createPubMedRelationship
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.loadCosmicHallmark
 import java.nio.file.Paths
 
@@ -55,9 +56,23 @@ object CosmicHallmarkLoader {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.addGeneRelationship(hallmarks: ReceiveChannel<CosmicHallmark>) =
+        produce<CosmicHallmark> {
+            for (hallmark in hallmarks) {
+                if (hallmark.geneSymbol.isNotEmpty()) {
+                    createCosmicGeneRelationship(hallmark)
+                }
+                send(hallmark)
+                delay(20)
+            }
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.addPubMedRelationship(hallmarks: ReceiveChannel<CosmicHallmark>) =
         produce<String> {
             for (hallmark in hallmarks) {
-                createCosmicGeneRelationship(hallmark)
+                if (hallmark.pubmedId.isNotEmpty()) {
+                    createPubMedRelationship(hallmark)
+                }
                 send(hallmark.geneSymbol)
                 delay(20)
             }
@@ -67,10 +82,12 @@ object CosmicHallmarkLoader {
         logger.atInfo().log("Loading CosmicGeneCensus data from file $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val geneSymbols = addGeneRelationship(
-            addHallmarkLabels(
-                loadCosmicHallmarks(
-                    parseCosmicHallmarkFile(filename)
+        val geneSymbols = addPubMedRelationship(
+            addGeneRelationship(
+                addHallmarkLabels(
+                    loadCosmicHallmarks(
+                        parseCosmicHallmarkFile(filename)
+                    )
                 )
             )
         )
@@ -86,6 +103,7 @@ object CosmicHallmarkLoader {
 
     }
 }
+
 // main function for integration testing
 fun main(args: Array<String>) {
     val filename = if (args.isNotEmpty()) args[0] else "./data/Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv"

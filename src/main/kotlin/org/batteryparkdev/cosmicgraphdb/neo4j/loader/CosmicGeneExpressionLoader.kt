@@ -57,7 +57,7 @@ object CosmicGeneExpressionLoader {
     }
 
     /*
-   Private function to create CosmicGeneExpression to CosmicGene relationships
+   Private function to create CosmicGeneExpression to CosmicSample relationships
     */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.createSampleRelationships(expressions: ReceiveChannel<CosmicCompleteGeneExpression>) = produce{

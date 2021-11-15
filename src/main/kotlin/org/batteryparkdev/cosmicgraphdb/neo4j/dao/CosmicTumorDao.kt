@@ -4,7 +4,9 @@ import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
+import org.batteryparkdev.cosmicgraphdb.pubmed.dao.PubMedArticleDao
 import org.batteryparkdev.cosmicgraphdb.pubmed.loader.PubMedLoader
+import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedIdentifier
 
 private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
@@ -17,7 +19,8 @@ fun createCosmicTumorNode(tumorId: Int): Int {
         true -> tumorId
         false -> Neo4jConnectionService.executeCypherCommand(
             "MERGE (ct:CosmicTumor{tumor_id: $tumorId }) " +
-                    " RETURN  ct.tumor_id").toInt()
+                    " RETURN  ct.tumor_id"
+        ).toInt()
     }
 }
 
@@ -30,16 +33,17 @@ fun createCosmicMutationRelationship(cosmicTumor: CosmicTumor) =
     )
 
 fun createPubMedRelationship(cosmicTumor: CosmicTumor) {
-    if(cosmicTumor.pubmedId > 0 ) {
-        // if (!PubMedLoader.pubMedNodeExistsPredicate(cosmicTumor.pubmedId)){
-        PubMedLoader.loadPubMedEntryById(cosmicTumor.pubmedId)
-        PubMedLoader.addPubMedLabel(cosmicTumor.pubmedId, "CosmicArticle")
-        // }
+    if (cosmicTumor.pubmedId > 0) {
+        // if the PubMed article has not been loaded yet, create a placeholder node
+        if (!PubMedArticleDao.pubMedNodeExistsPredicate(cosmicTumor.pubmedId)) {
+            val identifier = PubMedIdentifier(cosmicTumor.pubmedId, 0, "CosmicArticle")
+            PubMedArticleDao.createPlaceholderNode(identifier)
+        }
         Neo4jConnectionService.executeCypherCommand(
             "MATCH (ct:CosmicTumor), (pma:PubMedArticle) " +
                     " WHERE ct.tumor_id = ${cosmicTumor.tumorId} AND " +
                     " pma.pubmed_id = ${cosmicTumor.pubmedId} MERGE " +
-                    " (ct) -[r:HAS_PUBMED_ARTICLE] ->(pma)"
+                    " (ct) -[r:HAS_COSMIC_ARTICLE_ARTICLE] ->(pma)"
         )
     }
 }
@@ -53,7 +57,7 @@ fun createCosmicSampleRelationship(cosmicTumor: CosmicTumor) =
     )
 
 
-fun loadCosmicTumor(cosmicTumor: CosmicTumor):Int  =
+fun loadCosmicTumor(cosmicTumor: CosmicTumor): Int =
     Neo4jConnectionService.executeCypherCommand(
         "MERGE (ct:CosmicTumor{tumor_id: ${cosmicTumor.tumorId}}) " +
                 "SET ct.genome_wide_screen = ${cosmicTumor.genomeWideScreen}," +
@@ -61,6 +65,7 @@ fun loadCosmicTumor(cosmicTumor: CosmicTumor):Int  =
                 " ct.sample_type =\"${cosmicTumor.sampleType}\", ct.tumor_origin = \"${cosmicTumor.tumorOrigin}\", " +
                 " ct.age = ${cosmicTumor.age}  RETURN ct.tumor_id"
     ).toInt()
+
 /*
 Function to determine if CosmicTumor node exists
  */

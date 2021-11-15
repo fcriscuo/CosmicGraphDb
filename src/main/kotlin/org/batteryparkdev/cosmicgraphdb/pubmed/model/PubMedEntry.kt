@@ -21,7 +21,10 @@ data class PubMedEntry(
     val referenceSet: Set<Int>,
     val citationSet: Set<Int>,
     val citedByCount: Int
-) {
+)
+{
+
+
     companion object {
         /*
         Function to parse attributes from the PubMedArticle JaXB model object
@@ -46,6 +49,7 @@ data class PubMedEntry(
                 citations, citations.size
             )
         }
+
 
         private fun resolveReferenceIdSet(pubmedArticle: PubmedArticle): Set<Int> {
             val refSet = mutableSetOf<Int>()

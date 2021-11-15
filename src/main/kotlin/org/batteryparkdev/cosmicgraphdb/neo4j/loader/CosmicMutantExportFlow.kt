@@ -13,6 +13,7 @@ import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.*
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.coroutineContext
 
 /*
 Responsible for loading data from a CosmicMutantExport or CosmicMutantExportCensus file
@@ -21,6 +22,21 @@ The two (2) data pipelines (i.e. tumors and mutations are processed using
 a single Kotlin Flow
  */
 
+object CosmicMutantExportLoader {
+    fun loadMutantExportFile(filename: String) = runBlocking{
+        val scope = CoroutineScope(Dispatchers.IO)
+        val stopwatch = Stopwatch.createStarted()
+        val recordFlow = CosmicMutantExportFlow(scope, filename)
+        val tr = TumorReceiver(recordFlow, scope)
+        val mr = MutationReceiver(recordFlow, scope)
+        with(coroutineContext) {
+            stopwatch.elapsed(TimeUnit.SECONDS)
+            println("Elapsed time: ${stopwatch.elapsed(java.util.concurrent.TimeUnit.SECONDS)} seconds")
+            println("Cancelling children")
+            cancelChildren()
+        }
+    }
+}
 
 class CosmicMutantExportFlow(
     private val externalScope: CoroutineScope,
@@ -107,12 +123,12 @@ class TumorReceiver(
     var tumorNodeCount = 0
 
     suspend fun parseTumorRecord(record: CSVRecord) {
-        loadCosmicTumor(CosmicTumor.parseCsvRecord(record))
+        loadCosmicTumorData(CosmicTumor.parseCsvRecord(record))
         tumorNodeCount += 1
         delay(20)
     }
 
-    suspend fun loadCosmicTumor(tumor: CosmicTumor) {
+    suspend fun loadCosmicTumorData(tumor: CosmicTumor) {
         loadCosmicTumor(tumor)
         delay(20)
         processTumorSiteType(tumor)
@@ -169,5 +185,10 @@ fun main(args: Array<String>) = runBlocking {
     stopwatch.elapsed(TimeUnit.SECONDS)
     println("Elapsed time: ${stopwatch.elapsed(java.util.concurrent.TimeUnit.SECONDS)} seconds")
     println("Cancelling children")
-    coroutineContext.cancelChildren()
+    with(coroutineContext) {
+        stopwatch.elapsed(TimeUnit.SECONDS)
+        println("Elapsed time: ${stopwatch.elapsed(java.util.concurrent.TimeUnit.SECONDS)} seconds")
+        println("Cancelling children")
+        cancelChildren()
+    }
 }
