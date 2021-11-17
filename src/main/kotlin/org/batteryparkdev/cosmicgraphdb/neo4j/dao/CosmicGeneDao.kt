@@ -6,7 +6,10 @@ import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicMutationGene
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
 import org.batteryparkdev.cosmicgraphdb.neo4j.loader.CosmicGeneCensusLoader
+import org.batteryparkdev.cosmicgraphdb.pubmed.dao.PubMedArticleDao
 import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
+import java.util.*
+import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedIdentifier as PubMedIdentifier1
 
 object CosmicGeneDao {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
@@ -18,19 +21,19 @@ object CosmicGeneDao {
             "cg.other_germline_mut = \"OTHERMUT\"  RETURN cg.gene_symbol"
 
     fun loadCosmicGeneNode(cosmicGene: CosmicGeneCensus): String {
-            val merge = cypherLoadTemplate.replace("GENESYMBOL", cosmicGene.geneSymbol)
-                .replace("GENENAME", cosmicGene.geneName)
-                .replace("ENTREZ", cosmicGene.entrezGeneId)
-                .replace("LOCATION", cosmicGene.genomeLocation)
-                .replace("TIER", cosmicGene.tier.toString())
-                .replace("HALLMARK", cosmicGene.hallmark.toString())
-                .replace("CHRBAND", cosmicGene.chromosomeBand)
-                .replace("SOMATIC", cosmicGene.somatic.toString())
-                .replace("GERMLINE", cosmicGene.germline.toString())
-                .replace("CANCERSYN", cosmicGene.cancerSyndrome)
-                .replace("MOLGEN", cosmicGene.molecularGenetics)
-                .replace("OTHERMUT", cosmicGene.otherGermlineMut)
-            return Neo4jConnectionService.executeCypherCommand(merge)
+        val merge = cypherLoadTemplate.replace("GENESYMBOL", cosmicGene.geneSymbol)
+            .replace("GENENAME", cosmicGene.geneName)
+            .replace("ENTREZ", cosmicGene.entrezGeneId)
+            .replace("LOCATION", cosmicGene.genomeLocation)
+            .replace("TIER", cosmicGene.tier.toString())
+            .replace("HALLMARK", cosmicGene.hallmark.toString())
+            .replace("CHRBAND", cosmicGene.chromosomeBand)
+            .replace("SOMATIC", cosmicGene.somatic.toString())
+            .replace("GERMLINE", cosmicGene.germline.toString())
+            .replace("CANCERSYN", cosmicGene.cancerSyndrome)
+            .replace("MOLGEN", cosmicGene.molecularGenetics)
+            .replace("OTHERMUT", cosmicGene.otherGermlineMut)
+        return Neo4jConnectionService.executeCypherCommand(merge)
     }
 
     fun addGeneCensusLabel(geneSymbol: String): String {
@@ -47,17 +50,77 @@ object CosmicGeneDao {
         return ""
     }
 
+    /*
+    * Function to determine if a CosmicGene has been loaded into the database
+    *
+    * */
+    fun cosmicGeneNodeExistsPredicate(geneSymbol: String): Boolean {
+        val cypher = "OPTIONAL MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
+                " RETURN cg IS NOT NULL AS Predicate"
+        try {
+            val predicate = Neo4jConnectionService.executeCypherCommand(cypher)
+            when (predicate.lowercase(Locale.getDefault())) {
+                "true" -> return true
+                "false" -> return false
+            }
+        } catch (e: Exception) {
+            logger.atSevere().log(e.message.toString())
+            return false
+        }
+        return false
+    }
+
+    /*
+    Function to create a placeholder CosmicGene with just the gene_symbol property
+    This is used to establish a translocation partner relationship between two (2)
+    CosmicGene nodes before the second one has been loaded form the gene census file
+     */
+
+    private fun createCosmicGenePlaceholderNode(geneSymbol: String) {
+            Neo4jConnectionService.executeCypherCommand(
+                "MERGE (cg:CosmicGene{ gene_symbol: " +
+                        "\"$geneSymbol\"}) ")
+    }
+
+    /*
+    Function to create a bidirectional relationship between two CosmicGene nodes
+    If a CosmicGene for a target doesn't exist, create a placeholder node
+    */
     fun loadTranslocPartnerList(geneSymbol: String, transPartnerList: List<String>) {
+        addTranslocatonLabel(geneSymbol)
         transPartnerList.forEach { trans ->
             run {
-                Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$trans\"})")
-                addAnnotationLabel(trans, "TranslocationPartner")
-                completeBasicRelationship(geneSymbol, trans, "HAS_TRANSLOCATION_PARTNER")
+                // if the target gene hasn't been loaded yet, create
+                // a placeholder
+                if(!cosmicGeneNodeExistsPredicate(trans)) {
+                    createCosmicGenePlaceholderNode(trans)
+                }
+//                create bi-directional relationship between CosmicGene nodes
+                Neo4jConnectionService.executeCypherCommand(
+                    "MATCH (cg1:CosmicGene), (cg2:CosmicGene) " +
+                            "WHERE cg1.gene_symbol = \"$geneSymbol\" AND cg2.gene_symbol = \"$trans\" " +
+                            " MERGE (cg1) - [r:HAS_TRANSLOCATION_PARTNER] - (cg2) "
+                )
+//                add translocation label
+                addTranslocatonLabel(trans)
             }
         }
     }
 
-   fun loadOtherSyndromeAnnotations(geneSymbol: String, otherSyndromeList: List<String>) {
+    private fun addTranslocatonLabel(geneSymbol: String): String {
+        // confirm that label is novel
+        val label = "TranslocationPartner"
+        val labelExistsQuery = "MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\"}) " +
+                "RETURN apoc.label.exists(cg ,\"$label\") AS output;"
+        val addLabelCypher = "MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\"}) " +
+                " CALL apoc.create.addLabels(cg, [\"$label\"] ) yield node return node"
+        if (Neo4jConnectionService.executeCypherCommand(labelExistsQuery).uppercase() == "FALSE") {
+            return Neo4jConnectionService.executeCypherCommand(addLabelCypher)
+        }
+        return ""
+    }
+
+    fun loadOtherSyndromeAnnotations(geneSymbol: String, otherSyndromeList: List<String>) {
         otherSyndromeList.forEach { syn ->
             run {
                 Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$syn\"})")
@@ -72,7 +135,7 @@ object CosmicGeneDao {
             run {
                 Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$tissue\"})")
                 addAnnotationLabel(tissue, "TissueType")
-               completeBasicRelationship(geneSymbol, tissue, "HAS_TISSUE_TYPE")
+                completeBasicRelationship(geneSymbol, tissue, "HAS_TISSUE_TYPE")
             }
         }
     }
@@ -89,17 +152,18 @@ object CosmicGeneDao {
         }
     }
 
-   fun loadRoleInCancerAnnotations(geneSymbol: String, roleList: List<String>) {
+    fun loadRoleInCancerAnnotations(geneSymbol: String, roleList: List<String>) {
         roleList.forEach { role ->
             run {
                 Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$role\"})")
                 // add RoleInCancer label if novel
-               addAnnotationLabel(role, "RoleInCancer")
+                addAnnotationLabel(role, "RoleInCancer")
                 // CosmicGene -> CosmicAnnotation
                 completeBasicRelationship(geneSymbol, role, "HAS_ROLE_IN_CANCER")
             }
         }
     }
+
     fun addAnnotationLabel(value: String, label: String) {
         val labelExistsQuery = "MERGE (ca:CosmicAnnotation{annotation_value:\"$value\"}) " +
                 "RETURN apoc.label.exists(ca, \"$label\") AS output;"
