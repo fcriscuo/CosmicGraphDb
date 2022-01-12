@@ -14,6 +14,7 @@ data class CosmicMutation(
     val hgvsp: String, val hgvsc: String, val hgvsg: String, val tier: String
 
 ) {
+
     companion object : AbstractModel {
         fun parseCsvRecord(record: CSVRecord): CosmicMutation =
             CosmicMutation(

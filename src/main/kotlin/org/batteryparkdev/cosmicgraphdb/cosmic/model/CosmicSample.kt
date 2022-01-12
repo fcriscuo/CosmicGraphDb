@@ -43,12 +43,6 @@ data class CosmicSample(
 {
     companion object : AbstractModel {
 
-        /*
-
-        Sample name	ID_sample
-        ID_tumour
-
-         */
 
         fun parseCsvRecord(record: CSVRecord): CosmicSample =
             CosmicSample(

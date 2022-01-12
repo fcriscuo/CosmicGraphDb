@@ -36,7 +36,7 @@ data class CosmicType(
                     "Site", record.get("PRIMARY_SITE"),
                     record.get("SITE_SUBTYPE_1"), record.get("SITE_SUBTYPE_2"), record.get("SITE_SUBTYPE_3")
                 )
-                // CosmicTumor, CosmicCNA
+                // CosmicTumor, CosmicCNA, CosmicBreakpoint
                 else -> CosmicType(
                     "Site", record.get("Primary site"),
                     record.get("Site subtype 1"), record.get("Site subtype 2"), record.get("Site subtype 3")
@@ -69,6 +69,13 @@ data class CosmicType(
                     record.get("Histology subtype 3")
                 )
             }
+
+
+        fun resolveBreakpointMutationType(record: CSVRecord): CosmicType =
+            CosmicType(
+                "Breakpoint Mutation",
+                record.get("Mutation Type")
+            )
 
         fun resolveTissueType(record: CSVRecord): CosmicType =
             CosmicType(
