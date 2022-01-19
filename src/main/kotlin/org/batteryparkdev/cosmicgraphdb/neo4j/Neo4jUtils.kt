@@ -9,6 +9,11 @@ object Neo4jUtils {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
     /*
+    Function to simplify quoting a String value for Cypher input
+     */
+    fun formatQuotedString(input:String):String =
+        "\"" + input +"\""
+    /*
     Function to determine if a node has already been loaded into Neo4j
      */
     fun nodeLoadedPredicate(cypherCommand: String): Boolean {

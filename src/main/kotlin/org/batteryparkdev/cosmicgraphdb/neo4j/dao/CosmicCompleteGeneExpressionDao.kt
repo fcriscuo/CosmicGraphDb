@@ -11,9 +11,10 @@ Function to load data for a CompleteGeneExpression object into a Neo4j node
 fun loadCosmicCompleteGeneExpression(geneExp: CosmicCompleteGeneExpression): String =
     Neo4jConnectionService.executeCypherCommand(
         " MERGE (cge:CosmicGeneExpression{" +
-                " key: ${geneExp.key}  }) SET cge.sample_id = ${geneExp.sampleId}, " +
-                " cge.gene_symbol =\"${geneExp.geneSymbol}\", cge.regulation = \"${geneExp.regulation}\", " +
-                " cge.z_score = ${geneExp.zScore}, cge.study_id = ${geneExp.studyId} " +
+                " key: ${geneExp.key}  }) " +
+                " SET cge += {sample_id = ${geneExp.sampleId}, " +
+                " gene_symbol =\"${geneExp.geneSymbol}\", regulation = \"${geneExp.regulation}\", " +
+                " z_score = ${geneExp.zScore}, study_id = ${geneExp.studyId} }" +
                 " RETURN cge.key")
 
 /*

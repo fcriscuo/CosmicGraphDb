@@ -28,7 +28,7 @@ object CosmicTypeDao {
     }
 
     private fun addCosmicTypeLabel(id: Int, label: String) {
-        val labelExistsQuery = "MERGE (ct:CosmicType{type_id:$id}) " +
+        val labelExistsQuery = "MATCH (ct:CosmicType{type_id:$id}) " +
                 "RETURN apoc.label.exists(ct, \"$label\") AS output;"
         if (Neo4jConnectionService.executeCypherCommand(labelExistsQuery).uppercase() == "FALSE") {
             Neo4jConnectionService.executeCypherCommand(

@@ -3,16 +3,18 @@ package org.batteryparkdev.cosmicgraphdb.neo4j.dao
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicDiffMethylation
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
+import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
 
 private val logger: FluentLogger = FluentLogger.forEnclosingClass();
 /// n.b. chromosome values are numeric (x=23, y=24)
 
-private const val methylationLoadTemplate = "MERGE (cm: CosmicDiffMethylation{fragment_id:\"FRAGMENTID\"}) " +
-        " SET cm.study_id = STUDYID, cm.sample_id= SAMPLEID, cm.tumor_id=TUMORID, " +
-        " cm.genome_version=\"GENOME_VERSION\", cm.chromosome = CHROMOSOME, cm.position=POSITION, " +
-        " cm.strand=\"STRAND\",cm.gene_name=\"GENENAME\",cm.methylation=\"METHYLATION\"," +
-        " cm.avg_beta_value_normal=AVGBETA, cm.beta_value=BETAVALUE, cm.two_sided_pvalue = " +
-        "PVALUE  RETURN cm.fragment_id"
+private const val methylationLoadTemplate = "MERGE (cm: CosmicDiffMethylation{fragment_id:FRAGMENTID}) " +
+        " SET cm += study_id = STUDYID, sample_id= SAMPLEID, tumor_id=TUMORID, " +
+        " genome_version=GENOME_VERSION, chromosome = CHROMOSOME, position=POSITION, " +
+        " strand=STRAND,gene_name=GENENAME,methylation=METHYLATION," +
+        " avg_beta_value_normal=AVGBETA, beta_value=BETAVALUE, two_sided_pvalue = " +
+        "PVALUE } " +
+        " RETURN cm.fragment_id"
 
 fun createHistologyTypeRelationship(fragmentId: String, typeId: Int) =
     Neo4jConnectionService.executeCypherCommand(
@@ -22,18 +24,20 @@ fun createHistologyTypeRelationship(fragmentId: String, typeId: Int) =
                 " (cm) -[r:HAS_HISTOLOGY] -> (ct)"
     )
 
+
+
 fun loadCosmicDiffMethylation(methyl: CosmicDiffMethylation): String =
     Neo4jConnectionService.executeCypherCommand(
-        methylationLoadTemplate.replace("FRAGMENTID", methyl.fragmentId)
+        methylationLoadTemplate.replace("FRAGMENTID", Neo4jUtils.formatQuotedString(methyl.fragmentId))
             .replace("STUDYID", methyl.studyId.toString())
             .replace("SAMPLEID", methyl.sampleId.toString())
             .replace("TUMORID", methyl.tumorId.toString())
             .replace("GENOME_VERSION", methyl.genomeVersion)
             .replace("CHROMOSOME", methyl.chromosome.toString())
             .replace("POSITION", methyl.position.toString())
-            .replace("STRAND", methyl.strand)
-            .replace("GENENAME", methyl.geneName)
-            .replace("METHYLATION", methyl.methylation)
+            .replace("STRAND", Neo4jUtils.formatQuotedString(methyl.strand))
+            .replace("GENENAME", Neo4jUtils.formatQuotedString(methyl.geneName))
+            .replace("METHYLATION", Neo4jUtils.formatQuotedString(methyl.methylation))
             .replace("AVGBETA", methyl.avgBetaValueNormal.toString())
             .replace("BETAVALUE", methyl.betaValue.toString())
             .replace("PVALUE", methyl.twoSidedPValue.toString())

@@ -3,6 +3,7 @@ package org.batteryparkdev.cosmicgraphdb.neo4j.dao
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicHallmark
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
+import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
 import org.batteryparkdev.cosmicgraphdb.pubmed.dao.PubMedArticleDao
 import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedIdentifier
 
@@ -35,12 +36,12 @@ fun createPubMedRelationship(hallmark: CosmicHallmark){
 fun loadCosmicHallmark(hallmark: CosmicHallmark): Int =
     Neo4jConnectionService.executeCypherCommand(
         "MERGE (ch:CosmicHallmark{hallmark_id: ${hallmark.hallmarkId}}) " +
-                "SET ch.gene_symbol =\"${hallmark.geneSymbol}\", " +
-                " ch.cell_type = \"${hallmark.cellType}\", " +
-                " ch.pubmed_id = \"${hallmark.pubmedId}\"," +
-                " ch.hallmark = \"${hallmark.hallmark}\", " +
-                " ch.impact = \"${hallmark.impact}\", " +
-                " ch.description = \"${hallmark.description}\" " +
+                "SET ch += {gene_symbol = ${Neo4jUtils.formatQuotedString(hallmark.geneSymbol)}, " +
+                " cell_type = \"${Neo4jUtils.formatQuotedString(hallmark.cellType)}\", " +
+                " pubmed_id = \"${hallmark.pubmedId}\"," +
+                " hallmark = \"${hallmark.hallmark}\", " +
+                " impact = \"${hallmark.impact}\", " +
+                " description = \"${hallmark.description}\" }" +
                 " RETURN ch.hallmark_id"
     ).toInt()
 

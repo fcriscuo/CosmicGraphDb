@@ -43,7 +43,7 @@ fun createPubMedRelationship(cosmicTumor: CosmicTumor) {
             "MATCH (ct:CosmicTumor), (pma:PubMedArticle) " +
                     " WHERE ct.tumor_id = ${cosmicTumor.tumorId} AND " +
                     " pma.pubmed_id = ${cosmicTumor.pubmedId} MERGE " +
-                    " (ct) -[r:HAS_COSMIC_ARTICLE_ARTICLE] ->(pma)"
+                    " (ct) -[r:HAS_COSMIC_ARTICLE] ->(pma)"
         )
     }
 }

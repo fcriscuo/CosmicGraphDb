@@ -46,7 +46,6 @@ fun addCosmicSampleTypeLabel(id: Int, label: String) {
     }
 }
 
-
  fun createCosmicSampleRelationships(cosmicSample: CosmicSample){
     // CosmicSample to CosmicClassification relationship
     Neo4jConnectionService.executeCypherCommand(

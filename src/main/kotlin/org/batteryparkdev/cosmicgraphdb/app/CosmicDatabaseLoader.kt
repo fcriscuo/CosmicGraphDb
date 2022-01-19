@@ -39,12 +39,14 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
             DatafilePropertiesService.resolvePropertyAsString("file.cosmic.mutant.export.census")
     private val cosmicHallmarkFile = fileDirectory +
             DatafilePropertiesService.resolvePropertyAsString("file.cosmic.gene.census.hallmarks.of.cancer")
+    private val cosmicBreakpointsFile = fileDirectory +
+            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.breakpoints.export")
 
     private val nodeNameList = listOf<String>(
         "CosmicHallmark", "CosmicTumor", "CosmicMutation",
         "CosmicSample", "CosmicClassification", "CosmicGene", "CosmicType",
         "CosmicCompleteDNA", "CosmicGeneExpression", "CosmicDiffMethylation",
-        "CosmicArticle","Reference"
+        "CosmicArticle","CosmicBreakpoint","Reference"
     )
     @OptIn(DelicateCoroutinesApi::class)
     val job = GlobalScope.launch() {
@@ -107,13 +109,16 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
             // Job7 and Job9 depend on Job3 & Job6
             val task07 = asyncIO{ loadCompleteCNAJob(job2Result, job6Result)}
             val task09 = asyncIO{ loadGeneExpressionJob(job2Result, job6Result)}
+            // Job 10 depends on Job 6
+            val task10 =asyncIO { loadBreakpoints(job6Result) }
             // wait for last tier of jobs to complete
-            onDone(task01.await(),task07.await(), task08.await(), task09.await())
+            onDone(task01.await(),task07.await(), task08.await(), task09.await(), task10.await())
         }
     }
-    fun onDone(job1Result:String, job7Result: String, job8Result: String, job9Result: String) {
+    fun onDone(job1Result:String, job7Result: String, job8Result: String, job9Result: String, job10Result: String) {
         logger.atInfo().log("Executing onDone function")
-        logger.atInfo().log("task01 = $job1Result   task07 = $job7Result   task08 = $job8Result   task09 = $job9Result")
+        logger.atInfo().log("task01 = $job1Result   task07 = $job7Result   " +
+                " task08 = $job8Result   task09 = $job9Result   task10 =$job10Result")
         job.cancel()
     }
 
@@ -136,13 +141,13 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
     }
 
     fun loadGeneCensusJob(): String {  // job 2
-        logger.atInfo().log("3 - Starting GeneCensus loader")
+        logger.atInfo().log("2 - Starting GeneCensus loader")
         CosmicGeneCensusLoader.loadCosmicGeneCensusData(cosmicGeneCensusFile)
         return "GeneCensus loaded"
     }
 
     fun loadHallmarkJob(job2Result: String): String {  // job 3
-        logger.atInfo().log("2 - Starting Hallmark loader")
+        logger.atInfo().log("3 - Starting Hallmark loader")
         CosmicHallmarkLoader.processCosmicHallmarkData(cosmicHallmarkFile)
         return "Hallmark loaded"
     }
@@ -181,6 +186,12 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
         logger.atInfo().log("9 - Starting GeneExpression loader")
         CosmicGeneExpressionLoader.loadCosmicCompleteGeneExpressionData(cosmicGeneExpressionFile)
         return "Result of GeneExpression loaded"
+    }
+
+    fun loadBreakpoints(job6Result:String): String {   // job 10
+        logger.atInfo().log("10 - Starting Breakpoints loader")
+        CosmicBreakpointLoader.processCosmicBreakpointData(cosmicBreakpointsFile)
+        return "Result of CosmicBreakpoints loaded"
     }
 }
     fun main(args: Array<String>) = runBlocking {
