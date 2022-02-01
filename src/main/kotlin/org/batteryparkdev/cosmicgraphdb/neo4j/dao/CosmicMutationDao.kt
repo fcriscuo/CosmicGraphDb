@@ -18,7 +18,6 @@ fun loadCosmicMutation(cosmicMutation: CosmicMutation): Int =
                 "   cm.mutation_zygosity = \"${cosmicMutation.mutationZygosity}\", " +
                 "   cm.loh = \"${cosmicMutation}\", cm.grch = \"${cosmicMutation.GRCh}\", " +
                 "   cm.mutation_strand = \"${cosmicMutation.mutationStrand}\", " +
-                "   cm.snp = \"${cosmicMutation.SNP}\", " +
                 "   cm.resistance_mutation = \"${cosmicMutation.resistanceMutation}\", " +
                 "   cm.fathmm_prediction = \"${cosmicMutation.fathmmPrediction}\", " +
                 "   cm.fathmm_score = ${cosmicMutation.fathmmScore}, " +

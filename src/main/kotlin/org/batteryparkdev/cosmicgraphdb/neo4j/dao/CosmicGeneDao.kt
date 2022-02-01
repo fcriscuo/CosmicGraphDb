@@ -15,10 +15,10 @@ object CosmicGeneDao {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
     private const val cypherLoadTemplate = "MERGE (cg:CosmicGene{gene_symbol: GENESYMBOL }) " +
-            "SET cg += {gene_name = GENENAME, entrez_gene_id = ENTREZ, genome_location = LOCATION," +
-            " tier = TIER, hallmark = HALLMARK, chromosome_band = CHRBAND, somatic = SOMATIC, " +
-            " germline = GERMLINE, cancer_syndrome = CANCERSYN, molecular_genetics = MOLGEN, " +
-            " other_germline_mut = OTHERMUT }" +
+            "SET cg += {gene_name: GENENAME, entrez_gene_id: ENTREZ, genome_location: LOCATION," +
+            " tier: TIER, hallmark: HALLMARK, chromosome_band: CHRBAND, somatic: SOMATIC, " +
+            " germline: GERMLINE, cancer_syndrome: CANCERSYN, molecular_genetics: MOLGEN, " +
+            " other_germline_mut: OTHERMUT }" +
             " RETURN cg.gene_symbol"
 
 
@@ -45,7 +45,7 @@ object CosmicGeneDao {
         // add CensusGene label if novel to node
         val labelCypher = "MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
                 " WHERE apoc.label.exists(cg,\"$label\")  = false " +
-                "    CALL apoc.create.addLabels(cq, [\"$label\"] ) yield node return node"
+                "    CALL apoc.create.addLabels(cg, [\"$label\"] ) yield node return node"
         return Neo4jConnectionService.executeCypherCommand(labelCypher)
 //        val labelExistsQuery = "MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
 //                "RETURN apoc.label.exists(cg, \"$label\") AS output;"

@@ -5,11 +5,9 @@ import com.google.common.flogger.FluentLogger
 import kotlinx.coroutines.*
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
 import org.batteryparkdev.cosmicgraphdb.neo4j.loader.*
-import org.batteryparkdev.cosmicgraphdb.property.ApplicationPropertiesService
 import org.batteryparkdev.cosmicgraphdb.property.DatafilePropertiesService
 import org.batteryparkdev.cosmicgraphdb.pubmed.loader.CosmicPubMedArticleLoader
 import kotlin.coroutines.CoroutineContext
-import kotlin.concurrent.timer
 
 /*
 Primary COSMIC data loader

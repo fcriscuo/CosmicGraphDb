@@ -50,7 +50,8 @@ object PubMedArticleDao {
     be completed asynchronously
      */
     fun createPlaceholderNode(identifier: PubMedIdentifier) {
-        if (!pubMedNodeExistsPredicate(identifier.pubmedId)) {
+        logger.atInfo().log("+++Creating placeholder node for PubMed Id: ${identifier.pubmedId}")
+        if (pubMedNodeExistsPredicate(identifier.pubmedId).not()) {
             Neo4jConnectionService.executeCypherCommand(
                 "MERGE (pma:PubMedArticle { pubmed_id: " +
                         "${identifier.pubmedId}}) SET pma.article_title = \"\", " +

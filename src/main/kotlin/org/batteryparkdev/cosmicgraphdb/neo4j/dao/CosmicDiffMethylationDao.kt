@@ -9,10 +9,10 @@ private val logger: FluentLogger = FluentLogger.forEnclosingClass();
 /// n.b. chromosome values are numeric (x=23, y=24)
 
 private const val methylationLoadTemplate = "MERGE (cm: CosmicDiffMethylation{fragment_id:FRAGMENTID}) " +
-        " SET cm += study_id = STUDYID, sample_id= SAMPLEID, tumor_id=TUMORID, " +
-        " genome_version=GENOME_VERSION, chromosome = CHROMOSOME, position=POSITION, " +
-        " strand=STRAND,gene_name=GENENAME,methylation=METHYLATION," +
-        " avg_beta_value_normal=AVGBETA, beta_value=BETAVALUE, two_sided_pvalue = " +
+        " SET cm += {study_id: STUDYID, sample_id: SAMPLEID, tumor_id: TUMORID, " +
+        " genome_version: GENOME_VERSION, chromosome: CHROMOSOME, position: POSITION, " +
+        " strand: STRAND,gene_name: GENENAME, methylation: METHYLATION," +
+        " avg_beta_value_normal: AVGBETA, beta_value: BETAVALUE, two_sided_pvalue: " +
         "PVALUE } " +
         " RETURN cm.fragment_id"
 

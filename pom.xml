@@ -18,14 +18,14 @@
         <apache.commons.io.version>2.11.0</apache.commons.io.version>
         <apache.log4j.version>1.2.17</apache.log4j.version>
         <apache.csv.version>1.8</apache.csv.version>
-        <guava.version>30.1.1-jre</guava.version>
+        <guava.version>31.0.1-jre</guava.version>
         <scala_version>2.12.13</scala_version>
         <scalatest.version>3.2.9</scalatest.version>
         <eclipse.vertx.version>3.5.1</eclipse.vertx.version>
-        <neo4j.version>4.3.2</neo4j.version>
-        <neo4j.driver.version>4.3.4</neo4j.driver.version>
+        <neo4j.version>4.4.3</neo4j.version>
+        <neo4j.driver.version>4.4.3</neo4j.driver.version>
         <cfg4j.version>4.4.1</cfg4j.version>
-        <kotlin.version>1.5.30</kotlin.version>
+        <kotlin.version>1.6.10</kotlin.version>
         <kotlintest.version>1.5.21</kotlintest.version>
         <mockk.version>1.12.0</mockk.version>
         <arrow-kt.version>0.13.2</arrow-kt.version>

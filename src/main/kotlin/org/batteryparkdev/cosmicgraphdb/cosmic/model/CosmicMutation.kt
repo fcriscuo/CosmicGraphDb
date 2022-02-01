@@ -9,8 +9,9 @@ data class CosmicMutation(
     val genomicMutationId: String, val mutationId: Int, val mutationCds: String,
     val mutationAA: String, val mutationDescription: String, val mutationZygosity: String,
     val LOH: String, val GRCh: String, val mutationGenomePosition: String,
-    val mutationStrand: String, val SNP: String, val resistanceMutation: String,
+    val mutationStrand: String,  val resistanceMutation: String,
     val fathmmPrediction: String, val fathmmScore: Double, val mutationSomaticStatus: String,
+    val pubmedId: Int,
     val hgvsp: String, val hgvsc: String, val hgvsg: String, val tier: String
 
 ) {
@@ -27,9 +28,9 @@ data class CosmicMutation(
                 record.get("LOH") ?: "", record.get("GRCh")?:"38",
                 record.get("Mutation genome position"),
                 record.get("Mutation strand"),
-                record.get("SNP") ?: "",
                 record.get("Resistance Mutation"), record.get("FATHMM prediction"),
                 parseValidDoubleFromString(record.get("FATHMM score")), record.get("Mutation somatic status"),
+                parseValidIntegerFromString(record.get("Pubmed_PMID")),
                 record.get("HGVSP"), record.get("HGVSC"),
                 record.get("HGVSG"), resolveTier(record)
             )
@@ -46,8 +47,9 @@ data class CosmicMutation(
                 record.get("AA Mutation"), "",
                 record.get("Zygosity") ?: "",
                 "", "38",
-                record.get("Genome Coordinates (GRCh38)"), "", "",
-                "Y", "NS", 0.0, "",
+                record.get("Genome Coordinates (GRCh38)"), "", "Y",
+                "", 0.0, "",
+                parseValidIntegerFromString(record.get("Pubmed_PMID")),
                 record.get("HGVSP"), record.get("HGVSC"),
                 record.get("HGVSG"), resolveTier(record)
             )
@@ -64,7 +66,7 @@ data class CosmicMutation(
 }
 
 fun main() {
-    val path = Paths.get("./data/sample_CosmicMutantExport.tsv")
+    val path = Paths.get("./data/sample_CosmicMutantExportCensus.tsv")
     println("Processing csv file ${path.fileName}")
     var recordCount = 0
     TsvRecordSequenceSupplier(path).get().chunked(500)
@@ -73,10 +75,11 @@ fun main() {
                 .map { CosmicMutation.parseCsvRecord(it) }
                 .forEach { mut ->
                     println(
-                        "Cosmic Muattaion Id= ${mut.genomicMutationId}  location= ${mut.mutationGenomePosition}" +
+                        "Cosmic Muattaion Id= ${mut.mutationId}  location= ${mut.mutationGenomePosition}" +
                                 "  mutation AA = ${mut.mutationAA} " +
                                 "  description = ${mut.mutationDescription} " +
-                                "  gene = ${mut.geneSymbol}"
+                                "  gene = ${mut.geneSymbol} " +
+                                "  pubmed id: ${mut.pubmedId} "
                     )
                     recordCount += 1
                 }
