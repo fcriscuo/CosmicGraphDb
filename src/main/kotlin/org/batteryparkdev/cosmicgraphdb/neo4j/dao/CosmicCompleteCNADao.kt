@@ -10,10 +10,10 @@ private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 fun loadCosmicCompleteCNA(cna: CosmicCompleteCNA): String =
     Neo4jConnectionService.executeCypherCommand(
         "MERGE (cna:CosmicCompleteCNA{cnv_id: ${cna.cnvId}}) " +
-                " SET cna +={ sample_name = \"${cna.sampleName}\", total_cn = ${cna.totalCn}, " +
-                " minor_allele = \"${cna.minorAllele}\", mutation_type = \"${cna.mutationType}\"," +
-                " study_id = ${cna.studyId}, grch = \"${cna.grch}\", " +
-                " chromosome_start_stop = \"${cna.chromosomeStartStop}\" }" +
+                " SET cna +={ sample_name: \"${cna.sampleName}\", total_cn: ${cna.totalCn}, " +
+                " minor_allele: \"${cna.minorAllele}\", mutation_type: \"${cna.mutationType}\"," +
+                " study_id: ${cna.studyId}, grch: \"${cna.grch}\", " +
+                " chromosome_start_stop: \"${cna.chromosomeStartStop}\" }" +
                 " RETURN cna.cnv_id"
     )
 

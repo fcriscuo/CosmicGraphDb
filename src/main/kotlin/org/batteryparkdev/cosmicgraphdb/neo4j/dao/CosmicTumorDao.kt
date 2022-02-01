@@ -34,9 +34,11 @@ fun createCosmicMutationRelationship(cosmicTumor: CosmicTumor) =
 
 fun createPubMedRelationship(cosmicTumor: CosmicTumor) {
     if (cosmicTumor.pubmedId > 0) {
+
         // if the PubMed article has not been loaded yet, create a placeholder node
         if (!PubMedArticleDao.pubMedNodeExistsPredicate(cosmicTumor.pubmedId)) {
             val identifier = PubMedIdentifier(cosmicTumor.pubmedId, 0, "CosmicArticle")
+            logger.atInfo().log("Loading PubMedIdentifier Id: ${identifier.pubmedId}")
             PubMedArticleDao.createPlaceholderNode(identifier)
         }
         Neo4jConnectionService.executeCypherCommand(

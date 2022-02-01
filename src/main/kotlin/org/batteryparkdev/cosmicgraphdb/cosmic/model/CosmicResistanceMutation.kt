@@ -35,7 +35,7 @@ data class CosmicResistanceMutation(
     companion object : AbstractModel {
         fun parseCsvRecord(record: CSVRecord): CosmicResistanceMutation =
             CosmicResistanceMutation(
-                record.get("Ssmple ID").toInt(),
+                record.get("Sample ID").toInt(),
                 record.get("Gene Name"),
                 record.get("Transcript"),
                 when (record.get("Census Gene")) {

@@ -36,6 +36,7 @@ class CosmicPubMedLoaderApp  (fileDirectory: String){
                     .forEach { tumor ->
                         PubMedLoader.loadPubMedEntryById(tumor.pubmedId)
                        logger.atFine().log("Loaded PubMed Article Id : ${tumor.pubmedId}")
+                        Thread.sleep(300L)
                     }
             }
     }

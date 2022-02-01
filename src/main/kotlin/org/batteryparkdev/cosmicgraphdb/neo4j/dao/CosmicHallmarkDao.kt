@@ -25,6 +25,7 @@ fun createCosmicGeneRelationship(hallmark: CosmicHallmark) {
 fun createPubMedRelationship(hallmark: CosmicHallmark){
     val identifier = PubMedIdentifier(hallmark.pubmedId.toInt(),0,"CosmicArticle")
     PubMedArticleDao.createPlaceholderNode(identifier)
+    logger.atInfo().log("****PubMed placeholder id: ${identifier.pubmedId}  Hallmark: ${hallmark.hallmarkId}")
     Neo4jConnectionService.executeCypherCommand(
         "MATCH (ch:CosmicHallmark), (pma:PubMedArticle) WHERE " +
                 " ch.hallmark_id=${hallmark.hallmarkId}  AND pma.pubmedId =" +
@@ -36,12 +37,12 @@ fun createPubMedRelationship(hallmark: CosmicHallmark){
 fun loadCosmicHallmark(hallmark: CosmicHallmark): Int =
     Neo4jConnectionService.executeCypherCommand(
         "MERGE (ch:CosmicHallmark{hallmark_id: ${hallmark.hallmarkId}}) " +
-                "SET ch += {gene_symbol = ${Neo4jUtils.formatQuotedString(hallmark.geneSymbol)}, " +
-                " cell_type = \"${Neo4jUtils.formatQuotedString(hallmark.cellType)}\", " +
-                " pubmed_id = \"${hallmark.pubmedId}\"," +
-                " hallmark = \"${hallmark.hallmark}\", " +
-                " impact = \"${hallmark.impact}\", " +
-                " description = \"${hallmark.description}\" }" +
+                "SET ch += {gene_symbol: ${Neo4jUtils.formatQuotedString(hallmark.geneSymbol)}, " +
+                " cell_type: ${Neo4jUtils.formatQuotedString(hallmark.cellType)}, " +
+                " pubmed_id: ${hallmark.pubmedId}," +
+                " hallmark: ${Neo4jUtils.formatQuotedString(hallmark.hallmark)}, " +
+                " impact: ${Neo4jUtils.formatQuotedString(hallmark.impact)}, " +
+                " description: ${Neo4jUtils.formatQuotedString(hallmark.description)} }" +
                 " RETURN ch.hallmark_id"
     ).toInt()
 

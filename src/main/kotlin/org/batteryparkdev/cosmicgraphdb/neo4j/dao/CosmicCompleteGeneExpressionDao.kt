@@ -12,9 +12,9 @@ fun loadCosmicCompleteGeneExpression(geneExp: CosmicCompleteGeneExpression): Str
     Neo4jConnectionService.executeCypherCommand(
         " MERGE (cge:CosmicGeneExpression{" +
                 " key: ${geneExp.key}  }) " +
-                " SET cge += {sample_id = ${geneExp.sampleId}, " +
-                " gene_symbol =\"${geneExp.geneSymbol}\", regulation = \"${geneExp.regulation}\", " +
-                " z_score = ${geneExp.zScore}, study_id = ${geneExp.studyId} }" +
+                " SET cge += {sample_id: ${geneExp.sampleId}, " +
+                " gene_symbol: \"${geneExp.geneSymbol}\", regulation: \"${geneExp.regulation}\", " +
+                " z_score: ${geneExp.zScore}, study_id: ${geneExp.studyId} }" +
                 " RETURN cge.key")
 
 /*

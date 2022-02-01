@@ -13,7 +13,7 @@ private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 fun loadCosmicClassification(cosmicClassification: CosmicClassification): String =
     Neo4jConnectionService.executeCypherCommand(
         "MERGE (cc:CosmicClassification{phenotype_id:\"${cosmicClassification.cosmicPhenotypeId}\"}) " +
-                "SET cc.nci_code =\"${cosmicClassification.nciCode}\", cc.efo_url= \"${cosmicClassification.efoUrl}\"" +
+                "SET cc.nci_code= \"${cosmicClassification.nciCode}\", cc.efo_url= \"${cosmicClassification.efoUrl}\"" +
                 " RETURN cc.phenotype_id"
     )
 
