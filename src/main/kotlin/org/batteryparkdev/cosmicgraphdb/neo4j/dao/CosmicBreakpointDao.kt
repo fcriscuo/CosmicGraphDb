@@ -41,14 +41,14 @@ object CosmicBreakpointDao {
     fun addMutationLabel(mutationId: Int) =
         Neo4jConnectionService.executeCypherCommand(
             "MATCH (cb:CosmicBreakpoint{ mutation_id: $mutationId}) " +
-                    " WHERE apoc.label.exists(cg,\"$mutationLabel\")  = false " +
-                    " CALL apoc.create.addLabels(cq, [\"$mutationLabel\"] ) yield node return node"
+                    " WHERE apoc.label.exists(cb,\"$mutationLabel\")  = false " +
+                    " CALL apoc.create.addLabels(cb, [\"$mutationLabel\"] ) yield node return node"
         )
 
     fun createPubMedRelationship(cosmicBreakpoint: CosmicBreakpoint) {
         if (cosmicBreakpoint.pubmedId > 0) {
             // if the PubMed article has not been loaded yet, create a placeholder node
-            if (!PubMedArticleDao.pubMedNodeExistsPredicate(cosmicBreakpoint.pubmedId)) {
+            if (PubMedArticleDao.pubMedNodeExistsPredicate(cosmicBreakpoint.pubmedId).not()) {
                 val identifier = PubMedIdentifier(cosmicBreakpoint.pubmedId, 0, "CosmicArticle")
                 PubMedArticleDao.createPlaceholderNode(identifier)
             }

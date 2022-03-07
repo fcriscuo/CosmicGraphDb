@@ -44,7 +44,7 @@ class CosmicPubMedLoaderApp  (fileDirectory: String){
 
 fun main(args: Array<String>) {
     val fileDirectory =
-        when (args.size > 0) {
+        when (args.isNotEmpty()) {
             true -> args[0]
             false -> DatafilePropertiesService.resolvePropertyAsString("cosmic.data.directory")
         }

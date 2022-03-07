@@ -101,7 +101,7 @@ object CosmicGeneDao {
             run {
                 // if the target gene hasn't been loaded yet, create
                 // a placeholder
-                if (!cosmicGeneNodeExistsPredicate(trans)) {
+                if (cosmicGeneNodeExistsPredicate(trans).not()) {
                     createCosmicGenePlaceholderNode(trans)
                 }
 //                create bi-directional relationship between CosmicGene nodes

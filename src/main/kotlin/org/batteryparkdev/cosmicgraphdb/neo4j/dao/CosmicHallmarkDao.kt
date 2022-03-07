@@ -25,7 +25,6 @@ fun createCosmicGeneRelationship(hallmark: CosmicHallmark) {
 fun createPubMedRelationship(hallmark: CosmicHallmark){
     val identifier = PubMedIdentifier(hallmark.pubmedId.toInt(),0,"CosmicArticle")
     PubMedArticleDao.createPlaceholderNode(identifier)
-    logger.atInfo().log("****PubMed placeholder id: ${identifier.pubmedId}  Hallmark: ${hallmark.hallmarkId}")
     Neo4jConnectionService.executeCypherCommand(
         "MATCH (ch:CosmicHallmark), (pma:PubMedArticle) WHERE " +
                 " ch.hallmark_id=${hallmark.hallmarkId}  AND pma.pubmedId =" +

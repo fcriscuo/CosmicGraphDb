@@ -17,8 +17,6 @@ import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedIdentifier
 import org.batteryparkdev.cosmicgraphdb.pubmed.service.PubMedRetrievalService
 import java.util.*
 import kotlin.concurrent.scheduleAtFixedRate
-import kotlin.concurrent.timer
-
 
 
 /*
@@ -69,7 +67,6 @@ object CosmicPubMedArticleLoader {
         produce<PubMedEntry> {
             for (entry in entries){
                 PubMedArticleDao.mergePubMedEntry(entry)
-                logger.atInfo().log("Data for PubMed Id ${entry.pubmedId}  loaded into Neo4j")
                     send(entry)
                     delay(20)
             }

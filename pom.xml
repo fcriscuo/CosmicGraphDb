@@ -36,6 +36,7 @@
     </properties>
 
     <repositories>
+
         <repository>
             <id>central</id>
             <name>Maven Central</name>
@@ -71,6 +72,13 @@
     </pluginRepositories>
 
     <dependencies>
+        <!--  EMBL UniProt API -->
+        <!-- https://mvnrepository.com/artifact/uk.ac.ebi.uniprot/japi -->
+       <!-- <dependency>
+            <groupId>uk.ac.ebi.uniprot</groupId>
+            <artifactId>japi</artifactId>
+            <version>1.0.37</version>
+        </dependency>-->
 
         <!-- add local pubmed parser dependency -->
         <dependency>

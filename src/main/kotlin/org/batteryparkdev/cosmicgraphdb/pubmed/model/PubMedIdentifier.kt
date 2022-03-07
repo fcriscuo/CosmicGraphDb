@@ -5,7 +5,7 @@ import org.apache.commons.csv.CSVRecord
 data class PubMedIdentifier (val pubmedId: Int, val parentId: Int = 0, val label: String = "")
 {
     companion object {
-        val referenceLabel = "Reference"
+        const val referenceLabel = "Reference"
         fun parseCsvRecord(record: CSVRecord,
                            parentId: Int = 0,
                            label: String = "") =
