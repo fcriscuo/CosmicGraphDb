@@ -42,7 +42,7 @@ object PubMedLoader {
                 Only fetch the PubMed data from NCBI if the database does not
                 contain a PubMedReference node for this citation id
                  */
-                if (!PubMedArticleDao.pubMedNodeExistsPredicate(id)) {
+                if (PubMedArticleDao.pubMedNodeExistsPredicate(id).not()) {
                     logger.atFine().log("  Fetching citation  id: $id from NCBI")
                     val citEntry = loadPubMedEntryById(id, label, parentId)
                 } else {
@@ -60,7 +60,7 @@ object PubMedLoader {
         pubMedEntry.referenceSet.stream().forEach { id ->
             run {
                 logger.atFine().log("  Reference id: $id")
-                if (!PubMedArticleDao.pubMedNodeExistsPredicate(id)) {
+                if (PubMedArticleDao.pubMedNodeExistsPredicate(id).not()) {
                     logger.atFine().log("  Fetching reference id: $id from NCBI")
                     val refEntry = loadPubMedEntryById(id, label, parentId)
                 } else {
@@ -78,7 +78,7 @@ object PubMedLoader {
         but the existing node may have a new relationship and
         an additional label
          */
-        if (!PubMedArticleDao.pubMedNodeExistsPredicate(pubMedEntry.pubmedId)) {
+        if (PubMedArticleDao.pubMedNodeExistsPredicate(pubMedEntry.pubmedId).not()) {
             val newPubMedId = PubMedArticleDao.mergePubMedEntry(pubMedEntry)
             logger.atFine().log("PubMed Id $newPubMedId  loaded into Neo4j")
         } else {
