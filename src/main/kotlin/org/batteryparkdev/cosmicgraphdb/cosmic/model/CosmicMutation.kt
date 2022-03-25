@@ -2,7 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.cosmic.model
 
 import org.apache.commons.csv.CSVRecord
 import java.nio.file.Paths
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 
 data class CosmicMutation(
     val geneSymbol: String,

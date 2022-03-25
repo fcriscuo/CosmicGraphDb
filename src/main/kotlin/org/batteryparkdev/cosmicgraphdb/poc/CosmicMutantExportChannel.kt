@@ -11,8 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicMutation
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordChannel
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordChannel.produceTSVRecords
+import org.batteryparkdev.io.TsvRecordChannel
 
 object CosmicMutantExportChannel {
 

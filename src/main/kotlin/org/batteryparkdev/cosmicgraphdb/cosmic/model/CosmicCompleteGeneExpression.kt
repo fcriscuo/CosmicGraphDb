@@ -1,7 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.cosmic.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
 // SAMPLE_ID	SAMPLE_NAME	GENE_NAME	REGULATION	Z_SCORE	ID_STUDY

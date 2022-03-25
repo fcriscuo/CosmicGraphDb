@@ -9,11 +9,10 @@ import kotlinx.coroutines.flow.collect
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicMutation
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.*
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.coroutineContext
 
 /*
 Responsible for loading data from a CosmicMutantExport or CosmicMutantExportCensus file

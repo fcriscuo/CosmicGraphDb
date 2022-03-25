@@ -1,6 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.service
 
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
 /*

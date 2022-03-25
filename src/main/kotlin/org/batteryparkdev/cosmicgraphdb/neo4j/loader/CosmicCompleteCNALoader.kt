@@ -9,11 +9,10 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicCompleteCNA
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createRelationshipFromSample
-import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createRelationshipFromTumor
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createRelationshipToGene
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.loadCosmicCompleteCNA
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
 object CosmicCompleteCNALoader {

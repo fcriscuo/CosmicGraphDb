@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicCompleteGeneExpression
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createGeneExpressionToGeneRelationship
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createGeneExpressionToSampleRelationship
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.loadCosmicCompleteGeneExpression

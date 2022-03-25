@@ -9,11 +9,10 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicBreakpoint
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicBreakpointDao
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicBreakpointDao.createPubMedRelationship
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicBreakpointDao.loadCosmicBreakpointNode
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicTypeDao
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 

@@ -3,7 +3,7 @@ package org.batteryparkdev.cosmicgraphdb.pubmed.app
 import com.google.common.base.Stopwatch
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
 import org.batteryparkdev.cosmicgraphdb.property.DatafilePropertiesService
 import org.batteryparkdev.cosmicgraphdb.pubmed.loader.PubMedLoader

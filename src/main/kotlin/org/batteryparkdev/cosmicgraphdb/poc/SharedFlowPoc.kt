@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.collect
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicMutation
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
 

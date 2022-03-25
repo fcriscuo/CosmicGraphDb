@@ -8,7 +8,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.pubmed.dao.PubMedArticleDao
 import org.batteryparkdev.cosmicgraphdb.pubmed.model.PubMedIdentifier
 import java.nio.file.Paths
