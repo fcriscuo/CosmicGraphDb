@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicClassification
-import org.batteryparkdev.cosmicgraphdb.io.CsvRecordSequenceSupplier
+import org.batteryparkdev.io.CsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicTypeDao
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createCosmicTypeRelationships
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.loadCosmicClassification

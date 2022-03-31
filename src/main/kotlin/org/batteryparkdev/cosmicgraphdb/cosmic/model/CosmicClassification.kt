@@ -1,7 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.cosmic.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.cosmicgraphdb.io.CsvRecordSequenceSupplier
+import org.batteryparkdev.io.CsvRecordSequenceSupplier
 import java.nio.file.Paths
 
  data class CosmicClassification(

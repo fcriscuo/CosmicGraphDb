@@ -9,10 +9,9 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicMutation
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createCosmicGeneRelationship
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.createCosmicMutationToGeneRelationship
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.loadCosmicMutation
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 

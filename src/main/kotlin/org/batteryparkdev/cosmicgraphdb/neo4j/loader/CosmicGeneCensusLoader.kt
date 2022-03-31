@@ -9,8 +9,6 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicGeneCensus
-import org.batteryparkdev.cosmicgraphdb.io.CsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.addGeneCensusLabel
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.loadCosmicGeneNode
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.loadMutationTypeAnnotations
@@ -20,6 +18,7 @@ import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.loadSynonymAnnot
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.loadTissueTypeAnnotations
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.loadTranslocPartnerList
 import org.batteryparkdev.cosmicgraphdb.neo4j.dao.CosmicGeneDao.loadTumorList
+import org.batteryparkdev.io.CsvRecordSequenceSupplier
 import java.nio.file.Paths
 
 /*

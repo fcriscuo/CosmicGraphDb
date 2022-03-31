@@ -3,7 +3,7 @@ package org.batteryparkdev.cosmicgraphdb.pubmed.model
 import ai.wisecube.pubmed.*
 import arrow.core.Either
 import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
-import org.batteryparkdev.cosmicgraphdb.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.pubmed.service.PubMedRetrievalService
 import java.nio.file.Paths
 

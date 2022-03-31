@@ -1,7 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.cosmic.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.cosmicgraphdb.io.CsvRecordSequenceSupplier
+import org.batteryparkdev.io.CsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
 import java.nio.file.Paths
 
