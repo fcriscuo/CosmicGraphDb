@@ -9,8 +9,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicMutation
-import org.batteryparkdev.cosmicgraphdb.cosmic.model.CosmicTumor
+import org.batteryparkdev.cosmicgraphdb.model.CosmicMutation
+import org.batteryparkdev.cosmicgraphdb.model.CosmicTumor
 import org.batteryparkdev.io.TsvRecordChannel
 
 object CosmicMutantExportChannel {
