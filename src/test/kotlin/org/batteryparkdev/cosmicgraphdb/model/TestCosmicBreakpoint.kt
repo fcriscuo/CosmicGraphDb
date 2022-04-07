@@ -17,7 +17,7 @@ class TestCosmicBreakpoint {
 //                "{limit: $LIMIT, sep ='\t }" +
 //                "YIELD lineNo, map RETURN map;"
 //        val records = Neo4jConnectionService.executeCypherQuery(cypher);
-        ApocFileReader.processDelimitedFile(filename)
+        ApocFileReader.processDelimitedFile(filename).stream()
             .limit(LIMIT)
             .map { record -> record.get("map") }
             .map { CosmicBreakpoint.parseValueMap(it) }

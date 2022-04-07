@@ -22,14 +22,20 @@ data class CosmicClassification(
          cosmicPhenotypeId.plus(siteType.primary)
              .plus(histologyType.primary).hashCode()
 
-    fun generateMergeCypher():String = "CALL apoc.merge.node([\"CosmicClassification\"]," +
+    fun generateClassificationCypher():String =
+        generateMergeCypher()
+            .plus(siteType.generateParentRelationshipCypher(nodeName))
+            .plus(histologyType.generateParentRelationshipCypher(nodeName))
+            .plus(" RETURN $nodeName")
+
+
+    private fun generateMergeCypher():String = "CALL apoc.merge.node([\"CosmicClassification\"]," +
             "{ classification_id: ${resolveClassificationId()}}," +
             " { phenotype_id: \"${cosmicPhenotypeId}\", " +
             " nci_code: \"${nciCode}\"," +
             " efo_url: \"${efoUrl}\"," +
             " created: datetime() }," +
             "{ last_mod: datetime()}) YIELD node AS $nodeName \n "
-
 
     companion object : AbstractModel {
 

@@ -17,6 +17,24 @@ data class CosmicMutation(
 ) {
 
     companion object : AbstractModel {
+        const val nodename = "mutation"
+       \
+
+        private fun generateMutationPlaceholderCypher(mutationId: Int): String =
+            "CALL apoc.merge.node( [\"CosmicMutation\"], " +
+                    " {mutation_id $mutationId,  created: datetime()} " +
+                    " YIELD node AS ${CosmicMutation.nodename}"
+
+        fun generateChildRelationshipCypher(mutationId: Int, childLabel: String): String {
+            val relationship = "HAS_".plus(childLabel.uppercase())
+            val relname = "rel_mutation"
+            return generateMutationPlaceholderCypher(mutationId).plus(
+                "CALL apoc.merge.relationship(${CosmicMutation.nodename}, $relationship, " +
+                        " {}, {created: datetime()}, $childLabel,{} " +
+                        " YIELD rel as $relname \n"
+            )
+        }
+
         fun parseCsvRecord(record: CSVRecord): CosmicMutation =
             CosmicMutation(
                 record.get("Gene name"),   // actually HGNC approved symbol

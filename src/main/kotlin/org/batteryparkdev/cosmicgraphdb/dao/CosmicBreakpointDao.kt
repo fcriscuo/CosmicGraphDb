@@ -11,11 +11,8 @@ and mutation types
 
    fun loadCosmicBreakpoint( breakpoint: CosmicBreakpoint): Int {
       val cypher = breakpoint.generateMergeCypher()
-           .plus(breakpoint.site.generateMergeCypher())
            .plus(breakpoint.site.generateParentRelationshipCypher(breakpoint.nodeName))
-           .plus(breakpoint.histology.generateMergeCypher())
            .plus(breakpoint.histology.generateParentRelationshipCypher(breakpoint.nodeName))
-           .plus(breakpoint.mutationType.generateMergeCypher())
            .plus(breakpoint.mutationType.generateParentRelationshipCypher(breakpoint.nodeName))
           .plus(" RETURN ${breakpoint.nodeName}")
        println("Breakpoint cypher: $cypher")

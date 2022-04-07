@@ -24,9 +24,12 @@ data class CosmicType(
     fun generateParentRelationshipCypher(parentNodeName: String): String {
         val relationship = " HAS_".plus(label.uppercase())
         val relName = "rel_".plus(label.lowercase())
-        return " CALL apoc.merge.relationship ($parentNodeName, '$relationship' ," +
+        return generateMergeCypher().plus(
+        " CALL apoc.merge.relationship ($parentNodeName, '$relationship' ," +
                 " {}, {created: datetime()}," +
-                " ${label.lowercase()}, {}) YIELD rel AS $relName"
+                " ${label.lowercase()}, {}) YIELD rel AS $relName\n"
+        )
+
 
     }
 }

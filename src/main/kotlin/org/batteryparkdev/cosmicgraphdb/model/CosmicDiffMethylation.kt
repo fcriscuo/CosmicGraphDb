@@ -1,64 +1,86 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.neo4j.driver.Value
 import java.nio.file.Paths
 
 data class CosmicDiffMethylation(
     val studyId: Int, val sampleId: Int,
     val tumorId: Int, val site: CosmicType,
     val histology: CosmicType, val fragmentId: String,
-    // n.b. numeric values for chromosomes (x=23, y=24)
-    val genomeVersion: String, val chromosome: Int,
+    val genomeVersion: String, val chromosome: Int, // n.b. numeric values for chromosomes (x=23, y=24)
     val position: Int, val strand: String,
     val geneName: String, val methylation: String,
     val avgBetaValueNormal: Float, val betaValue: Float,
     val twoSidedPValue: Double
 ) {
+    val nodeName = "methylation"
+
+    fun generateDiffMethylationCypher():String =
+        generateMergeCypher()
+            .plus(site.generateParentRelationshipCypher(nodeName))
+            .plus(histology.generateParentRelationshipCypher(nodeName))
+            .plus(site.generateParentRelationshipCypher(nodeName))
+            .plus(histology.generateParentRelationshipCypher(nodeName))
+            .plus(CosmicTumor.generateChildRelationshipCypher(tumorId, nodeName))
+            .plus(CosmicSample.generateChildRelationshipCypher(sampleId, nodeName))
+            .plus(" RETURN $nodeName")
+
+    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicDiffMethylation\"], " +
+            " { key = apoc.create.uuid(), study_id: $studyId, " +
+            " fragment_id: ${Neo4jUtils.formatPropertyValue(fragmentId)}, genome_version: " +
+            " ${Neo4jUtils.formatPropertyValue(genomeVersion)}, chromosome: $chromosome," +
+            " position: $position, strand: ${Neo4jUtils.formatPropertyValue(strand)}," +
+            " gene_name: ${Neo4jUtils.formatPropertyValue(geneName)}, " +
+            " methylation: ${Neo4jUtils.formatPropertyValue(methylation)}," +
+            " avg_beta_value_normal: $avgBetaValueNormal, beta_value: $betaValue," +
+            " two_sided_p_value: $twoSidedPValue, created: datetime} " +
+            " { last_mod: datetime()}) YIELD node AS $nodeName \\n"
 
     companion object : AbstractModel {
-        fun parseCsvRecord(record: CSVRecord): CosmicDiffMethylation =
+
+        fun parseValueMap(value: Value): CosmicDiffMethylation =
             CosmicDiffMethylation(
-                record.get("STUDY_ID").toInt(),
-                record.get("ID_SAMPLE").toInt(),
-                record.get("ID_TUMOUR").toInt(),
-                CosmicType.resolveSiteTypeBySource(record, "CosmicDiffMethylation"),
-                CosmicType.resolveHistologyTypeBySource(record, "CosmicDiffMethylation"),
-                record.get("FRAGMENT_ID"),
-                record.get("GENOME_VERSION"),
-                record.get("CHROMOSOME").toInt(),  // Integer is OK
-                record.get("POSITION").toInt(),
-                when (record.get("STRAND")) {
-                    "1" -> "+"
-                    else -> "-"
+                value["STUDY_ID"].asInt(),
+                value["ID_SAMPLE"].asInt(),
+                value["ID_TUMOUR"].asInt(),
+                resolveSiteType(value),
+                resolveHistologySite(value),
+                value["FRAGMENT_ID"].asString(),
+                value["GENOME_VERSION"].asString(),
+                value["CHROMOSOME"].asInt(),  //Integer is OK here (x=23, y=24)
+                value["POSITION"].asInt(),
+                when (value["STRAND"].asInt()) {
+                    1 -> "+"
+                    else ->"-"
                 },
-                record.get("GENE_NAME"),
-                record.get("METHYLATION"),
-                record.get("AVG_BETA_VALUE_NORMAL").toFloat(),
-                record.get("BETA_VALUE").toFloat(),
-                record.get("TWO_SIDED_P_VALUE").toDouble()
+                value["GENE_NAME"].asString(),
+                value["METHYLATION"].asString(),
+                value["AVG_BETA_VALUE_NORMAL"].asFloat(),
+                value["BETA_VALUE"].asFloat(),
+                value["TWO_SIDED_P_VALUE"].asDouble()
             )
 
-    }
-}
+        private fun resolveSiteType(value: Value): CosmicType =
+            CosmicType(
+                "Site", value["PRIMARY_SITE"].asString(),
+                value["SITE_SUBTYPE_1"].asString(),
+                value["SITE_SUBTYPE_2"].asString(),
+                value["SITE_SUBTYPE_3"].asString()
+            )
 
-fun main() {
-    val path = Paths.get("./data/sample_CosmicCompleteDifferentialMethylation.tsv")
-    println("Processing csv file ${path.fileName}")
-    var recordCount = 0
-    TsvRecordSequenceSupplier(path).get().chunked(500)
-        .forEach { it ->
-            it.stream()
-                .map { CosmicDiffMethylation.parseCsvRecord(it) }
-                .forEach { methyl ->
-                    println(
-                        "Tumor Id: ${methyl.tumorId}  Gene name: ${methyl.geneName} " +
-                                " Chromosome: ${methyl.chromosome}   Position: ${methyl.position}" +
-                                " Sample Id: ${methyl.sampleId}  Histology: ${methyl.histology.primary}" +
-                                " Methylation: ${methyl.methylation} "
-                    )
-                    recordCount += 1
-                }
-        }
-    println("Record count = $recordCount")
+        private fun resolveHistologySite(value: Value): CosmicType =
+            CosmicType(
+                "Histology", value["PRIMARY_HISTOLOGY"].asString(),
+                value["HISTOLOGY_SUBTYPE_1"].asString(),
+                value["HISTOLOGY_SUBTYPE_2"].asString(),
+                value["HISTOLOGY_SUBTYPE_3"].asString()
+            )
+
+        private fun resolveMutationType(value: Value): CosmicType =
+            CosmicType(
+                "Mutation", value["MUT_TYPE"].asString()
+            )
+    }
 }

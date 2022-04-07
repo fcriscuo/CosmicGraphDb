@@ -13,6 +13,22 @@ data class CosmicTumor(
     val cosmicMutation: CosmicMutation
 ) {
     companion object : AbstractModel {
+        const val nodename = "tumor"
+
+        fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +
+                " {tumor_id = $tumorId, created: datetime()} " +
+                " YIELD node as ${CosmicTumor.nodename}  \n"
+
+        fun generateChildRelationshipCypher (tumorId: Int, childLabel: String ) :String{
+            val relationship = "HAS_".plus(childLabel.uppercase())
+            val relname = "rel_tumor"
+            return  generatePlaceholderCypher(tumorId).plus(
+            " CALL apoc.merge.relationship (${CosmicTumor.nodename}, '$relationship', " +
+                    " {}, {created: datetime()}, " +
+                    " $childLabel, {} YIELD rel AS $relname \n")
+        }
+
+
         fun parseCsvRecord(record: CSVRecord): CosmicTumor =
             CosmicTumor(
                 record.get("ID_tumour").toInt(), record.get("ID_sample").toInt(),

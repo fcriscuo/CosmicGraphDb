@@ -9,10 +9,6 @@ class TestCosmicClassification {
 
     fun parseClassificationFile(filename: String) {
         val LIMIT = 100L
-//        val cypher = "CALL apoc.load.csv(\"$filename\") " +
-//                "YIELD lineNo, map RETURN map;"
-//        val records = Neo4jConnectionService.executeCypherQuery(cypher);
-//        records.stream()
         ApocFileReader.processDelimitedFile(filename).stream()
             .limit(LIMIT)
             .map { record -> record.get("map") }

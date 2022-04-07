@@ -16,10 +16,18 @@ data class CosmicBreakpoint(
     val nodeName = "break_node"
     val breakpointId = mutationId
 
-    fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
-            " { sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}, " +
-            " sample_id: ${sampleId.toString()}, tumor_id: ${tumorId.toString()}, " +
-            " mutation_id: ${mutationId.toString()}, " +
+    fun generateCosmicBreakpointCypher() =
+        generateMergeCypher()
+            .plus(site.generateParentRelationshipCypher(nodeName))
+            .plus(histology.generateParentRelationshipCypher(nodeName))
+            .plus(mutationType.generateParentRelationshipCypher(nodeName))
+            .plus(generateSampleRelationshipCypher())
+            .plus(generateMutationRelationshipCypher())
+            .plus(generateTumorRelationshipCypher())
+            .plus(" RETURN $nodeName")
+
+   private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
+            " { mutation_id: ${mutationId.toString()}, " +
             "chromosome_from: \"$chromosomeFrom\" , " +
             " location_from_min: ${locationFromMin.toString()}," +
             " location_from_max: ${locationFromMax.toString()}, " +
@@ -31,7 +39,25 @@ data class CosmicBreakpoint(
             "  pubmed_id: ${pubmedId.toString()}, study_id: ${studyId.toString()}," +
             " created: datetime() }," +
             " { last_mod: datetime()}) YIELD node AS $nodeName \n "
+    /*
+      Function to generate the Cypher commands to create a
+      Tumor - [HAS_BREAKPOINT] -> Breakpoint relationship for this CNA
+       */
+    private fun generateTumorRelationshipCypher(): String =
+        CosmicTumor.generateChildRelationshipCypher(tumorId, nodeName)
 
+    /*
+    Function to generate Cypher command to establish
+    a Sample -[HAS_BBREAKPOINT] -> Breakpoint relationship
+     */
+    private fun generateSampleRelationshipCypher(): String =
+        CosmicSample.generateChildRelationshipCypher(sampleId, nodeName)
+    /*
+    Private function to generate Cypher for
+    Mutation -[HAS_BREAKPOINT] -> Breakpoint relationship
+     */
+    private fun generateMutationRelationshipCypher(): String =
+        CosmicMutation.generateChildRelationshipCypher(mutationId,nodeName)
 
     companion object : AbstractModel {
 

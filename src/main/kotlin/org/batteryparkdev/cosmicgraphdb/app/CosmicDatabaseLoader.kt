@@ -4,9 +4,8 @@ import com.google.common.base.Stopwatch
 import com.google.common.flogger.FluentLogger
 import kotlinx.coroutines.*
 import org.batteryparkdev.cosmicgraphdb.loader.*
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
-import org.batteryparkdev.cosmicgraphdb.neo4j.loader.*
 import org.batteryparkdev.cosmicgraphdb.property.DatafilePropertiesService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.pubmed.loader.CosmicPubMedArticleLoader
 import kotlin.coroutines.CoroutineContext
 
@@ -189,7 +188,7 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
 
     fun loadBreakpoints(job6Result:String): String {   // job 10
         logger.atInfo().log("10 - Starting Breakpoints loader")
-        CosmicBreakpointLoader.processCosmicBreakpointData(cosmicBreakpointsFile)
+        CosmicBreakpointLoader.loadCosmicBreakpointData(cosmicBreakpointsFile)
         return "Result of CosmicBreakpoints loaded"
     }
 }

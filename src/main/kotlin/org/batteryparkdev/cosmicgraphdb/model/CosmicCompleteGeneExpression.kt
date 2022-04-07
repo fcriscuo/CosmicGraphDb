@@ -1,13 +1,11 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
-import java.nio.file.Paths
+import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.neo4j.driver.Value
 
-// SAMPLE_ID	SAMPLE_NAME	GENE_NAME	REGULATION	Z_SCORE	ID_STUDY
 // n.b The GENE_NAME column really contains the gene symbol
 data class CosmicCompleteGeneExpression(
-    val sampleId:Int,
+    val sampleId: Int,
     val geneSymbol: String,
     val regulation: String,
     val zScore: Float,
@@ -15,38 +13,34 @@ data class CosmicCompleteGeneExpression(
     val key:Int
     )
 {
+    val nodeName = "expression"
+
+    fun generateCosmicSampleCypher(): String =
+        generateMergeCypher().plus(generateGeneRelationshipCypher())
+            .plus(generateSampleRelationshipCypher())
+            .plus(" RETURN $nodeName")
+
+    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CompleteGeneExpression\"], " +
+            "  {key: $key, regulation: ${Neo4jUtils.formatPropertyValue(regulation)}," +
+            " z_score: $zScore, study_id: $studyId, created: datetime} " +
+            " { last_mod: datetime()}) YIELD node AS $nodeName \n"
+
+    private fun generateGeneRelationshipCypher() =
+        CosmicGeneCensus.generateHasGeneRelationshipCypher(geneSymbol,nodeName)
+
+    private fun generateSampleRelationshipCypher() =
+        CosmicSample.generateChildRelationshipCypher(sampleId, nodeName)
+
     companion object: AbstractModel {
 
-        fun parseCsvRecord(record: CSVRecord): CosmicCompleteGeneExpression =
-            CosmicCompleteGeneExpression(
-                record.get("SAMPLE_ID").toInt(),
-                record.get("GENE_NAME"),  // really gene symbol
-                record.get("REGULATION"), record.get("Z_SCORE").toFloat(),
-                record.get("ID_STUDY").toInt(),
-                (record.get("GENE_NAME")+record.get("SAMPLE_ID")).hashCode()
-            )
+         fun parseValueMap(value: Value): CosmicCompleteGeneExpression =
+             CosmicCompleteGeneExpression(value["SAMPLE_ID"].asInt(),
+                 value["GENE_NAME"].asString(),
+                 value["REGULATION"].asString(),
+                 value["Z_SCORE"].asFloat(),
+                 value["ID_STUDY"].asInt(),
+                 value["GENE_NAME"].asString().plus(value["SAMPLE_ID"].asInt().toString()).hashCode()
+             )
+         }
 
-    }
-}
-
-fun main() {
-    val path = Paths.get("./data/sample_CosmicCompleteGeneExpression.tsv")
-    println("Processing csv file ${path.fileName}")
-    var recordCount = 0
-    TsvRecordSequenceSupplier(path).get().chunked(100)
-        .forEach { it ->
-            it.stream()
-                .limit(100L)
-                .map { CosmicCompleteGeneExpression.parseCsvRecord(it) }
-                .forEach { exp ->
-                    println(
-                        "Sample: ${exp.sampleId}  Gene name: ${exp.geneSymbol} " +
-                                " Regulation: ${exp.regulation} " +
-                                " z-Score: ${exp.zScore}  Study Id: ${exp.studyId} " +
-                                " Key: ${exp.key}"
-                    )
-                    recordCount += 1
-                }
-        }
-    println("Record count = $recordCount")
 }

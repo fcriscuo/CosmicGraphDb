@@ -2,8 +2,9 @@ package org.batteryparkdev.cosmicgraphdb.dao
 
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.model.CosmicDiffMethylation
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
+
 
 private val logger: FluentLogger = FluentLogger.forEnclosingClass();
 /// n.b. chromosome values are numeric (x=23, y=24)

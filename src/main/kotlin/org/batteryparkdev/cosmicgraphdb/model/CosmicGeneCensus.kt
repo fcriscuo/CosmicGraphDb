@@ -3,6 +3,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.io.CsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import java.nio.file.Paths
 
 /*
@@ -15,6 +16,7 @@ Other Syndrome,Synonyms
  */
 
 data class CosmicGeneCensus(
+
     val geneSymbol:String, val geneName:String, val entrezGeneId: String,
     val genomeLocation:String, val tier:Int=0, val hallmark:Boolean = false,
     val chromosomeBand:String, val somatic:Boolean = false, val germline: Boolean,
@@ -24,7 +26,35 @@ data class CosmicGeneCensus(
     val translocationPartnerList: List<String>,
     val otherGermlineMut: String, val otherSyndromeList: List<String>, val synonymList: List<String>
 ) {
+
     companion object : AbstractModel {
+        const val nodename = "gene"
+        /*
+        "CALL apoc.merge.node([\"CosmicCompleteCNA\"], " +
+            " { cnv_id: ${cnvId.toString()}, gene_id: ${geneId.toString()}, " +
+            " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
+            " sample_id: ${sampleId.toString()}, tumor_id: ${tumorId.toString()}, " +
+            " sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}," +
+            " total_cn: ${totalCn.toString()}, minor_allele: ${Neo4jUtils.formatPropertyValue(minorAllele)}," +
+            " study_id: ${studyId.toString()}, grch: \"$grch\"," +
+            " chromosome_start_stop: \"$chromosomeStartStop\",created: datetime()  " +
+            " } { last_mod: datetime()}) YIELD node AS $nodeName \n"
+         */
+        fun generatePlaceholderCypher(geneSymbol:String): String =" CALL apoc.merge.node([\"CosmicGene\"]," +
+                " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, created: datetime()} " +
+                " YIELD node as ${CosmicGeneCensus.nodename} \n"
+
+        fun generateHasGeneRelationshipCypher(geneSymbol:String, parentNodeName: String): String {
+            val relationship = " HAS_GENE"
+            val relName = "rel_gene"
+            return generatePlaceholderCypher(geneSymbol).plus(
+                    " CALL apoc.merge.relationship ($parentNodeName, '$relationship' ," +
+                    " {}, {created: datetime()}," +
+                    " ${CosmicGeneCensus.nodename}, {}) YIELD rel AS $relName \n")
+        }
+
+
+
         fun parseCsvRecord (record: CSVRecord): CosmicGeneCensus {
             val geneSymbol =  record.get("Gene Symbol")
             val geneName = record.get("Name")

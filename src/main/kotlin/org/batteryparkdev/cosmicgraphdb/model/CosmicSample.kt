@@ -41,8 +41,27 @@ data class CosmicSample(
     val cosmicPhenotypeId: String
     )
 {
-    companion object : AbstractModel {
 
+    companion object : AbstractModel {
+        const val nodename = "sample"
+
+        /*
+        Functions to generate Cypher a placeholder CosmicSample node if necessary
+        and Cypher to create a Sample -[HAS child] -> child  relationship
+         */
+        private fun generateSamplePlaceholderCypher(sampleId: Int): String = " CALL apoc.merge.node( [\"CosmicSample\"], " +
+                "{sample_id: $sampleId, created: datetime()} " +
+                " YIELD node as ${CosmicSample.nodename} \n"
+
+        fun generateChildRelationshipCypher( sampleId: Int, childLabel: String) :String {
+            val relationship = "HAS_".plus(childLabel.uppercase())
+            val relname = "rel_sample"
+            return  generateSamplePlaceholderCypher(sampleId).plus(
+                "CALL apoc.merge.relationship( ${CosmicSample.nodename}, $relationship, " +
+                        " {}, {created: datetime()}, $childLabel,{} " +
+                        " YIELD rel AS $relname \n"
+            )
+        }
 
         fun parseCsvRecord(record: CSVRecord): CosmicSample =
             CosmicSample(

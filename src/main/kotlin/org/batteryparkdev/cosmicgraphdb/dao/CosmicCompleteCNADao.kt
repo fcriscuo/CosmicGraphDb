@@ -2,20 +2,29 @@ package org.batteryparkdev.cosmicgraphdb.dao
 
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteCNA
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.createCosmicGeneNode
+import org.batteryparkdev.cosmicgraphdb.model.CosmicGeneCensus
+import org.batteryparkdev.cosmicgraphdb.model.CosmicTumor
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 
 private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
-fun loadCosmicCompleteCNA(cna: CosmicCompleteCNA): String =
-    Neo4jConnectionService.executeCypherCommand(
-        "MERGE (cna:CosmicCompleteCNA{cnv_id: ${cna.cnvId}}) " +
-                " SET cna +={ sample_name: \"${cna.sampleName}\", total_cn: ${cna.totalCn}, " +
-                " minor_allele: \"${cna.minorAllele}\", mutation_type: \"${cna.mutationType}\"," +
-                " study_id: ${cna.studyId}, grch: \"${cna.grch}\", " +
-                " chromosome_start_stop: \"${cna.chromosomeStartStop}\" }" +
-                " RETURN cna.cnv_id"
-    )
+fun loadCosmicCompleteCNA(cna: CosmicCompleteCNA): Int {
+    val cypher = cna.generateCompleteCNACypher()
+        .plus(cna.site.generateMergeCypher())
+        .plus(cna.site.generateParentRelationshipCypher(cna.nodeName))
+        .plus(cna.histology.generateMergeCypher())
+        .plus(cna.histology.generateParentRelationshipCypher(cna.nodeName))
+        .plus(cna.mutationType.generateMergeCypher())
+        .plus(cna.mutationType.generateParentRelationshipCypher(cna.nodeName))
+        .plus(CosmicGeneCensus.generateHasGeneRelationshipCypher(cna.geneSymbol, cna.nodeName))
+        .plus(CosmicTumor.generateChildRelationshipCypher(cna.tumorId, cna.nodeName))
+        .plus(" RETURN ${cna.nodeName}")
+    println("CNA cypher: $cypher")
+    val node = Neo4jConnectionService.executeCypherCommand(cypher)
+    return cna.cnvId
+}
+
 
 fun createRelationshipToGene(cnvId: Int, geneSymbol: String) {
     // create basic CosmicGene node if necessary
@@ -27,7 +36,7 @@ fun createRelationshipToGene(cnvId: Int, geneSymbol: String) {
     )
 }
 
-fun createRelationshipFromTumor(cnvId: Int, tumorId: Int) {
+fun createRelationshipFromTumor(tumorId: Int): String {
     createCosmicTumorNode(tumorId)
     Neo4jConnectionService.executeCypherCommand(
         "MATCH (cna:CosmicCompleteCNA), (ct:CosmicTumor) WHERE " +

@@ -1,7 +1,8 @@
 package org.batteryparkdev.cosmicgraphdb.dao
 
 import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteGeneExpression
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+
 
 /*
 Function to load data for a CompleteGeneExpression object into a Neo4j node
