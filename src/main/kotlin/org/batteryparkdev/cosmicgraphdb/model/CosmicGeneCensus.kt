@@ -1,95 +1,126 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.io.CsvRecordSequenceSupplier
 import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
-import java.nio.file.Paths
-
-/*
-Gene Symbol,Name, Entrez GeneId,Genome Location,Tier
-,Hallmark,Chr Band,Somatic,Germline,Tumour Types(Somatic),
-Tumour Types(Germline),Cancer Syndrome,Tissue Type,
-Molecular Genetics,Role in Cancer,Mutation Types,
-Translocation Partner,Other Germline Mut,
-Other Syndrome,Synonyms
- */
+import org.neo4j.driver.Value
 
 data class CosmicGeneCensus(
 
-    val geneSymbol:String, val geneName:String, val entrezGeneId: String,
-    val genomeLocation:String, val tier:Int=0, val hallmark:Boolean = false,
-    val chromosomeBand:String, val somatic:Boolean = false, val germline: Boolean,
+    val geneSymbol: String, val geneName: String, val entrezGeneId: String,
+    val genomeLocation: String, val tier: Int = 0, val hallmark: Boolean = false,
+    val chromosomeBand: String, val somatic: Boolean = false, val germline: Boolean,
     val somaticTumorTypeList: List<String>, val germlineTumorTypeList: List<String>,
-    val cancerSyndrome:String, val tissueTypeList:List<String>, val molecularGenetics: String,
-    val roleInCancerList:List<String>, val mutationTypeList: List<String>,
+    val cancerSyndrome: String, val tissueTypeList: List<String>, val molecularGenetics: String,
+    val roleInCancerList: List<String>, val mutationTypeList: List<String>,
     val translocationPartnerList: List<String>,
     val otherGermlineMut: String, val otherSyndromeList: List<String>, val synonymList: List<String>
 ) {
+    fun generateCosmicGeneCypher(): String =
+        generateMergeCypher()
+            .plus(
+                CosmicAnnotationFunctions.generateAnnotationCypher(
+                    somaticTumorTypeList,
+                    "SomaticTumorType", CosmicTumor.nodename
+                )
+            )
+            .plus(
+                CosmicAnnotationFunctions.generateAnnotationCypher(
+                    germlineTumorTypeList, "GermlineTumorType",
+                    CosmicGeneCensus.nodename
+                )
+            )
+            .plus(
+                CosmicAnnotationFunctions.generateAnnotationCypher(
+                    tissueTypeList,
+                    "TissueType", CosmicGeneCensus.nodename
+                )
+            )
+            .plus(
+                CosmicAnnotationFunctions.generateAnnotationCypher(
+                    roleInCancerList,
+                    "RoleInCancer", CosmicGeneCensus.nodename
+                )
+            )
+            .plus(
+                CosmicAnnotationFunctions.generateAnnotationCypher(
+                    mutationTypeList, "MutationType",
+                    CosmicGeneCensus.nodename
+                )
+            )
+            .plus(
+                CosmicAnnotationFunctions.generateAnnotationCypher(
+                    otherSyndromeList, "OtherSyndrome",
+                    CosmicGeneCensus.nodename
+                )
+            )
+            .plus(
+                CosmicAnnotationFunctions.generateAnnotationCypher(
+                    synonymList, "Synonym",
+                    CosmicGeneCensus.nodename
+                )
+            )
+            .plus(CosmicAnnotationFunctions.generateTranslocationCypher(translocationPartnerList))
+            .plus(" RETURN ${CosmicGeneCensus.nodename}")
+
+    private fun generateMergeCypher(): String =
+        "CALL apoc.merge.node( [\"CosmicGene, CosmicCensus\"]," +
+                "{  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}," +
+                " gene_name: ${Neo4jUtils.formatPropertyValue(geneName)}," +
+                " entrez_gene_id: ${Neo4jUtils.formatPropertyValue(entrezGeneId)}," +
+                " genome_location: ${Neo4jUtils.formatPropertyValue(genomeLocation)}," +
+                " tier: $tier, hallmark: $hallmark, " +
+                " chromosome_band: ${Neo4jUtils.formatPropertyValue(chromosomeBand)}, " +
+                " somatic: $somatic, germline: $germline," +
+                " cancer_syndrome: ${Neo4jUtils.formatPropertyValue(cancerSyndrome)}," +
+                " molecular_genetics ${Neo4jUtils.formatPropertyValue(molecularGenetics)}," +
+                " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}," +
+                "  created: datetime()} YIELD NODE as ${CosmicGeneCensus.nodename} \n"
 
     companion object : AbstractModel {
         const val nodename = "gene"
-        /*
-        "CALL apoc.merge.node([\"CosmicCompleteCNA\"], " +
-            " { cnv_id: ${cnvId.toString()}, gene_id: ${geneId.toString()}, " +
-            " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
-            " sample_id: ${sampleId.toString()}, tumor_id: ${tumorId.toString()}, " +
-            " sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}," +
-            " total_cn: ${totalCn.toString()}, minor_allele: ${Neo4jUtils.formatPropertyValue(minorAllele)}," +
-            " study_id: ${studyId.toString()}, grch: \"$grch\"," +
-            " chromosome_start_stop: \"$chromosomeStartStop\",created: datetime()  " +
-            " } { last_mod: datetime()}) YIELD node AS $nodeName \n"
-         */
-        fun generatePlaceholderCypher(geneSymbol:String): String =" CALL apoc.merge.node([\"CosmicGene\"]," +
+
+        private fun generatePlaceholderCypher(geneSymbol: String): String = " CALL apoc.merge.node([\"CosmicGene\"]," +
                 " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, created: datetime()} " +
                 " YIELD node as ${CosmicGeneCensus.nodename} \n"
 
-        fun generateHasGeneRelationshipCypher(geneSymbol:String, parentNodeName: String): String {
+        fun generateHasGeneRelationshipCypher(geneSymbol: String, parentNodeName: String): String {
             val relationship = " HAS_GENE"
             val relName = "rel_gene"
             return generatePlaceholderCypher(geneSymbol).plus(
-                    " CALL apoc.merge.relationship ($parentNodeName, '$relationship' ," +
-                    " {}, {created: datetime()}," +
-                    " ${CosmicGeneCensus.nodename}, {}) YIELD rel AS $relName \n")
-        }
-
-
-
-        fun parseCsvRecord (record: CSVRecord): CosmicGeneCensus {
-            val geneSymbol =  record.get("Gene Symbol")
-            val geneName = record.get("Name")
-            val entrezGeneId = record.get("Entrez GeneId")
-            val genomeLocation = record.get("Genome Location")
-            val tier = record.get("Tier").toInt()
-            val hallmark = (!record.get("Hallmark").isNullOrEmpty() &&
-                    record.get("Hallmark").lowercase() == "yes")
-            val chromosomeBand = record.get("Chr Band")
-            val somatic = (!record.get("Somatic").isNullOrEmpty() &&
-                    record.get("Somatic").lowercase() == "yes")
-            val germline = (!record.get("Germline").isNullOrEmpty() &&
-                    record.get("Germline").lowercase() == "yes")
-            val somaticTumorTypeList = processTumorTypes(record.get("Tumour Types(Somatic)"))
-            val germlineTumorTypeList = processTumorTypes(record.get("Tumour Types(Germline)"))
-            val cancerSyndrome = record.get("Cancer Syndrome")?: ""
-            val tissueTypeList = parseStringOnComma(record.get("Tissue Type"))
-            val molecularGenetics = record.get("Molecular Genetics") ?: ""
-            val roleInCancerList = parseStringOnComma(record.get("Role in Cancer") )
-            val mutationTypeList = parseStringOnComma(record.get("Mutation Types") )
-            val translocationPartnerList = parseStringOnComma(record.get("Translocation Partner"))
-            val otherGermlineMut = record.get("Other Germline Mut")
-            val otherSyndromeList = parseStringOnSemiColon(record.get("Other Syndrome"))
-            val synonymList = parseStringOnComma(record.get("Synonyms"))
-            return CosmicGeneCensus( geneSymbol,geneName, entrezGeneId, genomeLocation,tier,
-                hallmark, chromosomeBand, somatic, germline, somaticTumorTypeList,
-                germlineTumorTypeList, cancerSyndrome, tissueTypeList, molecularGenetics,
-                roleInCancerList, mutationTypeList, translocationPartnerList,
-                otherGermlineMut, otherSyndromeList,synonymList
+                " CALL apoc.merge.relationship ($parentNodeName, '$relationship' ," +
+                        " {}, {created: datetime()}," +
+                        " ${CosmicGeneCensus.nodename}, {}) YIELD rel AS $relName \n"
             )
         }
+
+        fun parseValueMap(value: Value): CosmicGeneCensus =
+            CosmicGeneCensus(
+                value["Gene Symbol"].asString(),
+                value["Name"].asString(),
+                value["Entrez GeneId"].asString(),
+                value["Genome Location"].asString(),
+                value["Tier"].asString().toInt(),
+                value["Hallmark"].toString().isNotBlank(),
+                value["Chr Band"].toString(),
+                value["Somatic"].toString().isNotBlank(),
+                value["Germline"].toString().isNotBlank(),
+                processTumorTypes(value["Tumour Types(Somatic)"].asString()),
+                processTumorTypes(value["Tumour Types(Germline)"].asString()),
+                value["Cancer Syndrome"].asString(),
+                parseStringOnComma(value["Tissue Type"].asString()),
+                value["Molecular Genetics"].toString(),
+                parseStringOnComma(value["Role in Cancer"].asString()),
+                parseStringOnComma(value["Mutation Types"].asString()),
+                parseStringOnComma(value["Translocation Partner"].asString()),
+                value["Other Germline Mut"].asString(),
+                parseStringOnSemiColon(value["Other Syndrome"].asString()),
+                parseStringOnComma(value["Synonyms"].asString())
+            )
+
         /*
-    Function to resolve a tumor type abbeviationd
+    Function to resolve a tumor type abbreviations
      */
-        fun processTumorTypes(tumorTypes:String):List<String>  {
+        private fun processTumorTypes(tumorTypes: String): List<String> {
             val tumorTypeList = mutableListOf<String>()
             parseStringOnComma(tumorTypes).forEach {
                 tumorTypeList.add(TumorTypeService.resolveTumorType(it))
@@ -97,28 +128,5 @@ data class CosmicGeneCensus(
             return tumorTypeList.toList()  // make List immutable
         }
     }
-
-
 }
 
-fun main() {
-    val path = Paths.get("./data/cancer_gene_census.csv")
-    println("Processing csv file ${path.fileName}")
-    var recordCount = 0
-    CsvRecordSequenceSupplier(path).get().chunked(500)
-        .forEach { it ->
-            it.stream()
-                .map { CosmicGeneCensus.parseCsvRecord(it) }
-                .forEach {
-                        cgc -> println("Gene Symbol= ${cgc.geneSymbol} " +
-                        "  role in cancer = ${cgc.roleInCancerList} " +
-                        "  tissue type = ${cgc.tissueTypeList} +" +
-                        "  translocation partner(s) = ${cgc.translocationPartnerList}\n" +
-                        "  mutation type(s) = ${cgc.mutationTypeList}    somatic tumor types = ${cgc.somaticTumorTypeList} \n" +
-                        "  cancer syndrome = ${cgc.cancerSyndrome}   other syndromes= ${cgc.otherSyndromeList}\n" +
-                        "  other germline mut = ${cgc.otherGermlineMut}  synonyms =  ${cgc.synonymList}")
-                    recordCount += 1
-                }
-        }
-    println("Record count = $recordCount")
-}
