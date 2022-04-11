@@ -20,7 +20,7 @@ data class CosmicGeneCensus(
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     somaticTumorTypeList,
-                    "SomaticTumorType", CosmicTumor.nodename
+                    "SomaticTumorType", CosmicGeneCensus.nodename
                 )
             )
             .plus(
@@ -63,24 +63,24 @@ data class CosmicGeneCensus(
             .plus(" RETURN ${CosmicGeneCensus.nodename}")
 
     private fun generateMergeCypher(): String =
-        "CALL apoc.merge.node( [\"CosmicGene, CosmicCensus\"]," +
-                "{  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}," +
-                " gene_name: ${Neo4jUtils.formatPropertyValue(geneName)}," +
+        "CALL apoc.merge.node( [\"CosmicGene\", \"CosmicCensus\"]," +
+                "{  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
+                " {gene_name: ${Neo4jUtils.formatPropertyValue(geneName)}," +
                 " entrez_gene_id: ${Neo4jUtils.formatPropertyValue(entrezGeneId)}," +
                 " genome_location: ${Neo4jUtils.formatPropertyValue(genomeLocation)}," +
                 " tier: $tier, hallmark: $hallmark, " +
-                " chromosome_band: ${Neo4jUtils.formatPropertyValue(chromosomeBand)}, " +
-                " somatic: $somatic, germline: $germline," +
+                " chromosome_band: $chromosomeBand, " +
+                " somatic: $somatic, germline: $germline, " +
                 " cancer_syndrome: ${Neo4jUtils.formatPropertyValue(cancerSyndrome)}," +
-                " molecular_genetics ${Neo4jUtils.formatPropertyValue(molecularGenetics)}," +
+                " molecular_genetics: $molecularGenetics, " +
                 " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}," +
-                "  created: datetime()} YIELD node as ${CosmicGeneCensus.nodename} \n"
+                "  created: datetime()}) YIELD node as ${CosmicGeneCensus.nodename} \n"
 
     companion object : AbstractModel {
         const val nodename = "gene"
 
         private fun generatePlaceholderCypher(geneSymbol: String): String = " CALL apoc.merge.node([\"CosmicGene\"]," +
-                " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, created: datetime()} " +
+                " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, created: datetime()} ) " +
                 " YIELD node as ${CosmicGeneCensus.nodename} \n"
 
         fun generateHasGeneRelationshipCypher(geneSymbol: String, parentNodeName: String): String {

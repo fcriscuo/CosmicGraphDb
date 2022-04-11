@@ -1,52 +1,67 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
-import java.nio.file.Paths
+import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.neo4j.driver.Value
 
 /*
 COSMIC_ID	COSMIC_GENE_NAME	Entrez_id	HGNC_ID	Mutated?	Cancer_census?	Expert Curated?
  */
-data class CosmicHGNC (
-    val cosmicId: String,
-    val cosmicGeneName: String,
-    val entrezId: String,
-    val hgncId: String,
+data class CosmicHGNC(
+    val cosmicId: Int,
+    val hgncGeneSymbol: String,
+    val entrezId: Int,
+    val hgncId: Int,
     val isMutated: Boolean,
     val isCancerCensus: Boolean,
-    val isExpertCurrated:Boolean
-        )
-{
-    companion object: AbstractModel {
-        fun parseCsvRecord(record: CSVRecord): CosmicHGNC =
+    val isExpertCurrated: Boolean
+) {
+
+    fun generateCosmicHGNCCypher(): String =
+        generateMergeCypher()
+            .plus(generateGeneRelationshipCypher())
+            .plus(generateEntrezRelationshipCypher())
+            .plus(" RETURN ${CosmicHGNC.nodename}")
+
+    private fun generateMergeCypher(): String =
+        " CALL apoc.merge.node( [\"CosmicHGNC\"], " +
+                " {hgnc_id: $hgncId}," +
+                " {cosmic_id: $cosmicId, gene_symbol: ${Neo4jUtils.formatPropertyValue(hgncGeneSymbol)}, " +
+                " entrez_id: $entrezId, is_mutaated: $isMutated, is_cancer_census: $isCancerCensus, " +
+                " is_expert_currated: $isExpertCurrated, " +
+                "  created: datetime()}) YIELD node as ${CosmicHGNC.nodename} \n"
+
+    /*
+   Function to generate Cypher commands to create a
+   HGNC - [HAS_GENE] -> Gene relationship
+    */
+    private fun generateGeneRelationshipCypher(): String =
+        when (isCancerCensus) {
+            true -> CosmicGeneCensus.generateHasGeneRelationshipCypher(hgncGeneSymbol, CosmicHGNC.nodename)
+            false -> " "
+        }
+
+    //HGNC - [HAS_ENTREZ]  -> Entrez  relationship
+    private fun generateEntrezRelationshipCypher(): String =
+        when (entrezId > 0) {
+            true -> Entrez.generateHasEntrezRelationship(entrezId, CosmicHGNC.nodename)
+            false -> " "
+        }
+
+    companion object : AbstractModel {
+        const val nodename = "hgnc"
+
+        /*
+         convertYNtoBoolean(record.get("Mutated?")),
+         */
+        fun parseValueMap(value: Value): CosmicHGNC =
             CosmicHGNC(
-                record.get("COSMIC_ID"),
-                record.get("COSMIC_GENE_NAME"),
-                record.get("Entrez_id"),
-                record.get("HGNC_ID"),
-                convertYNtoBoolean(record.get("Mutated?")),
-                convertYNtoBoolean(record.get("Cancer_census?")),
-                convertYNtoBoolean(record.get("Expert Curated?"))
+                value["COSMIC_ID"].asString().toInt(),
+                value["COSMIC_GENE_NAME"].asString(),
+                value["Entrez_id"].asString().toInt(),
+                value["HGNC_ID"].asString().toInt(),
+                convertYNtoBoolean(value["Mutated?"].asString()),
+                convertYNtoBoolean(value["Cancer_census?"].asString()),
+                convertYNtoBoolean(value["Expert Curated?"].asString())
             )
     }
-}
-fun main() {
-    val path = Paths.get("./data/CosmicHGNC.tsv")
-    println("Processing csv file ${path.fileName}")
-    var recordCount = 0
-    TsvRecordSequenceSupplier(path).get().chunked(500)
-        .forEach { it ->
-            it.stream()
-                .map { CosmicHGNC.parseCsvRecord(it) }
-                .forEach { hgnc ->
-                    println(
-                        "Cosmic Id: ${hgnc.cosmicId}  Gene name: ${hgnc.cosmicGeneName} " +
-                                " Entrez Id: ${hgnc.entrezId} " +
-                                " HGNC Id: ${hgnc.hgncId}  Is mutated?: ${hgnc.isMutated}" +
-                                " Is Census: ${hgnc.isCancerCensus}  Is Currated?: ${hgnc.isExpertCurrated}"
-                    )
-                    recordCount += 1
-                }
-        }
-    println("Record count = $recordCount")
 }

@@ -1,7 +1,6 @@
-package org.batteryparkdev.pubmedref.neo4j
+package org.batteryparkdev.cosmicgraphdb.neo4j
 
 import com.google.common.flogger.FluentLogger
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 
 /*
@@ -14,9 +13,10 @@ val constraints by lazy {
         "CREATE CONSTRAINT unique_classification_id IF NOT EXISTS ON (c:CosmicClassification) ASSERT c.cosmic_phenotype_id IS UNIQUE",
         "CREATE CONSTRAINT unique_classification_type_id IF NOT EXISTS ON (t:ClassificationType) ASSERT t.type_id IS UNIQUE",
         "CREATE CONSTRAINT unique_cosmic_gene_symbol IF NOT EXISTS ON (cg: CosmicGene) ASSERT cg.gene_symbol IS UNIQUE",
+        "CREATE CONSTRAINT unique_cosmic_hgnc_id IF NOT EXISTS ON (hgnc: CosmicHGNC) ASSERT hgnc.hgnc_id IS UNIQUE",
         "CREATE CONSTRAINT unique_cosmic_hallmark_id IF NOT EXISTS ON (hm: CosmicHallmark) ASSERT hm.hallmark_id IS UNIQUE",
         "CREATE CONSTRAINT unique_cosmic_hallmark_collect IF NOT EXISTS ON (hmc: CosmicHallmarkCollection) ASSERT hmc.gene_symbol IS UNIQUE",
-        "CREATE CONSTRAINT unique_pubmed_id IF NOT EXISTS ON (pma:PubMedArticle) ASSERT pma.pubmed_id IS UNIQUE",
+        "CREATE CONSTRAINT unique_entrez_id IF NOT EXISTS ON (ent:Entrez) ASSERT ent.entrez_id IS UNIQUE",
         "CREATE CONSTRAINT unique_annotation_id IF NOT EXISTS ON (ca:CosmicAnnotation) ASSERT ca.annotation_value IS UNIQUE",
         "CREATE CONSTRAINT unique_type_id IF NOT EXISTS ON (ct:CosmicType) ASSERT ct.type_id IS UNIQUE",
         "CREATE CONSTRAINT unique_mutation_id IF NOT EXISTS ON (cm:CosmicMutation) ASSERT cm.mutation_id IS UNIQUE",

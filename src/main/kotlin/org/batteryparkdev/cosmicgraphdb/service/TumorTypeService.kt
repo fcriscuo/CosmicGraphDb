@@ -11,7 +11,7 @@ in the Abbreviations section
 
  */
 object TumorTypeService {
-    private val abbreviationsFilePath = Paths.get("./data/CosmicTumorTypeAbbreviations.tsv")
+    private val abbreviationsFilePath = Paths.get("/Volumes/SSD870/COSMIC_rel95/CosmicTumorTypeAbbreviations.tsv")
     private val abbreviationsMap = mutableMapOf<String, String>()
     init{
         TsvRecordSequenceSupplier(abbreviationsFilePath).get().forEach {

@@ -1,6 +1,5 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 
 object CosmicAnnotationFunctions {
@@ -20,11 +19,11 @@ object CosmicAnnotationFunctions {
                 cypher = cypher.plus(
                     " CALL apoc.merge.node( [\"CosmicAnnotation\"," +
                             " ${Neo4jUtils.formatPropertyValue(secondaryLabel)}]," +
-                            " {annotation_value: ${Neo4jUtils.formatPropertyValue(annon)}" +
-                            " created: datetime()} YIELD node as $annonName \n" +
+                            " {annotation_value: ${Neo4jUtils.formatPropertyValue(annon)}," +
+                            " created: datetime()}) YIELD node as $annonName \n" +
                             " CALL apoc.merge.relationship( $parentNodeName, '$relationship', " +
                             " {}, {created: datetime()}, " +
-                            " $annonName, {} YIELD rel AS $relName \n"
+                            " $annonName, {} ) YIELD rel AS $relName \n"
                 )
             }
         }
@@ -43,7 +42,8 @@ object CosmicAnnotationFunctions {
                 cypher = cypher.plus(
                     " CALL apoc.merge.node([\"CosmicGene\"], " +
                             " {  gene_symbol: ${Neo4jUtils.formatPropertyValue(trans)}, " +
-                            " created: datetime()} YIELD node as $transName} \n"
+                            " created: datetime()}) YIELD node" +
+                            " as $transName \n"
                 )
                     .plus(
                         " CALL apoc.merge.relationship(${CosmicGeneCensus.nodename}, " +
