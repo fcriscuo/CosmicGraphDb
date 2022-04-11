@@ -21,7 +21,7 @@ object CosmicAnnotationFunctions {
                     " CALL apoc.merge.node( [\"CosmicAnnotation\"," +
                             " ${Neo4jUtils.formatPropertyValue(secondaryLabel)}]," +
                             " {annotation_value: ${Neo4jUtils.formatPropertyValue(annon)}" +
-                            " created: datetime()} YIELD NODE as $annonName \n" +
+                            " created: datetime()} YIELD node as $annonName \n" +
                             " CALL apoc.merge.relationship( $parentNodeName, '$relationship', " +
                             " {}, {created: datetime()}, " +
                             " $annonName, {} YIELD rel AS $relName \n"
@@ -43,7 +43,7 @@ object CosmicAnnotationFunctions {
                 cypher = cypher.plus(
                     " CALL apoc.merge.node([\"CosmicGene\"], " +
                             " {  gene_symbol: ${Neo4jUtils.formatPropertyValue(trans)}, " +
-                            " created: datetime()} YIELD NODE as $transName} \n"
+                            " created: datetime()} YIELD node as $transName} \n"
                 )
                     .plus(
                         " CALL apoc.merge.relationship(${CosmicGeneCensus.nodename}, " +

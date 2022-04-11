@@ -74,7 +74,7 @@ data class CosmicGeneCensus(
                 " cancer_syndrome: ${Neo4jUtils.formatPropertyValue(cancerSyndrome)}," +
                 " molecular_genetics ${Neo4jUtils.formatPropertyValue(molecularGenetics)}," +
                 " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}," +
-                "  created: datetime()} YIELD NODE as ${CosmicGeneCensus.nodename} \n"
+                "  created: datetime()} YIELD node as ${CosmicGeneCensus.nodename} \n"
 
     companion object : AbstractModel {
         const val nodename = "gene"
