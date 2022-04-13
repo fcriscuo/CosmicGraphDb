@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import java.util.*
 
 data class CosmicType(
     val label: String,
@@ -8,12 +9,14 @@ data class CosmicType(
     val subtype2: String = "NS",
     val subtype3: String = "NS"
 ) {
-    // generate a unique identifier for database key
-    private fun generateIdentifier(): Int = (label + primary + subtype1 + subtype2 + subtype3).hashCode()
 
-    fun generateMergeCypher(): String =
+    fun generateCosmicTypeCypher(parentNodeName: String) =
+        generateMergeCypher()
+            .plus(generateParentRelationshipCypher(parentNodeName))
+
+    private fun generateMergeCypher(): String =
         " CALL apoc.merge.node([\"CosmicType\",\"${label}\"], " +
-                "{ cosmic_type_id: ${generateIdentifier()}}, " +
+                "{ cosmic_type_id: ${UUID.randomUUID().hashCode()}}, " +
                 "{ primary: \"${primary}\", " +
                 "  subtype1: \"${subtype1}\", " +
                 "  subtype2: \"${subtype2}\", " +
@@ -21,15 +24,13 @@ data class CosmicType(
                 " created: datetime() }," +
                 "{ last_mod: datetime()}) YIELD node AS ${label.lowercase()}\n "
 
-    fun generateParentRelationshipCypher(parentNodeName: String): String {
-        val relationship = " HAS_".plus(label.uppercase())
+    private fun generateParentRelationshipCypher(parentNodeName: String): String {
+        val relationship = "HAS_".plus(label.uppercase())
         val relName = "rel_".plus(label.lowercase())
         return generateMergeCypher().plus(
-        " CALL apoc.merge.relationship ($parentNodeName, '$relationship' ," +
-                " {}, {created: datetime()}," +
-                " ${label.lowercase()}, {}) YIELD rel AS $relName\n"
+            " CALL apoc.merge.relationship($parentNodeName, '$relationship' ," +
+                    " {}, {created: datetime()}," +
+                    " ${label.lowercase()}, {}) YIELD rel AS $relName\n"
         )
-
-
     }
 }

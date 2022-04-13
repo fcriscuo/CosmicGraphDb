@@ -84,10 +84,10 @@ data class CosmicGeneCensus(
                 " YIELD node as ${CosmicGeneCensus.nodename} \n"
 
         fun generateHasGeneRelationshipCypher(geneSymbol: String, parentNodeName: String): String {
-            val relationship = " HAS_GENE"
+            val relationship = "HAS_GENE"
             val relName = "rel_gene"
             return generatePlaceholderCypher(geneSymbol).plus(
-                " CALL apoc.merge.relationship ($parentNodeName, '$relationship' ," +
+                " CALL apoc.merge.relationship($parentNodeName, '$relationship' ," +
                         " {}, {created: datetime()}," +
                         " ${CosmicGeneCensus.nodename}, {}) YIELD rel AS $relName \n"
             )

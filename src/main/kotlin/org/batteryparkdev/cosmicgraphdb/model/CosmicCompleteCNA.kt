@@ -14,9 +14,12 @@ data class CosmicCompleteCNA(
 
     fun generateCompleteCNACypher():String =
         generateMergeCypher().plus(generateGeneRelationshipCypher())
+            .plus(site.generateCosmicTypeCypher(nodeName))
+            .plus(histology.generateCosmicTypeCypher(nodeName))
+            .plus(mutationType.generateCosmicTypeCypher(nodeName))
             .plus(generateTumorRelationshipCypher())
             .plus(generateSampleRelationshipCypher())
-            .plus(" RETURN $nodeName")
+            .plus(" RETURN node as $nodeName\n")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicCompleteCNA\"], " +
             " { cnv_id: ${cnvId.toString()},  " +

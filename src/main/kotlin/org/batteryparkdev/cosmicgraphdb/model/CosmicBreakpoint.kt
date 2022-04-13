@@ -1,6 +1,5 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.neo4j.driver.Value
 
@@ -18,13 +17,13 @@ data class CosmicBreakpoint(
 
     fun generateCosmicBreakpointCypher() =
         generateMergeCypher()
-            .plus(site.generateParentRelationshipCypher(nodeName))
-            .plus(histology.generateParentRelationshipCypher(nodeName))
-            .plus(mutationType.generateParentRelationshipCypher(nodeName))
+            .plus(site.generateCosmicTypeCypher(nodeName))
+            .plus(histology.generateCosmicTypeCypher(nodeName))
+            .plus(mutationType.generateCosmicTypeCypher(nodeName))
             .plus(generateSampleRelationshipCypher())
             .plus(generateMutationRelationshipCypher())
             .plus(generateTumorRelationshipCypher())
-            .plus(" RETURN $nodeName")
+            .plus(" RETURN node AS  $nodeName \n")
 
    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
             " { mutation_id: ${mutationId.toString()}, " +
@@ -84,7 +83,6 @@ data class CosmicBreakpoint(
                 chromTo, locationToMin, locationToMax, strandTo, pubmedId, studyId
             )
         }
-
 
         private fun resolveSiteType(value: Value): CosmicType =
             CosmicType(

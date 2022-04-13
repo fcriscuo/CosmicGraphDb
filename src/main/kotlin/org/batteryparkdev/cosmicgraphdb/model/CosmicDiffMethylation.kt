@@ -19,13 +19,11 @@ data class CosmicDiffMethylation(
 
     fun generateDiffMethylationCypher():String =
         generateMergeCypher()
-            .plus(site.generateParentRelationshipCypher(nodeName))
-            .plus(histology.generateParentRelationshipCypher(nodeName))
-            .plus(site.generateParentRelationshipCypher(nodeName))
-            .plus(histology.generateParentRelationshipCypher(nodeName))
+            .plus(site.generateCosmicTypeCypher(nodeName))
+            .plus(histology.generateCosmicTypeCypher(nodeName))
             .plus(CosmicTumor.generateChildRelationshipCypher(tumorId, nodeName))
             .plus(CosmicSample.generateChildRelationshipCypher(sampleId, nodeName))
-            .plus(" RETURN $nodeName")
+            .plus(" RETURN node as $nodeName")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicDiffMethylation\"], " +
             " { key = apoc.create.uuid(), study_id: $studyId, " +

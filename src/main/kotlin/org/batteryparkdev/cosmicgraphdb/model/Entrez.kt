@@ -1,5 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.neo4j.driver.Value
+
 data class Entrez (val entrezId: Int ){
 
     companion object{
@@ -18,5 +20,10 @@ data class Entrez (val entrezId: Int ){
                             " ${Entrez.nodename}, {}) YIELD rel AS $relName \n"
                 )
         }
+
+        fun parseValueMap(value: Value): Entrez =
+            Entrez(
+                value["Entrez_id"].asString().toInt()
+            )
     }
 }

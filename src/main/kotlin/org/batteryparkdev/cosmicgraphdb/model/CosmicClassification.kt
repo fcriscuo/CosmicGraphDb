@@ -24,8 +24,8 @@ data class CosmicClassification(
 
     fun generateClassificationCypher():String =
         generateMergeCypher()
-            .plus(siteType.generateParentRelationshipCypher(nodeName))
-            .plus(histologyType.generateParentRelationshipCypher(nodeName))
+            .plus(siteType.generateCosmicTypeCypher(nodeName))
+            .plus(histologyType.generateCosmicTypeCypher(nodeName))
             .plus(" RETURN $nodeName")
 
 
