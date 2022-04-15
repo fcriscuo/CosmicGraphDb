@@ -64,15 +64,15 @@ data class CosmicMutation(
 
         private fun generateMutationPlaceholderCypher(mutationId: Int): String =
             "CALL apoc.merge.node( [\"CosmicMutation\"], " +
-                    " {mutation_id $mutationId,  created: datetime()} " +
+                    " {mutation_id: $mutationId,  created: datetime()} )" +
                     " YIELD node AS ${CosmicMutation.nodename}"
 
         fun generateChildRelationshipCypher(mutationId: Int, childLabel: String): String {
             val relationship = "HAS_".plus(childLabel.uppercase())
             val relname = "rel_mutation"
             return generateMutationPlaceholderCypher(mutationId).plus(
-                "CALL apoc.merge.relationship(${CosmicMutation.nodename}, $relationship, " +
-                        " {}, {created: datetime()}, ${childLabel.lowercase()},{} " +
+                "CALL apoc.merge.relationship(${CosmicMutation.nodename}, '$relationship', " +
+                        " {}, {created: datetime()}, ${childLabel.lowercase()},{} )" +
                         " YIELD rel as $relname \n"
             )
         }

@@ -23,7 +23,7 @@ data class CosmicHallmark(
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicHallmark\"]," +
                 " {hallmark_id:  ${Neo4jUtils.formatPropertyValue(hallmarkId)}, " +
-                "  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
+                "  {gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
                 "  cell_type: ${Neo4jUtils.formatPropertyValue(cellType)}, " +
                 "  pubmed_id: $pubmedId, " +
                 "  hallmark: ${Neo4jUtils.formatPropertyValue(hallmark)}, " +

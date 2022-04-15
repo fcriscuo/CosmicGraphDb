@@ -1,84 +1,61 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
-import java.nio.file.Paths
-
-/*
-
-Sample Name	Sample ID	Gene Name
-Transcript	Census Gene	Drug Name
-MUTATION_ID	GENOMIC_MUTATION_ID	LEGACY_MUTATION_ID	AA Mutation	CDS Mutation
-Primary Tissue	Tissue Subtype 1	Tissue Subtype 2
-Histology	Histology Subtype 1	Histology Subtype 2
-Pubmed Id	CGP Study	Somatic Status	Sample Type	Zygosity
-Genome Coordinates (GRCh38)	Tier	HGVSP	HGVSC	HGVSG
- */
+import org.batteryparkdev.cosmicgraphdb.service.generateNeo4jNodeKey
+import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.neo4j.driver.Value
 
 data class CosmicResistanceMutation(
+    val resistanceId: String,
+    val mutationId: Int,
     val sampleId: Int,
-    val geneName: String,
+    val geneSymbol: String,
     val transcript: String,
-    val censusGene: Boolean,
     val drugName: String,
-    val cosmicMutation: CosmicMutation,
-    val cosmicTissueType: CosmicType,
-    val cosmicHistology: CosmicType,
-    val pubmedId: String,
-    val cgpStudy: String,
-    val somaticStatus: String,
-    val zygosity: String,
-    val genomeCoordinates: String,
-    val tier: Int
+    val pubmedId: Int
 ) {
 
-    companion object : AbstractModel {
-        fun parseCsvRecord(record: CSVRecord): CosmicResistanceMutation =
-            CosmicResistanceMutation(
-                record.get("Sample ID").toInt(),
-                record.get("Gene Name"),
-                record.get("Transcript"),
-                when (record.get("Census Gene")) {
-                    "Yes" -> true
-                    else -> false
-                },
-                record.get("Drug Name"),
-                CosmicMutation.parseResistanceMutationCsvRecord(record),
-                CosmicType.resolveTissueType(record),
-                CosmicType.resolveHistologyTypeBySource(record,"CosmicResistanceMutation"),
-                record.get("Pubmed Id"),
-                record.get("CGP Study"),
-                record.get("Somatic Status"),
-                record.get("Zygosity"),
-                record.get("Genome Coordinates (GRCh38)"),
-                parseValidIntegerFromString(record.get("Tier"))
-            )
+    fun generateCosmicResistanceCypher(): String =generateMergeCypher()
+        .plus(CosmicMutation.generateChildRelationshipCypher(mutationId, CosmicResistanceMutation.nodename))
+        .plus(CosmicSample.generateChildRelationshipCypher(sampleId, CosmicResistanceMutation.nodename))
+        .plus(generateDrugRelationshipCypher())
+        .plus(" RETURN node AS ${CosmicResistanceMutation.nodename}\n")
 
-        /*
-        The CosmicResistanceMutations file has non-standard column names
-        for histology columns
-         */
+    private fun generateMergeCypher(): String =
+        " CALL apoc.merge.node([\"DrugResistance\"], " +
+                " {resistance_id: ${Neo4jUtils.formatPropertyValue(resistanceId)}}," +
+                "  { mutation_id: $mutationId, " +
+                " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}," +
+                " transcript: ${Neo4jUtils.formatPropertyValue(transcript)}, " +
+                " pubmed_id: $pubmedId, " +
+                "  created: datetime()}) YIELD node as ${CosmicResistanceMutation.nodename} \n"
+
+    private fun generateDrugMergeCypher(): String  =
+        "CALL apoc.merge.node( [\"CosmicDrug\"], " +
+                " {drug_name: ${Neo4jUtils.formatPropertyValue(drugName.lowercase())}},  {created: datetime()} )" +
+                " YIELD node AS drug \n"
+    private fun generateDrugRelationshipCypher(): String {
+        val relationship = "RESISTANT_TO"
+        val relname = "rel_drug"
+        return generateDrugMergeCypher().plus(
+            "CALL apoc.merge.relationship(${CosmicResistanceMutation.nodename}, '$relationship', " +
+                    " {}, {created: datetime()}, drug,{} )" +
+                    " YIELD rel as $relname \n"
+        )
+    }
+
+    companion object : AbstractModel {
+        const val nodename = "resistance"
+        fun parseValueMap(value: Value): CosmicResistanceMutation =
+            CosmicResistanceMutation(
+                generateNeo4jNodeKey(),
+                value["MUTATION_ID"].asString().toInt(),
+                value["Sample ID"].asString().toInt(),
+                value["Gene Name"].asString(),
+                value["Transcript"].asString(),
+                value["Drug Name"].asString(),
+                value["Pubmed Id"].asString().toInt()
+            )
 
     }
 }
 
-fun main() {
-    val path = Paths.get("./data/CosmicResistanceMutations.tsv")
-    println("Processing csv file ${path.fileName}")
-    var recordCount = 0
-    TsvRecordSequenceSupplier(path).get().chunked(500)
-        .forEach { it ->
-            it.stream()
-                .map { CosmicResistanceMutation.parseCsvRecord(it) }
-                .forEach { mut ->
-                    println(
-                        "Sample Id: ${mut.sampleId}  Transcript: ${mut.transcript} " +
-                                " Drug name: ${mut.drugName}  Mutation: ${mut.cosmicMutation.mutationAA} " +
-                                "Histology: ${mut.cosmicHistology.primary}"
-                    )
-                    recordCount += 1
-                }
-
-        }
-    println("Record count $recordCount")
-}

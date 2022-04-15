@@ -50,15 +50,15 @@ data class CosmicSample(
         and Cypher to create a Sample -[HAS child] -> child  relationship
          */
         private fun generateSamplePlaceholderCypher(sampleId: Int): String = " CALL apoc.merge.node( [\"CosmicSample\"], " +
-                "{sample_id: $sampleId, created: datetime()} " +
+                "{sample_id: $sampleId, created: datetime()}) " +
                 " YIELD node as ${CosmicSample.nodename} \n"
 
         fun generateChildRelationshipCypher( sampleId: Int, childLabel: String) :String {
             val relationship = "HAS_".plus(childLabel.uppercase())
             val relname = "rel_sample"
             return  generateSamplePlaceholderCypher(sampleId).plus(
-                "CALL apoc.merge.relationship( ${CosmicSample.nodename}, $relationship, " +
-                        " {}, {created: datetime()}, $childLabel,{} " +
+                "CALL apoc.merge.relationship( ${CosmicSample.nodename}, '$relationship', " +
+                        " {}, {created: datetime()}, $childLabel,{} )" +
                         " YIELD rel AS $relname \n"
             )
         }

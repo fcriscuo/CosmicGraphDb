@@ -2,12 +2,6 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
 
-/*
-Gene name
-Accession Number
-	Gene CDS length
-	HGNC ID
- */
 data class CosmicMutationGene(
     val geneSymbol: String, val accessionNumber: String,
     val cdsLength: Int, val hgncId: String

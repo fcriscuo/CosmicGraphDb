@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.service
 
 import arrow.core.Either
 import java.io.InputStream
+import kotlin.random.Random
 
 /**
  * Created by fcriscuo on 7/28/21.
@@ -20,3 +21,26 @@ fun executeCurlOperation( curlCommand:String): Either<Exception, InputStream> {
         return Either.Left(e)
     }
 }
+
+fun generateNeo4jNodeKey():String  = generateUniqueString(6).single()
+    .plus(":").plus(generateUniqueString(6).single())
+/*
+Excerpted From
+Kotlin Coroutines Deep Dive
+Marcin Moskała
+ */
+private fun generateUniqueString(
+    length: Int,
+    seed: Long = System.currentTimeMillis()
+): Sequence<String> = sequence {
+    val random = Random(seed)
+    val charPool = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+    while (true) {
+        val randomString = (1..length)
+            .map { i -> random.nextInt(charPool.size) }
+            .map(charPool::get)
+            .joinToString("");
+        yield(randomString)
+    }
+}.distinct()
+
