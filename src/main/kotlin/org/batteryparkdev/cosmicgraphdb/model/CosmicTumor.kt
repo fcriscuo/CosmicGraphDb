@@ -15,6 +15,8 @@ data class CosmicTumor(
     companion object : AbstractModel {
         const val nodename = "tumor"
 
+
+
         fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +
                 " {tumor_id = $tumorId, created: datetime()} " +
                 " YIELD node as ${CosmicTumor.nodename}  \n"

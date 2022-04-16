@@ -1,9 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.property.DatafilePropertiesService
-import java.nio.file.Paths
+import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.neo4j.driver.Value
 
 data class CosmicSample(
     val sampleId: Int,
@@ -16,11 +14,11 @@ data class CosmicSample(
     val mutationAlleleSpecification: String,
     val msi: String,
     val averagePloidy: String,
-    val wholeGeneomeScreen: String,
-    val wholeExomeScreen: String,
+    val wholeGeneomeScreen: Boolean,
+    val wholeExomeScreen: Boolean,
     val sampleRemark: String,
     val drugResponse: String,
-    val grade:String,
+    val grade: String,
     val ageAtTumorRecurrence: Int,
     val stage: String,
     val cytogenetics: String,
@@ -33,83 +31,125 @@ data class CosmicSample(
     val germlineMutation: String,
     val therapy: String,
     val family: String,
-    val normalTissueTested: String,
+    val normalTissueTested: Boolean,
     val gender: String,
     val individualRemark: String,
     val nciCode: String,
     val sampleType: String,
     val cosmicPhenotypeId: String
-    )
-{
+) {
+
+    // function to resolve the correct identifier for the CosmicClassification
+    private fun resolveClassificationId(): Int =
+        (cosmicPhenotypeId.plus(site.primary)
+            .plus(histology.primary)).hashCode()
+
+    fun generateCosmicSampleCypher(): String =
+        generateMergeCypher()
+            .plus(site.generateCosmicTypeCypher(CosmicSample.nodename))
+            .plus(histology.generateCosmicTypeCypher(CosmicSample.nodename))
+            .plus(CosmicTumor.generateChildRelationshipCypher(tumorId, CosmicSample.nodename))
+            .plus(CosmicClassification.generateChildRelationshipCypher(resolveClassificationId(),CosmicSample.nodename ))
+            .plus(" RETURN  ${CosmicSample.nodename}\n")
+
+    private fun generateMergeCypher(): String =
+        "CALL apoc.merge.node( [\"CosmicSample\"], " +
+                " {sample_id: $sampleId}," +
+                " {sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}," +
+                " therapy_relationship: ${Neo4jUtils.formatPropertyValue(therapyRelationship)}," +
+                " sample_differentiator: ${Neo4jUtils.formatPropertyValue(therapyRelationship)}, " +
+                " mutation_allele_specfication: ${Neo4jUtils.formatPropertyValue(mutationAlleleSpecification)}, " +
+                " msi: ${Neo4jUtils.formatPropertyValue(msi)}, average_ploidy: " +
+                " ${Neo4jUtils.formatPropertyValue(averagePloidy)}, whole_genome_screen: $wholeGeneomeScreen, " +
+                " whole_exome_screen: $wholeExomeScreen, sample_remark: ${Neo4jUtils.formatPropertyValue(sampleRemark)}, " +
+                " drug_respose: ${Neo4jUtils.formatPropertyValue(drugResponse)}, " +
+                " grade: ${Neo4jUtils.formatPropertyValue(grade)}, age_at_tumor_recurrance: $ageAtTumorRecurrence, " +
+                " stage: ${Neo4jUtils.formatPropertyValue(stage)}, cytogenetics: " +
+                " ${Neo4jUtils.formatPropertyValue(cytogenetics)}, metastatic_site: " +
+                " ${Neo4jUtils.formatPropertyValue(metastaticSite)}, tumor_source: " +
+                " ${Neo4jUtils.formatPropertyValue(tumorSource)}, tumor_remark: " +
+                " ${Neo4jUtils.formatPropertyValue(tumorRemark)}, age: $age, " +
+                " ethnicity: ${Neo4jUtils.formatPropertyValue(ethnicity)}, environmental_variables: " +
+                " ${Neo4jUtils.formatPropertyValue(environmentalVariables)}, germline_mutation: " +
+                " ${Neo4jUtils.formatPropertyValue(germlineMutation)}, therapy: " +
+                " ${Neo4jUtils.formatPropertyValue(therapy)}, family: ${Neo4jUtils.formatPropertyValue(family)}, " +
+                " normal_tissue_tested: $normalTissueTested, gender: ${Neo4jUtils.formatPropertyValue(gender)}, " +
+                " individual_remark: ${Neo4jUtils.formatPropertyValue(individualRemark)}, " +
+                " nci_code: ${Neo4jUtils.formatPropertyValue(nciCode)}, sample_type: " +
+                " ${Neo4jUtils.formatPropertyValue(sampleType)}, cosmic_phenotype_id: " +
+                " ${Neo4jUtils.formatPropertyValue(cosmicPhenotypeId)}," +
+                " created: datetime()}) YIELD node as ${CosmicSample.nodename} \n"
+
 
     companion object : AbstractModel {
         const val nodename = "sample"
+        const val classificationPrefix = "COSO"  // the classification file uses a prefix, the sample file does not
+                                               // COSO36736185  vs  36736185
+        fun parseValueMap(value: Value): CosmicSample =
+            CosmicSample(
+                value["sample_id"].asString().toInt(), value["sample_name"].asString(),
+                value["id_tumour"].asString().toInt(),
+                resolveSiteType(value),
+                resolveHistologyType(value),
+                value["therapy_relationship"].asString(),
+                value["sample_differentiator"].asString(),
+                value["mutation_allele_specification"].asString(),
+                value["msi"].asString(), value["average_ploidy"].asString(),
+                convertYNtoBoolean(value["whole_genome_screen"].asString()),
+                convertYNtoBoolean(value["whole_exome_screen"].asString()),
+                removeInternalQuotes(value["sample_remark"].asString()),
+                value["drug_response"].asString(),
+                value["grade"].asString(),
+                parseValidIntegerFromString(value["age_at_tumour_recurrence"].asString()),
+                value["stage"].asString(), value["cytogenetics"].asString(),
+                value["metastatic_site"].asString(),
+                value["tumour_source"].asString(),
+                removeInternalQuotes(value["tumour_remark"].asString()),
+                parseValidIntegerFromString(value["age"].asString()),
+                value["ethnicity"].asString(), value["environmental_variables"].asString(),
+                value["germline_mutation"].asString(),
+                value["therapy"].asString(), value["family"].asString(),
+                convertYNtoBoolean(value["normal_tissue_tested"].asString()),
+                value["gender"].asString(), value["individual_remark"].asString(),
+                value["nci_code"].asString(),
+                value["sample_type"].asString(),
+                classificationPrefix.plus(value["cosmic_phenotype_id"].asString())
+            )
+
+        private fun resolveSiteType(value: Value): CosmicType =
+            CosmicType(
+                "Site", value["primary_site"].asString(),
+                value["site_subtype_1"].asString(),
+                value["site_subtype_2"].asString(),
+                value["site_subtype_3"].asString()
+            )
+
+        private fun resolveHistologyType(value: Value): CosmicType =
+            CosmicType(
+                "Histology", value["Primary histology"].asString(),
+                value["histology_subtype_1"].asString(),
+                value["histology_subtype_2 "].asString(),
+                value["histology_subtype_3"].asString()
+            )
 
         /*
         Functions to generate Cypher a placeholder CosmicSample node if necessary
         and Cypher to create a Sample -[HAS child] -> child  relationship
          */
-        private fun generateSamplePlaceholderCypher(sampleId: Int): String = " CALL apoc.merge.node( [\"CosmicSample\"], " +
-                "{sample_id: $sampleId, created: datetime()}) " +
-                " YIELD node as ${CosmicSample.nodename} \n"
+        private fun generateSamplePlaceholderCypher(sampleId: Int): String =
+            " CALL apoc.merge.node( [\"CosmicSample\"], " +
+                    "{sample_id: $sampleId, created: datetime()}) " +
+                    " YIELD node as ${CosmicSample.nodename} \n"
 
-        fun generateChildRelationshipCypher( sampleId: Int, childLabel: String) :String {
+        fun generateChildRelationshipCypher(sampleId: Int, childLabel: String): String {
             val relationship = "HAS_".plus(childLabel.uppercase())
             val relname = "rel_sample"
-            return  generateSamplePlaceholderCypher(sampleId).plus(
+            return generateSamplePlaceholderCypher(sampleId).plus(
                 "CALL apoc.merge.relationship( ${CosmicSample.nodename}, '$relationship', " +
                         " {}, {created: datetime()}, $childLabel,{} )" +
                         " YIELD rel AS $relname \n"
             )
         }
-
-        fun parseCsvRecord(record: CSVRecord): CosmicSample =
-            CosmicSample(
-                record.get("sample_id").toInt(), record.get("sample_name"), record.get("id_tumour").toInt(),
-                CosmicType.resolveSiteTypeBySource(record,"CosmicSample"),
-                CosmicType.resolveHistologyTypeBySource(record,"CosmicSample"),
-                record.get("therapy_relationship"), record.get("sample_differentiator"),
-                record.get("mutation_allele_specification"), record.get("msi"), record.get("average_ploidy"),
-                record.get("whole_genome_screen"),record.get("whole_exome_screen"),
-                removeInternalQuotes(record.get("sample_remark")),
-                record.get("drug_response"), record.get("grade"),
-                parseValidIntegerFromString(record.get("age_at_tumour_recurrence")),
-                record.get("stage"), record.get("cytogenetics"), record.get("metastatic_site"),
-                record.get("tumour_source"),
-                removeInternalQuotes(record.get("tumour_remark")),
-                parseValidIntegerFromString(record.get("age")),
-                record.get("ethnicity"), record.get("environmental_variables"), record.get("germline_mutation"),
-                record.get("therapy"), record.get("family"), record.get("normal_tissue_tested"),
-                record.get("gender"), record.get("individual_remark"), record.get("nci_code"),
-                record.get("sample_type"), record.get("cosmic_phenotype_id")
-            )
     }
 }
 
-fun main() {
-    /* scan complete file to diagnose any data parsing issues */
-   val dataDirectory =  DatafilePropertiesService.resolvePropertyAsString("cosmic.data.directory")
-    val cosmicSampleFile = dataDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.sample")
-    val path = Paths.get(cosmicSampleFile)
-    println("Processing COSMIC sample file ${path.fileName}")
-    var recordCount = 0
-    TsvRecordSequenceSupplier(path).get().chunked(500)
-        .forEach { it ->
-            it.stream()
-                .map { CosmicSample.parseCsvRecord(it) }
-                .forEach { sample ->
-                    println(
-                        "Sample Id= ${sample.sampleId}  SampleType= ${sample.sampleType}" +
-                                "  Tumor Id = ${sample.tumorId} " +
-                                "  sample name = ${sample.sampleName}" +
-                                "  age = ${sample.age} " +
-                                "  Tumor Source = ${sample.tumorSource} " +
-                                "  Germline Mutation = ${sample.germlineMutation} "
-
-                    )
-                    recordCount += 1
-                }
-        }
-    println("Record count = $recordCount")
-}

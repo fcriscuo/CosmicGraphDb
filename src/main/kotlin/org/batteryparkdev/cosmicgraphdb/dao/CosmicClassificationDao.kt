@@ -12,7 +12,7 @@ involving CancerClassification data
 private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
 fun loadCosmicClassification(classification: CosmicClassification): Int {
-    val id = classification.resolveClassificationId()
+
 
     val cypher = classification.generateMergeCypher()
         .plus(classification.siteType.generateMergeCypher())

@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.neo4j.driver.Value
+import java.util.*
 
 /*
 Data class responsible for modelling an entry in the CosmicClassification file
@@ -16,11 +17,11 @@ data class CosmicClassification(
     val nciCode: String,
     val efoUrl: String
 ) {
-     val nodeName = "class_node"
+
 
     fun resolveClassificationId(): Int =
-         cosmicPhenotypeId.plus(siteType.primary)
-             .plus(histologyType.primary).hashCode()
+        (cosmicPhenotypeId.plus(siteType.primary)
+             .plus(histologyType.primary)).hashCode()
 
     fun generateClassificationCypher():String =
         generateMergeCypher()
@@ -30,7 +31,7 @@ data class CosmicClassification(
 
 
     private fun generateMergeCypher():String = "CALL apoc.merge.node([\"CosmicClassification\"]," +
-            "{ classification_id: ${resolveClassificationId()}}," +
+            "{ classification_id: ${resolveClassificationId()}, " +
             " { phenotype_id: \"${cosmicPhenotypeId}\", " +
             " nci_code: \"${nciCode}\"," +
             " efo_url: \"${efoUrl}\"," +
@@ -38,7 +39,7 @@ data class CosmicClassification(
             "{ last_mod: datetime()}) YIELD node AS $nodeName \n "
 
     companion object : AbstractModel {
-
+        val nodeName = "class_node"
         fun parseValueMap(value: Value): CosmicClassification {
             val nciCode =value["NCI_CODE"].asString() ?: "NS"
             val efo = value["EFO"].asString() ?: "NS"
@@ -80,6 +81,18 @@ data class CosmicClassification(
                 value["HIST_SUBTYPE2_COSMIC"].asString(),
                 value["HIST_SUBTYPE3_COSMIC"].asString()
             )
+        fun generateChildRelationshipCypher(classificationId: Int, parentNodeName:String):String {
+            val relationship = "HAS_COSMIC_CLASSIFICATION"
+            val relName = "rel_class"
+            return " CALL apoc.merge.node([\"CosmicClassification\"], " +
+                    " { classification_id: $classificationId})  " +
+                    " YIELD node as ${CosmicClassification.nodeName} \n " +
+                    " CALL apoc.merge.relationship( $parentNodeName, 'relationship', " +
+                    " {},  {created: datetime()}, ${CosmicClassification.nodeName}, {} ) " +
+                    " YIELD rel as $relName \n"
+        }
     }
+
+
 }
 
