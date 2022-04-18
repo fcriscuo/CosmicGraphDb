@@ -126,7 +126,7 @@ data class CosmicSample(
 
         private fun resolveHistologyType(value: Value): CosmicType =
             CosmicType(
-                "Histology", value["Primary histology"].asString(),
+                "Histology", value["primary_histology"].asString(),
                 value["histology_subtype_1"].asString(),
                 value["histology_subtype_2 "].asString(),
                 value["histology_subtype_3"].asString()

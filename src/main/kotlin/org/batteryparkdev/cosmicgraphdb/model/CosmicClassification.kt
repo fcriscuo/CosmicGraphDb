@@ -84,11 +84,10 @@ data class CosmicClassification(
         fun generateChildRelationshipCypher(classificationId: Int, parentNodeName:String):String {
             val relationship = "HAS_COSMIC_CLASSIFICATION"
             val relName = "rel_class"
-            return " CALL apoc.merge.node([\"CosmicClassification\"], " +
-                    " { classification_id: $classificationId})  " +
-                    " YIELD node as ${CosmicClassification.nodeName} \n " +
-                    " CALL apoc.merge.relationship( $parentNodeName, 'relationship', " +
-                    " {},  {created: datetime()}, ${CosmicClassification.nodeName}, {} ) " +
+            return " MATCH (cc:CosmicClassification) WHERE cc.classification_id =  " +
+                    " $classificationId  \n" +
+                    " CALL apoc.merge.relationship( $parentNodeName, '$relationship', " +
+                    " {},  {created: datetime()}, cc, {} ) " +
                     " YIELD rel as $relName \n"
         }
     }
