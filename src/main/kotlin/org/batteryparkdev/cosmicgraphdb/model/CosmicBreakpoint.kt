@@ -2,7 +2,18 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.neo4j.driver.Value
-
+/*
+Accession Number	Gene CDS length	HGNC ID
+Sample name	ID_sample ID_tumour
+Primary site	Site subtype 1	Site subtype 2	Site subtype 3
+Primary histology	Histology subtype 1	Histology subtype 2	Histology subtype 3
+Genome-wide screen	GENOMIC_MUTATION_ID	LEGACY_MUTATION_ID	MUTATION_ID
+Mutation CDS	Mutation AA	Mutation Description	Mutation zygosity
+LOH	GRCh	Mutation genome position	Mutation strand	Resistance
+Mutation	FATHMM prediction	FATHMM score	Mutation somatic status
+Pubmed_PMID	ID_STUDY
+Sample Type	Tumour origin	Age	HGVSP	HGVSC	HGVSG
+ */
 data class CosmicBreakpoint(
     val sampleName: String, val sampleId: Int, val tumorId: Int,
     val site: CosmicType, val histology: CosmicType,
@@ -15,18 +26,11 @@ data class CosmicBreakpoint(
     val nodeName = "break_node"
     val breakpointId = mutationId
 
-    fun generateCosmicBreakpointCypher() =
-        generateMergeCypher()
-            .plus(site.generateCosmicTypeCypher(nodeName))
-            .plus(histology.generateCosmicTypeCypher(nodeName))
-            .plus(mutationType.generateCosmicTypeCypher(nodeName))
-            .plus(generateSampleRelationshipCypher())
-            .plus(generateMutationRelationshipCypher())
-            .plus(generateTumorRelationshipCypher())
-            .plus(" RETURN node AS  $nodeName \n")
-
-   private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
-            " { mutation_id: ${mutationId.toString()}, " +
+    fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
+            " {sample_id: ${sampleId.toString()}}," +
+            " { sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}, " +
+            "  tumor_id: ${tumorId.toString()}, " +
+            " mutation_id: ${mutationId.toString()}, " +
             "chromosome_from: \"$chromosomeFrom\" , " +
             " location_from_min: ${locationFromMin.toString()}," +
             " location_from_max: ${locationFromMax.toString()}, " +
@@ -38,25 +42,7 @@ data class CosmicBreakpoint(
             "  pubmed_id: ${pubmedId.toString()}, study_id: ${studyId.toString()}," +
             " created: datetime() }," +
             " { last_mod: datetime()}) YIELD node AS $nodeName \n "
-    /*
-      Function to generate the Cypher commands to create a
-      Tumor - [HAS_BREAKPOINT] -> Breakpoint relationship for this CNA
-       */
-    private fun generateTumorRelationshipCypher(): String =
-        CosmicTumor.generateChildRelationshipCypher(tumorId, nodeName)
 
-    /*
-    Function to generate Cypher command to establish
-    a Sample -[HAS_BBREAKPOINT] -> Breakpoint relationship
-     */
-    private fun generateSampleRelationshipCypher(): String =
-        CosmicSample.generateChildRelationshipCypher(sampleId, nodeName)
-    /*
-    Private function to generate Cypher for
-    Mutation -[HAS_BREAKPOINT] -> Breakpoint relationship
-     */
-    private fun generateMutationRelationshipCypher(): String =
-        CosmicMutation.generateChildRelationshipCypher(mutationId,nodeName)
 
     companion object : AbstractModel {
 
@@ -83,6 +69,7 @@ data class CosmicBreakpoint(
                 chromTo, locationToMin, locationToMax, strandTo, pubmedId, studyId
             )
         }
+
 
         private fun resolveSiteType(value: Value): CosmicType =
             CosmicType(

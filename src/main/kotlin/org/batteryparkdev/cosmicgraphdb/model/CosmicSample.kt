@@ -42,15 +42,15 @@ data class CosmicSample(
     // function to resolve the correct identifier for the CosmicClassification
     private fun resolveClassificationId(): Int =
         (cosmicPhenotypeId.plus(site.primary)
-            .plus(histology.primary)).hashCode()
+            .plus(site.subtype1)).hashCode()
 
     fun generateCosmicSampleCypher(): String =
         generateMergeCypher()
             .plus(site.generateCosmicTypeCypher(CosmicSample.nodename))
             .plus(histology.generateCosmicTypeCypher(CosmicSample.nodename))
-            .plus(CosmicTumor.generateChildRelationshipCypher(tumorId, CosmicSample.nodename))
+           // .plus(CosmicTumor.generateChildRelationshipCypher(tumorId, CosmicSample.nodename))
             .plus(CosmicClassification.generateChildRelationshipCypher(resolveClassificationId(),CosmicSample.nodename ))
-            .plus(" RETURN  ${CosmicSample.nodename}\n")
+            .plus(" RETURN ${CosmicSample.nodename}\n")
 
     private fun generateMergeCypher(): String =
         "CALL apoc.merge.node( [\"CosmicSample\"], " +
@@ -68,7 +68,7 @@ data class CosmicSample(
                 " ${Neo4jUtils.formatPropertyValue(cytogenetics)}, metastatic_site: " +
                 " ${Neo4jUtils.formatPropertyValue(metastaticSite)}, tumor_source: " +
                 " ${Neo4jUtils.formatPropertyValue(tumorSource)}, tumor_remark: " +
-                " ${Neo4jUtils.formatPropertyValue(tumorRemark)}, age: $age, " +
+                " ${Neo4jUtils.formatPropertyValue(tumorRemark)}, age: $age ," +
                 " ethnicity: ${Neo4jUtils.formatPropertyValue(ethnicity)}, environmental_variables: " +
                 " ${Neo4jUtils.formatPropertyValue(environmentalVariables)}, germline_mutation: " +
                 " ${Neo4jUtils.formatPropertyValue(germlineMutation)}, therapy: " +
@@ -131,6 +131,9 @@ data class CosmicSample(
                 value["histology_subtype_2 "].asString(),
                 value["histology_subtype_3"].asString()
             )
+
+        fun generateMatchCosmicSampleCypher(sampleId: Int)  =
+            "CALL apoc.merge.node ([\"CosmicSample\"],{sample_id: $sampleId},{} ) YIELD node AS sample\n"
 
         /*
         Functions to generate Cypher a placeholder CosmicSample node if necessary

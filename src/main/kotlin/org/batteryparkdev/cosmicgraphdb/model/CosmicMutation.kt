@@ -1,28 +1,40 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
+import java.nio.file.Paths
+import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.neo4j.driver.Value
 
 data class CosmicMutation(
     val geneSymbol: String,
     val genomicMutationId: String, val geneCDSLength:Int,
-    val hgncId: Int, val mutationId: Int, val mutationCds: String,
+    val hgncId: Int,
+    val mutationId: Int, val mutationCds: String,
     val mutationAA: String, val mutationDescription: String, val mutationZygosity: String,
     val LOH: String, val GRCh: String, val mutationGenomePosition: String,
     val mutationStrand: String, val resistanceMutation: String,
     val fathmmPrediction: String, val fathmmScore: Double, val mutationSomaticStatus: String,
     val pubmedId: Int, val genomeWideScreen:Boolean,
     val hgvsp: String, val hgvsc: String, val hgvsg: String, val tier: String,
-    val siteType: CosmicType,
-    val histologyType: CosmicType,
+    val tumor: CosmicTumor
+
 
 ) {
     fun generateCosmicMutationCypher(): String = generateMergeCypher()
-        .plus(siteType.generateCosmicTypeCypher(CosmicMutation.nodename))
-        .plus(histologyType.generateCosmicTypeCypher(CosmicMutation.nodename))
+        .plus(tumor.generateCosmicTumorCypher())
+        .plus(generateTumorMutationRelationshipCypher())
         .plus(generateGeneRelationshipCypher())
         .plus(generateHGNCRelationshipCypher())
-        .plus(" RETURN node AS ${CosmicMutation.nodename}\n")
+        .plus(" RETURN ${CosmicMutation.nodename}")
+
+     private fun generateTumorMutationRelationshipCypher(): String {
+         val relationship = "HAS_MUTATION"
+         val relname = "rel_tumor_mut"
+         return "CALL apoc.merge.relationship(${CosmicTumor.nodename}, '$relationship', " +
+                     " {}, {created: datetime()}, ${CosmicMutation.nodename},{} )" +
+                     " YIELD rel as $relname \n"
+     }
 
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicMutation\"], " +
@@ -64,8 +76,8 @@ data class CosmicMutation(
 
         private fun generateMutationPlaceholderCypher(mutationId: Int): String =
             "CALL apoc.merge.node( [\"CosmicMutation\"], " +
-                    " {mutation_id: $mutationId,  created: datetime()} )" +
-                    " YIELD node AS ${CosmicMutation.nodename}"
+                    " {mutation_id: $mutationId,  created: datetime()}) " +
+                    " YIELD node AS ${CosmicMutation.nodename}\n "
 
         fun generateChildRelationshipCypher(mutationId: Int, childLabel: String): String {
             val relationship = "HAS_".plus(childLabel.uppercase())
@@ -102,29 +114,13 @@ data class CosmicMutation(
                 value["HGVSC"].asString(),
                 value["HGVSG"].asString(),
                 resolveTier(value),
-                resolveSiteType(value),
-                resolveHistologySite(value)
+                CosmicTumor.parseValueMap(value)
             )
 
-        private fun resolveSiteType(value: Value): CosmicType =
-            CosmicType(
-                "Site", value["Primary site"].asString(),
-                value["Site subtype 1"].asString(),
-                value["Site subtype 2"].asString(),
-                value["Site subtype 3"].asString()
-            )
-
-        private fun resolveHistologySite(value: Value): CosmicType =
-            CosmicType(
-                "Histology", value["Primary histology"].asString(),
-                value["Histology subtype 1"].asString(),
-                value["Histology subtype 2"].asString(),
-                value["Histology subtype 3"].asString()
-            )
 
         /*
                Not all mutation files have a Tier column
-                */
+          */
         private fun resolveTier(value:Value):String =
             when(value.keys().contains("Tier")) {
                 true -> value["Tier"].asString()

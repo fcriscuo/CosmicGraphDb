@@ -1,20 +1,86 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
-import java.nio.file.Paths
+import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
+import org.neo4j.driver.Value
+
 
 data class CosmicTumor(
-    val tumorId: Int, val sampleId: Int, val mutationId: Int,
+    val tumorId: Int, val sampleId: Int,
     val site: CosmicType, val histology: CosmicType,
-    val genomeWideScreen: Boolean,
-    val pubmedId: Int, val studyId: String, val sampleType: String,
-    val tumorOrigin: String, val age: Int,
-    val cosmicMutation: CosmicMutation
+    val tumorOrigin: String, val age: String,
 ) {
+
+    fun generateCosmicTumorCypher():String {
+        val tumorNodeIdentifier = NodeIdentifier("CosmicTumor",
+        "tumor_id", tumorId.toString())
+        val cypher = when (Neo4jUtils.nodeExistsPredicate(tumorNodeIdentifier)) {
+            true -> generateTumorMatchCypher().plus(generateTumorSampleRelationshipCypher())
+            false -> generateTumorMergeCypher().plus(generateTumorSampleRelationshipCypher())
+        }
+        println("Tumor: $cypher")
+        return cypher
+    }
+
+    /*
+    Function to generate Cypher statements to create tumor, site, and histology
+    nodes and relationships in the Neo4j database if the tumor id is novel
+    n.b. the generated Cypher is intended to be used within a larger
+    transaction and as a result it does not have a RETURN component
+     */
+   private fun generateTumorMergeCypher(): String =
+        " CALL apoc.merge.node( [\"CosmicTumor\"], " +
+                "{tumor_id: $tumorId,  tumor_origin: " +
+                "${Neo4jUtils.formatPropertyValue(tumorOrigin)} ," +
+                " age: ${Neo4jUtils.formatPropertyValue(age)}, " +
+                "  created: datetime()}) YIELD node as ${CosmicTumor.nodename} \n"
+                    .plus(site.generateMergeCypher())
+                    .plus(site.generateParentRelationshipCypher(CosmicTumor.nodename))
+                    .plus(histology.generateMergeCypher())
+                    .plus(histology.generateParentRelationshipCypher(CosmicTumor.nodename))
+
+
+   private  fun generateTumorMatchCypher(): String =
+       "CALL apoc.merge.node ([${CosmicTumor.nodename}],{tumor_id: $tumorId},{} ) " +
+               " YIELD node AS ${CosmicTumor.nodename}\n"
+
+
+    fun generateTumorSampleRelationshipCypher(): String {
+        val relationship = "HAS_SAMPLE"
+        val relname = "rel_mut_sample"
+        return CosmicSample.generateMatchCosmicSampleCypher(sampleId)
+            .plus("CALL apoc.merge.relationship(${CosmicTumor.nodename}, '$relationship', " +
+                    " {}, {created: datetime()}, ${CosmicSample.nodename},{} )" +
+                    " YIELD rel AS $relname \n")
+    }
+
     companion object : AbstractModel {
         const val nodename = "tumor"
+        fun parseValueMap(value: Value): CosmicTumor =
+            CosmicTumor(
+                value["ID_tumour"].asString().toInt(),
+                value["ID_sample"].asString().toInt(),
+                resolveSiteType(value),
+                resolveHistologySite(value),
+                value["Tumour origin"].asString(),
+                value["Age"].asString()
+            )
 
+        private fun resolveSiteType(value: Value): CosmicType =
+            CosmicType(
+                "Site", value["Primary site"].asString(),
+                value["Site subtype 1"].asString(),
+                value["Site subtype 2"].asString(),
+                value["Site subtype 3"].asString()
+            )
+
+        private fun resolveHistologySite(value: Value): CosmicType =
+            CosmicType(
+                "Histology", value["Primary histology"].asString(),
+                value["Histology subtype 1"].asString(),
+                value["Histology subtype 2"].asString(),
+                value["Histology subtype 3"].asString()
+            )
 
 
         fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +
@@ -30,44 +96,7 @@ data class CosmicTumor(
                     " $childLabel, {} YIELD rel AS $relname \n")
         }
 
-
-        fun parseCsvRecord(record: CSVRecord): CosmicTumor =
-            CosmicTumor(
-                record.get("ID_tumour").toInt(), record.get("ID_sample").toInt(),
-                record.get("MUTATION_ID").toInt(),
-                CosmicType.resolveSiteTypeBySource(record, "CosmicTumor"),
-                CosmicType.resolveHistologyTypeBySource(record, "CosmicTumor"),
-                record.get("Genome-wide screen").lowercase() == "y",
-                parseValidIntegerFromString(record.get("Pubmed_PMID")), record.get("ID_STUDY"),
-                record.get("Sample Type"), record.get("Tumour origin"),
-                parseValidIntegerFromString(record.get("Age")),
-                CosmicMutation.parseCsvRecord(record)
-            )
     }
 }
 
-fun main() {
-    val path = Paths.get("./data/sample_CosmicMutantExportCensus.tsv")
-    println("Processing csv file ${path.fileName}")
-    var recordCount = 0
-    TsvRecordSequenceSupplier(path).get().chunked(500)
-        .forEach { it ->
-            it.stream()
-                .map { CosmicTumor.parseCsvRecord(it) }
-                .forEach { tumor ->
-                    println(
-                        "Tumor Id= ${tumor.tumorId}  Mutation id= ${tumor.mutationId}" +
-                                "  Tumor origin = ${tumor.tumorOrigin} " +
-                                "  gene = ${tumor.cosmicMutation.geneSymbol} " +
-                                "   pubmed id = ${tumor.pubmedId}" +
-                                "  sample id = ${tumor.sampleId}" +
-                                "  mutation id = ${tumor.cosmicMutation.mutationId} " +
-                                "  mutation AA = ${tumor.cosmicMutation.mutationAA} " +
-                                "  tumor pubmed id = ${tumor.pubmedId} "
-                    )
-                    recordCount += 1
-                }
-        }
-    println("Record count = $recordCount")
-}
 
