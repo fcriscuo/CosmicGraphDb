@@ -34,10 +34,9 @@ data class CosmicTumor(
                 "${Neo4jUtils.formatPropertyValue(tumorOrigin)} ," +
                 " age: ${Neo4jUtils.formatPropertyValue(age)}, " +
                 "  created: datetime()}) YIELD node as ${CosmicTumor.nodename} \n"
-                    .plus(site.generateMergeCypher())
-                    .plus(site.generateParentRelationshipCypher(CosmicTumor.nodename))
-                    .plus(histology.generateMergeCypher())
-                    .plus(histology.generateParentRelationshipCypher(CosmicTumor.nodename))
+                    .plus(site.generateCosmicTypeCypher(CosmicTumor.nodename))
+                    .plus(histology.generateCosmicTypeCypher(CosmicTumor.nodename))
+
 
 
    private  fun generateTumorMatchCypher(): String =

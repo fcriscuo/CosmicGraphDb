@@ -7,7 +7,6 @@ data class CosmicClassification(
     val siteType: CosmicType,
     val histologyType: CosmicType,
     val cosmicSiteType: CosmicType,
-    val cosmicHistologyType: CosmicType,
     val nciCode: String,
     val efoUrl: String
 ) {
@@ -16,17 +15,22 @@ data class CosmicClassification(
          cosmicPhenotypeId.plus(siteType.primary)
              .plus(siteType.subtype1).hashCode()
 
-    fun generateMergeCypher():String = "CALL apoc.merge.node([\"CosmicClassification\"]," +
+    fun generateCosmicClassificationCypher(): String =
+        generateMergeCypher()
+            .plus(siteType.generateCosmicTypeCypher(CosmicClassification.nodename))
+                .plus(histologyType.generateCosmicTypeCypher(CosmicClassification.nodename))
+            .plus(" RETURN ${CosmicClassification.nodename}\n")
+
+    private fun generateMergeCypher():String = "CALL apoc.merge.node([\"CosmicClassification\"]," +
             "{ classification_id: ${resolveClassificationId()}}," +
             " { phenotype_id: \"${cosmicPhenotypeId}\", " +
             " nci_code: \"${nciCode}\"," +
             " efo_url: \"${efoUrl}\"," +
             " created: datetime() }," +
-            "{ last_mod: datetime()}) YIELD node AS $nodeName \n "
-
-
+            "{ last_mod: datetime()}) YIELD node AS $nodename \n "
+    
     companion object : AbstractModel {
-        val nodeName = "class_node"
+        val nodename = "classification"
         fun parseValueMap(value: Value): CosmicClassification {
             val nciCode =value["NCI_CODE"].asString() ?: "NS"
             val efo = value["EFO"].asString() ?: "NS"
@@ -36,7 +40,6 @@ data class CosmicClassification(
                 resolveSiteType(value),
                 resolveHistologyType(value),
                 resolveCosmicSiteType(value),
-                resolveCosmicHistologyType(value),
                 nciCode, efo
             )
         }
@@ -62,20 +65,12 @@ data class CosmicClassification(
                 value["SITE_SUBTYPE2_COSMIC"].asString(),
                 value["SITE_SUBTYPE3_COSMIC"].asString()
             )
-        private fun resolveCosmicHistologyType(value:Value): CosmicType =
-            CosmicType("CosmicHistology", value["HISTOLOGY_COSMIC"].asString(),
-                value["HIST_SUBTYPE1_COSMIC"].asString(),
-                value["HIST_SUBTYPE2_COSMIC"].asString(),
-                value["HIST_SUBTYPE3_COSMIC"].asString()
-            )
+
         fun generateChildRelationshipCypher(classificationId: Int, parentNodeName:String):String {
             val relationship = "HAS_COSMIC_CLASSIFICATION"
             val relName = "rel_class"
             return " MATCH (cc:CosmicClassification) WHERE cc.classification_id =  " +
                     " $classificationId  \n" +
-                    // "CALL apoc.merge.node([\"CosmicClassification\"], " +
-                    // " { classification_id: $classificationId})  " +
-                    // " YIELD node as ${CosmicClassification.nodeName} \n " +
                     " CALL apoc.merge.relationship( $parentNodeName, '$relationship', " +
                     " {},  {created: datetime()}, cc, {} ) " +
                     " YIELD rel as $relName \n"

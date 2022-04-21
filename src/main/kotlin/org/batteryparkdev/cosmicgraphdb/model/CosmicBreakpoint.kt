@@ -2,19 +2,10 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.neo4j.driver.Value
-/*
-Accession Number	Gene CDS length	HGNC ID
-Sample name	ID_sample ID_tumour
-Primary site	Site subtype 1	Site subtype 2	Site subtype 3
-Primary histology	Histology subtype 1	Histology subtype 2	Histology subtype 3
-Genome-wide screen	GENOMIC_MUTATION_ID	LEGACY_MUTATION_ID	MUTATION_ID
-Mutation CDS	Mutation AA	Mutation Description	Mutation zygosity
-LOH	GRCh	Mutation genome position	Mutation strand	Resistance
-Mutation	FATHMM prediction	FATHMM score	Mutation somatic status
-Pubmed_PMID	ID_STUDY
-Sample Type	Tumour origin	Age	HGVSP	HGVSC	HGVSG
- */
+import java.util.*
+
 data class CosmicBreakpoint(
+    val breakpointId: Int,
     val sampleName: String, val sampleId: Int, val tumorId: Int,
     val site: CosmicType, val histology: CosmicType,
     val mutationType: CosmicType, val mutationId: Int,
@@ -23,29 +14,37 @@ data class CosmicBreakpoint(
     val strandFrom: String, val chromosomeTo: String, val locationToMin: Int, val locationToMax: Int,
     val strandTo: String, val pubmedId: Int = 0, val studyId: Int
 ) {
-    val nodeName = "break_node"
-    val breakpointId = mutationId
+    fun generateBreakpointCypher(): String = generateMergeCypher()
+        .plus(site.generateCosmicTypeCypher(CosmicBreakpoint.nodename))
+        .plus(histology.generateCosmicTypeCypher(CosmicBreakpoint.nodename))
+        .plus(generateTumorRelationshipCypher())
+        .plus(generateMutationRelationshipCypher())
+        .plus(" RETURN ${CosmicBreakpoint.nodename}\n")
 
-    fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
-            " {sample_id: ${sampleId.toString()}}," +
-            " { sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}, " +
-            "  tumor_id: ${tumorId.toString()}, " +
-            " mutation_id: ${mutationId.toString()}, " +
+    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
+            " {breakpoint_id: $breakpointId}, " +
+            " {sample_id: $sampleId," +
+            " sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}, " +
             "chromosome_from: \"$chromosomeFrom\" , " +
-            " location_from_min: ${locationFromMin.toString()}," +
-            " location_from_max: ${locationFromMax.toString()}, " +
+            " location_from_min: $locationFromMin," +
+            " location_from_max: $locationFromMax, " +
             " strand_from: ${Neo4jUtils.formatPropertyValue(strandFrom)}, " +
             "chromosome_to: \"$chromosomeTo\", " +  // can't use utility here
-            " location_to_min: ${locationToMin.toString()}," +
-            " location_to_max: ${locationToMax.toString()}, " +
+            " location_to_min: $locationToMin," +
+            " location_to_max: $locationToMax, " +
             " strand_to: ${Neo4jUtils.formatPropertyValue(strandTo)}," +
-            "  pubmed_id: ${pubmedId.toString()}, study_id: ${studyId.toString()}," +
+            "  pubmed_id: $pubmedId, study_id: ${studyId.toString()}," +
             " created: datetime() }," +
-            " { last_mod: datetime()}) YIELD node AS $nodeName \n "
+            " { last_mod: datetime()}) YIELD node AS ${CosmicBreakpoint.nodename} \n "
 
+  private fun generateTumorRelationshipCypher(): String =
+      CosmicTumor.generateChildRelationshipCypher(tumorId,CosmicBreakpoint.nodename )
+
+    private fun generateMutationRelationshipCypher(): String =
+        CosmicMutation.generateChildRelationshipCypher(mutationId, CosmicBreakpoint.nodename)
 
     companion object : AbstractModel {
-
+         const val  nodename = "breakpoint"
         fun parseValueMap(value: Value): CosmicBreakpoint {
             val sampleName = value["Sample name"].asString()
             val sampleId = value["ID_SAMPLE"].asString().toInt()
@@ -63,6 +62,7 @@ data class CosmicBreakpoint(
             val studyId = parseValidIntegerFromString(value["ID_STUDY"].asString()) ?: 0
 
             return CosmicBreakpoint(
+                UUID.randomUUID().hashCode(),
                 sampleName, sampleId, tumorId, resolveSiteType(value),
                 resolveHistologySite(value), resolveMutationType(value),
                 mutationId, chromFrom, locationFromMin, locationFromMax, strandFrom,

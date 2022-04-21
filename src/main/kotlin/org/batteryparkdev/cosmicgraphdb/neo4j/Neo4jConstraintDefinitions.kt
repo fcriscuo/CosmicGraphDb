@@ -22,7 +22,7 @@ val constraints by lazy {
         "CREATE CONSTRAINT unique_mutation_id IF NOT EXISTS ON (cm:CosmicMutation) ASSERT cm.mutation_id IS UNIQUE",
         "CREATE CONSTRAINT unique_sample_id IF NOT EXISTS ON (cs:CosmicSample) ASSERT cs.sample_id IS UNIQUE",
         "CREATE CONSTRAINT unique_gene_expression_id IF NOT EXISTS ON (cge:CosmicGeneExpression) ASSERT cge.key IS UNIQUE",
-        "CREATE CONSTRAINT unique_breakpoint_mutation_id IF NOT EXISTS ON (cb:CosmicBreakpoint) ASSERT cb.mutation_id IS UNIQUE",
+        "CREATE CONSTRAINT unique_breakpoint_id IF NOT EXISTS ON (cb:CosmicBreakpoint) ASSERT cb.breakpoint_id IS UNIQUE",
         "CREATE CONSTRAINT unique_diff_methylation_id IF NOT EXISTS ON (cdm:CosmicDiffMethylation) ASSERT cdm_key IS UNIQUE",
         "CREATE CONSTRAINT unique_complete_cna_id IF NOT EXISTS ON (cna:CosmicCompleteCNA) ASSERT cna.cnv_id IS UNIQUE"
     )
