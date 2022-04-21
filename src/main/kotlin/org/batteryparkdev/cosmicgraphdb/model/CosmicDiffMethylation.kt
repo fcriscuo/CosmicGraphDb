@@ -1,9 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.neo4j.driver.Value
-import java.nio.file.Paths
 
 data class CosmicDiffMethylation(
     val studyId: Int, val sampleId: Int,
@@ -15,26 +13,27 @@ data class CosmicDiffMethylation(
     val avgBetaValueNormal: Float, val betaValue: Float,
     val twoSidedPValue: Double
 ) {
-    val nodeName = "methylation"
+    val nodename = "methylation"
 
     fun generateDiffMethylationCypher():String =
         generateMergeCypher()
-            .plus(site.generateCosmicTypeCypher(nodeName))
-            .plus(histology.generateCosmicTypeCypher(nodeName))
-            .plus(CosmicTumor.generateChildRelationshipCypher(tumorId, nodeName))
-            .plus(CosmicSample.generateChildRelationshipCypher(sampleId, nodeName))
-            .plus(" RETURN node as $nodeName")
+            .plus(site.generateCosmicTypeCypher(nodename))
+            .plus(histology.generateCosmicTypeCypher(nodename))
+            .plus(CosmicTumor.generateChildRelationshipCypher(tumorId, nodename))
+            .plus(CosmicSample.generateChildRelationshipCypher(sampleId, nodename))
+            .plus(" RETURN  $nodename")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicDiffMethylation\"], " +
-            " { key = apoc.create.uuid(), study_id: $studyId, " +
+            " { key: apoc.create.uuid()}," +
+            "{ study_id: $studyId, " +
             " fragment_id: ${Neo4jUtils.formatPropertyValue(fragmentId)}, genome_version: " +
             " ${Neo4jUtils.formatPropertyValue(genomeVersion)}, chromosome: $chromosome," +
             " position: $position, strand: ${Neo4jUtils.formatPropertyValue(strand)}," +
             " gene_name: ${Neo4jUtils.formatPropertyValue(geneName)}, " +
             " methylation: ${Neo4jUtils.formatPropertyValue(methylation)}," +
             " avg_beta_value_normal: $avgBetaValueNormal, beta_value: $betaValue," +
-            " two_sided_p_value: $twoSidedPValue, created: datetime} " +
-            " { last_mod: datetime()}) YIELD node AS $nodeName \\n"
+            " two_sided_p_value: $twoSidedPValue, created: datetime}, " +
+            " { last_mod: datetime()}) YIELD node AS $nodename \n"
 
     companion object : AbstractModel {
 

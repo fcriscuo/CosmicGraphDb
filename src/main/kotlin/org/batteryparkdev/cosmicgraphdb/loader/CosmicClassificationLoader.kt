@@ -8,8 +8,8 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.batteryparkdev.cosmicgraphdb.model.CosmicBreakpoint
 import org.batteryparkdev.cosmicgraphdb.model.CosmicClassification
-import org.batteryparkdev.cosmicgraphdb.dao.loadCosmicClassification
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 
 object CosmicClassificationLoader {
@@ -38,12 +38,15 @@ object CosmicClassificationLoader {
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.loadCosmicClassifications(classifications: ReceiveChannel<CosmicClassification>) =
-        produce<Int> {
+        produce<String> {
             for (classification in classifications) {
                send (loadCosmicClassification(classification))
                 delay(20)
             }
         }
+
+    private fun loadCosmicClassification(classification: CosmicClassification): String =
+        Neo4jConnectionService.executeCypherCommand(classification.generateCosmicClassificationCypher())
 
     fun loadCosmicClassificationData(filename: String) = runBlocking {
         logger.atInfo().log("Loading CosmicClassification data from file $filename")

@@ -8,30 +8,22 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteCNA
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import java.nio.file.Paths
 
 object CosmicCompleteCNALoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
-    /*
-    Private function to create a coroutine channel of CosmicCompleteCNA
-    model objects
-     */
-
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.parseCosmicCompleteCNAFile(cosmicCompleteCNAFile: String) =
         produce<CosmicCompleteCNA> {
-            val cypher = "CALL apoc.load.csv(\"$cosmicCompleteCNAFile\") " +
-                    "YIELD lineNo, map RETURN map;"
-            val records = Neo4jConnectionService.executeCypherQuery(cypher);
-            records.map { record -> record.get("map") }
-                .map{ CosmicCompleteCNA.parseValueMap(it)}
+            ApocFileReader.processDelimitedFile(cosmicCompleteCNAFile)
+                .map { record -> record.get("map") }
+                .map { CosmicCompleteCNA.parseValueMap(it) }
                 .forEach {
-                    send (it)
-                    delay(20)
+                    send(it)
+                    delay(20L)
                 }
         }
 

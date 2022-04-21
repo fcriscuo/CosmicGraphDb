@@ -13,23 +13,23 @@ data class CosmicCompleteGeneExpression(
     val key:Int
     )
 {
-    val nodeName = "expression"
+    val nodename = "expression"
 
     fun generateCosmicSampleCypher(): String =
         generateMergeCypher().plus(generateGeneRelationshipCypher())
             .plus(generateSampleRelationshipCypher())
-            .plus(" RETURN $nodeName")
+            .plus(" RETURN $nodename")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CompleteGeneExpression\"], " +
             "  {key: $key, regulation: ${Neo4jUtils.formatPropertyValue(regulation)}," +
             " z_score: $zScore, study_id: $studyId, created: datetime} " +
-            " { last_mod: datetime()}) YIELD node AS $nodeName \n"
+            " { last_mod: datetime()}) YIELD node AS $nodename \n"
 
     private fun generateGeneRelationshipCypher() =
-        CosmicGeneCensus.generateHasGeneRelationshipCypher(geneSymbol,nodeName)
+        CosmicGeneCensus.generateHasGeneRelationshipCypher(geneSymbol,nodename)
 
     private fun generateSampleRelationshipCypher() =
-        CosmicSample.generateChildRelationshipCypher(sampleId, nodeName)
+        CosmicSample.generateChildRelationshipCypher(sampleId, nodename)
 
     companion object: AbstractModel {
 

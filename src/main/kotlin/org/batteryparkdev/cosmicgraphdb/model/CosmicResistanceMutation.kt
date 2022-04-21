@@ -55,7 +55,6 @@ data class CosmicResistanceMutation(
                 value["Drug Name"].asString(),
                 value["Pubmed Id"].asString().toInt()
             )
-
     }
 }
 

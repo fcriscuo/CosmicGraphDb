@@ -4,7 +4,6 @@ import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 
-
 data class CosmicTumor(
     val tumorId: Int, val sampleId: Int,
     val site: CosmicType, val histology: CosmicType,
@@ -94,7 +93,6 @@ data class CosmicTumor(
                     " {}, {created: datetime()}, " +
                     " $childLabel, {} YIELD rel AS $relname \n")
         }
-
     }
 }
 

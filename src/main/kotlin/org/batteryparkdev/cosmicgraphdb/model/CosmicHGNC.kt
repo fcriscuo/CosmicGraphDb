@@ -3,9 +3,6 @@ package org.batteryparkdev.cosmicgraphdb.model
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.neo4j.driver.Value
 
-/*
-COSMIC_ID	COSMIC_GENE_NAME	Entrez_id	HGNC_ID	Mutated?	Cancer_census?	Expert Curated?
- */
 data class CosmicHGNC(
     val cosmicId: Int,
     val hgncGeneSymbol: String,
@@ -15,7 +12,6 @@ data class CosmicHGNC(
     val isCancerCensus: Boolean,
     val isExpertCurrated: Boolean
 ) {
-
     fun generateCosmicHGNCCypher(): String =
         generateMergeCypher()
             .plus(generateGeneRelationshipCypher())
@@ -50,9 +46,6 @@ data class CosmicHGNC(
     companion object : AbstractModel {
         const val nodename = "hgnc"
 
-        /*
-         convertYNtoBoolean(record.get("Mutated?")),
-         */
         fun parseValueMap(value: Value): CosmicHGNC =
             CosmicHGNC(
                 value["COSMIC_ID"].asString().toInt(),
@@ -77,7 +70,5 @@ data class CosmicHGNC(
                         " ${CosmicHGNC.nodename}, {}) YIELD rel AS $relName \n"
             )
         }
-
-
     }
 }

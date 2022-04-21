@@ -2,72 +2,76 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.neo4j.driver.Value
+import java.util.*
 
 data class CosmicCompleteCNA(
-    val cnvId:Int, val geneId:Int, val geneSymbol:String, val sampleId:Int,
+    val cnaId: Int,
+    val cnvId:String, val geneId:Int, val geneSymbol:String, val sampleId:Int,
     val tumorId:Int, val site: CosmicType, val histology: CosmicType,
     val sampleName:String, val totalCn:Int, val minorAllele: String,
     val mutationType: CosmicType, val studyId: Int, val grch:String= "38",
     val chromosomeStartStop:String
 ) {
-     val nodeName = "cna_node"
+     val nodename = "complete_cna"
 
     fun generateCompleteCNACypher():String =
         generateMergeCypher().plus(generateGeneRelationshipCypher())
-            .plus(site.generateCosmicTypeCypher(nodeName))
-            .plus(histology.generateCosmicTypeCypher(nodeName))
-            .plus(mutationType.generateCosmicTypeCypher(nodeName))
+            .plus(site.generateCosmicTypeCypher(nodename))
+            .plus(histology.generateCosmicTypeCypher(nodename))
+            .plus(mutationType.generateCosmicTypeCypher(nodename))
             .plus(generateTumorRelationshipCypher())
             .plus(generateSampleRelationshipCypher())
-            .plus(" RETURN node as $nodeName\n")
+            .plus(" RETURN  $nodename\n")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicCompleteCNA\"], " +
-            " { cnv_id: ${cnvId.toString()},  " +
+            " {cna_id: ${cnaId} }, "+
+            " { cnv_id: ${cnvId.toString()}, " +
             " total_cn: ${totalCn.toString()}, minor_allele: ${Neo4jUtils.formatPropertyValue(minorAllele)}," +
             " study_id: ${studyId.toString()}, grch: \"$grch\"," +
             " chromosome_start_stop: \"$chromosomeStartStop\",created: datetime()  " +
-            " } { last_mod: datetime()}) YIELD node AS $nodeName \n"
+            " }, { last_mod: datetime()}) YIELD node AS $nodename \n"
 
     /*
     Function to generate Cypher commands to create a
     CNA - [HAS_GENE] -> Gene relationship
      */
     private fun generateGeneRelationshipCypher(): String =
-        CosmicGeneCensus.generateHasGeneRelationshipCypher(geneSymbol,nodeName)
+        CosmicGeneCensus.generateHasGeneRelationshipCypher(geneSymbol,nodename)
 
     /*
     Function to generate the Cypher commands to create a
     Tumor - [HAS_CNA] -> CNA relationship for this CNA
      */
     private fun generateTumorRelationshipCypher(): String =
-        CosmicTumor.generateChildRelationshipCypher(tumorId, nodeName)
+        CosmicTumor.generateChildRelationshipCypher(tumorId, nodename)
 
     /*
     Function to generate Cypher command to establish
     a Sample -[HAS_CNA] -> CNA relationship
      */
     private fun generateSampleRelationshipCypher(): String =
-        CosmicSample.generateChildRelationshipCypher(sampleId, nodeName)
+        CosmicSample.generateChildRelationshipCypher(sampleId, nodename)
 
     companion object: AbstractModel {
 
-        fun parseValueMap(value: Value): CosmicCompleteCNA {
-            val cnvId = value["CNV_ID"].asString().toInt()
-            val geneId = value["ID_GENE"].asString().toInt()
-            val geneSymbol = value["gene_name"].asString()   // actually HGNC symbol
-            val sampleId = value["ID_SAMPLE"].asString().toInt()
-            val tumorId = parseValidIntegerFromString(value["ID_TUMOR"].asString())
-            val sampleName = value["SAMPLE_NAME"].asString()
-            val totalCn = value["TOTAL_CN"].asString().toInt()
-            val minorAllele = value["MINOR_ALLELE"].asString()
-            val studyId = value["ID_STUDY"].asString().toInt()
-            val grch = value["GRCh"].asString()
-            val chrmstartstop = value["Chromosome:G_Start..G_Stop"].asString()
-            return CosmicCompleteCNA(cnvId, geneId, geneSymbol, sampleId,
-                tumorId, resolveSiteType(value), resolveHistologySite(value),
-                sampleName, totalCn, minorAllele, resolveMutationType(value),
-                studyId, grch, chrmstartstop)
-        }
+        fun parseValueMap(value: Value): CosmicCompleteCNA =
+            CosmicCompleteCNA(
+                UUID.randomUUID().hashCode(),   // unique identifier
+                value["CNV_ID"].asString(),
+                value["ID_GENE"].asString().toInt(),
+                value["gene_name"].asString(),   // actually HGNC symbol
+                value["ID_SAMPLE"].asString().toInt(),
+                parseValidIntegerFromString(value["ID_TUMOR"].asString()),
+                resolveSiteType(value),
+                resolveHistologySite(value),
+                value["SAMPLE_NAME"].asString(),
+                value["TOTAL_CN"].asString().toInt(),
+                value["MINOR_ALLELE"].asString(),
+                resolveMutationType(value),
+                value["ID_STUDY"].asString().toInt(),
+                value["GRCh"].asString(),
+                value["Chromosome:G_Start..G_Stop"].asString()
+            )
 
         private fun resolveSiteType(value: Value): CosmicType =
             CosmicType(

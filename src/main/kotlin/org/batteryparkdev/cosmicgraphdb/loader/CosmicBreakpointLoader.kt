@@ -8,9 +8,9 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.batteryparkdev.cosmicgraphdb.dao.loadCosmicBreakpoint
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.cosmicgraphdb.model.CosmicBreakpoint
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 
 object CosmicBreakpointLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
@@ -34,12 +34,16 @@ object CosmicBreakpointLoader {
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.loadCosmicBreakpoints(breakpoints: ReceiveChannel<CosmicBreakpoint>)=
-        produce<Int> {
+        produce<String> {
             for (breakpoint in breakpoints){
-                send(loadCosmicBreakpoint(breakpoint))
+                send(executeLoadCypher(breakpoint))
                 delay(20)
             }
         }
+
+    private fun executeLoadCypher(breakpoint: CosmicBreakpoint): String =
+        Neo4jConnectionService.executeCypherCommand(breakpoint.generateBreakpointCypher())
+
     fun loadCosmicBreakpointData(filename: String) = runBlocking {
         logger.atInfo().log("Loading CosmicBreakpointData from file: $filename")
         var nodeCount = 0

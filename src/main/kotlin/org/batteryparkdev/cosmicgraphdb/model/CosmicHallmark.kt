@@ -1,20 +1,15 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.neo4j.driver.Value
-import java.nio.file.Paths
 import java.util.*
 
-
 data class CosmicHallmark(
-    val hallmarkId: String,   // needed to establish unique database identifier
+    val hallmarkId: Int,   // needed to establish unique database identifier
     val geneSymbol: String, val cellType: String, val pubmedId: Int,
     val hallmark: String, val impact: String, val description: String
 ) {
-
-    fun generateCosmicHallmarkCypher():String =
+    fun generateCosmicHallmarkCypher(): String =
         generateMergeCypher()
             .plus(generateMergeHallmarkCollectionCypher())
             .plus(generateHasHallmarkRelationshipCypher())
@@ -22,7 +17,7 @@ data class CosmicHallmark(
 
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicHallmark\"]," +
-                " {hallmark_id:  ${Neo4jUtils.formatPropertyValue(hallmarkId)}, " +
+                " {hallmark_id:  $hallmarkId} , " +
                 "  {gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
                 "  cell_type: ${Neo4jUtils.formatPropertyValue(cellType)}, " +
                 "  pubmed_id: $pubmedId, " +
@@ -35,18 +30,18 @@ data class CosmicHallmark(
     private fun generateMergeHallmarkCollectionCypher(): String =
         " CALL apoc.merge.node( [\"CosmicHallmarkCollection\"], " +
                 "{ gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
-                "  {created: datetime()}, {lastSeen: datetime()} ) YIELD node as ${CosmicHallmark.collectionname} \n " +
+                "  {created: datetime()}, {lastSeen: datetime()} ) YIELD node as $collectionname \n " +
                 " CALL apoc.merge.node( [\"CosmicGene, CosmicCensus\"]," +
                 "{  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
                 "  {created: datetime()},{} ) YIELD node as hallmark_gene \n" +
                 " CALL apoc.merge.relationship (  hallmark_gene, 'HAS_HALLMARK_COLLECTION', " +
                 " {}, {created: datetime()}, " +
-                " ${CosmicHallmark.collectionname}, {}) YIELD rel AS rel_coll \n"
+                " $collectionname, {}) YIELD rel AS rel_coll \n"
 
     private fun generateHasHallmarkRelationshipCypher(): String {
         val relationship = " HAS_HALLMARK"
         val relName = "rel_hallmark"
-        return "CALL apoc.merge.relationship (  ${CosmicHallmark.collectionname}, '$relationship'," +
+        return "CALL apoc.merge.relationship (  $collectionname, '$relationship'," +
                 " {}, {created: datetime()}, " +
                 " ${CosmicHallmark.nodename}, {} YIELD rel AS $relName \n"
     }
@@ -56,7 +51,7 @@ data class CosmicHallmark(
         const val collectionname = "hallmark_collect"
         fun parseValueMap(value: Value): CosmicHallmark =
             CosmicHallmark(
-                UUID.randomUUID().toString(),  // unique identifier for key
+                UUID.randomUUID().hashCode(),  // unique identifier for key
                 value["GENE_NAME"].asString(),
                 value["CELL_TYPE"].asString(),
                 value["PUBMED_PMID"].asInt(),
