@@ -182,7 +182,7 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
 
     fun loadGeneExpressionJob(job3Result: String, job6Result: String): String { // job 9
         logger.atInfo().log("9 - Starting GeneExpression loader")
-        CosmicGeneExpressionLoader.loadCosmicCompleteGeneExpressionData(cosmicGeneExpressionFile)
+        CosmicCompleteGeneExpressionLoader.loadCosmicCompleteGeneExpressionData(cosmicGeneExpressionFile)
         return "Result of GeneExpression loaded"
     }
 

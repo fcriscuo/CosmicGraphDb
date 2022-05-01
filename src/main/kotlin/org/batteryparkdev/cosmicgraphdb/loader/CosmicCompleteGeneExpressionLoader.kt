@@ -9,14 +9,13 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteGeneExpression
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.dao.createGeneExpressionToGeneRelationship
-import org.batteryparkdev.cosmicgraphdb.dao.createGeneExpressionToSampleRelationship
-import org.batteryparkdev.cosmicgraphdb.dao.loadCosmicCompleteGeneExpression
+import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import java.nio.file.Paths
 
-object CosmicGeneExpressionLoader {
+object CosmicCompleteGeneExpressionLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
+
     /*
     Private function to create a channel of CosmicCompleteGeneExpression model objects
      */
@@ -24,10 +23,12 @@ object CosmicGeneExpressionLoader {
     private fun CoroutineScope.parseCosmicGeneExpression(cosmicGeneExpressionFile: String) =
         produce<CosmicCompleteGeneExpression> {
             val path = Paths.get(cosmicGeneExpressionFile)
-            TsvRecordSequenceSupplier(path).get()
+            ApocFileReader.processDelimitedFile(cosmicGeneExpressionFile)
+                .map { record -> record.get("map") }
+                .map { CosmicCompleteGeneExpression.parseValueMap(it) }
                 .forEach {
-                    send(CosmicCompleteGeneExpression.parseCsvRecord(it))
-                    delay(20)
+                    send(it)
+                    delay(20L)
                 }
         }
 
@@ -36,36 +37,12 @@ object CosmicGeneExpressionLoader {
     into a Neo4j database
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-     private fun CoroutineScope.loadGeneExpression( expressions: ReceiveChannel<CosmicCompleteGeneExpression>) = produce {
+     private fun CoroutineScope.loadCompleteGeneExpression(expressions: ReceiveChannel<CosmicCompleteGeneExpression>) = produce {
          for (expression in expressions) {
-             loadCosmicCompleteGeneExpression(expression)
+             Neo4jConnectionService.executeCypherCommand(expression.generateCompleteGeneExpressionCypher())
              send(expression)
              delay(50)
          }
-    }
-
-    /*
-    Private function to create CosmicGeneExpression to CosmicGene relationships
-     */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.createGeneRelationships(expressions: ReceiveChannel<CosmicCompleteGeneExpression>) = produce {
-        for (expression in expressions) {
-            createGeneExpressionToGeneRelationship(expression)
-            send(expression)
-            delay(50)
-        }
-    }
-
-    /*
-   Private function to create CosmicGeneExpression to CosmicSample relationships
-    */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.createSampleRelationships(expressions: ReceiveChannel<CosmicCompleteGeneExpression>) = produce{
-        for (expression in expressions){
-            createGeneExpressionToSampleRelationship(expression)
-            send(expression.key)
-            delay(50)
-        }
     }
 
     /*
@@ -75,9 +52,8 @@ object CosmicGeneExpressionLoader {
         logger.atInfo().log("Loading CosmicCompleteGeneExpression data from file:  $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val ids = createSampleRelationships(
-            createGeneRelationships(
-            loadGeneExpression(parseCosmicGeneExpression(filename))))
+        val ids =
+            loadCompleteGeneExpression(parseCosmicGeneExpression(filename))
         for (id in ids) {
             // pipeline stream is lazy - need to consume output
             nodeCount += 1
@@ -90,7 +66,3 @@ object CosmicGeneExpressionLoader {
     }
 }
 
-fun main(args: Array<String>) {
-    val filename = if (args.isNotEmpty()) args[0] else "data/sample_CosmicCompleteGeneExpression.tsv"
-    CosmicGeneExpressionLoader.loadCosmicCompleteGeneExpressionData(filename)
-}

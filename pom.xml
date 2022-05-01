@@ -16,6 +16,7 @@
         <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
         <apache.commons.lang3.version>3.12.0</apache.commons.lang3.version>
         <apache.commons.io.version>2.11.0</apache.commons.io.version>
+        <apache.commons.config.version>2.7</apache.commons.config.version>
         <apache.log4j.version>1.2.17</apache.log4j.version>
         <apache.csv.version>1.8</apache.csv.version>
         <guava.version>31.1-jre</guava.version>
@@ -28,7 +29,7 @@
         <kotlin.version>1.6.10</kotlin.version>
         <kotlintest.version>1.5.21</kotlintest.version>
         <mockk.version>1.12.0</mockk.version>
-        <arrow-kt.version>1.0.1</arrow-kt.version>
+        <arrow-kt.version>1.1.2</arrow-kt.version>
         <ktor.version>1.6.1</ktor.version>
         <gson.version>2.9.0</gson.version>
         <maven.compiler.source>15</maven.compiler.source>
@@ -79,16 +80,17 @@
             <artifactId>japi</artifactId>
             <version>1.0.37</version>
         </dependency>-->
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-configuration2 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-configuration2</artifactId>
+            <version>${apache.commons.config.version}</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/io.github.microutils/kotlin-logging -->
         <dependency>
             <groupId>io.github.microutils</groupId>
             <artifactId>kotlin-logging-jvm</artifactId>
             <version>2.1.21</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.10</version>
         </dependency>
         <!--local dependency for PublicationImporter -->
         <dependency>
@@ -121,7 +123,6 @@
             <artifactId>scala-library</artifactId>
             <version>2.12.13</version>
         </dependency>
-
         <dependency>
             <groupId>com.google.flogger</groupId>
             <artifactId>flogger-log4j-backend</artifactId>
@@ -247,6 +248,14 @@
             <artifactId>arrow-core</artifactId>
             <version>1.0.1</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.arrow-kt/arrow-core-jvm -->
+        <dependency>
+            <groupId>io.arrow-kt</groupId>
+            <artifactId>arrow-core-jvm</artifactId>
+            <version>1.1.2</version>
+        </dependency>
+
 
         <!-- https://mvnrepository.com/artifact/io.arrow-kt/arrow-annotations -->
         <dependency>

@@ -15,7 +15,7 @@ data class CosmicCompleteGeneExpression(
 {
     val nodename = "expression"
 
-    fun generateCosmicSampleCypher(): String =
+    fun generateCompleteGeneExpressionCypher(): String =
         generateMergeCypher().plus(generateGeneRelationshipCypher())
             .plus(generateSampleRelationshipCypher())
             .plus(" RETURN $nodename")

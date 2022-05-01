@@ -4,8 +4,8 @@ import com.google.common.base.Stopwatch
 import com.google.common.flogger.FluentLogger
 import org.batteryparkdev.cosmicgraphdb.model.CosmicTumor
 import org.batteryparkdev.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jUtils
-import org.batteryparkdev.cosmicgraphdb.property.DatafilePropertiesService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
+
 import org.batteryparkdev.pubmed.loader.PubMedLoader
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit

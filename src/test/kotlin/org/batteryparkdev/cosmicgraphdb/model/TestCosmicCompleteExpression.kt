@@ -10,7 +10,7 @@ class TestCosmicCompleteExpression {
             .limit(LIMIT)
             .map { record -> record.get("map") }
             .map{CosmicCompleteGeneExpression.parseValueMap(it)}
-            .forEach { println("CosmicCompleteExpression: ${it.generateCosmicSampleCypher()}") }
+            .forEach { println("CosmicCompleteExpression: ${it.generateCompleteGeneExpressionCypher()}") }
     }
 }
 fun main (args:Array<String>) {

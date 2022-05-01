@@ -9,16 +9,9 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.model.CosmicGeneCensus
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.addGeneCensusLabel
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.loadCosmicGeneNode
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.loadMutationTypeAnnotations
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.loadOtherSyndromeAnnotations
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.loadRoleInCancerAnnotations
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.loadSynonymAnnotations
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.loadTissueTypeAnnotations
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.loadTranslocPartnerList
-import org.batteryparkdev.cosmicgraphdb.dao.CosmicGeneDao.loadTumorList
-import org.batteryparkdev.io.CsvRecordSequenceSupplier
+import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
+import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import java.nio.file.Paths
 
 /*
@@ -31,10 +24,12 @@ object CosmicGeneCensusLoader {
     private fun CoroutineScope.parseCosmicGeneCensusFile(cosmicGeneCensusFile: String) =
         produce<CosmicGeneCensus> {
             val path = Paths.get(cosmicGeneCensusFile)
-            CsvRecordSequenceSupplier(path).get()
+            ApocFileReader.processDelimitedFile(cosmicGeneCensusFile)
+                .map { record -> record.get("map") }
+                .map { CosmicGeneCensus.parseValueMap(it) }
                 .forEach {
-                    send (CosmicGeneCensus.parseCsvRecord(it))
-                    delay(20)
+                    send(it)
+                    delay(20L)
                 }
         }
 
@@ -47,6 +42,9 @@ object CosmicGeneCensusLoader {
             delay(20)
         }
     }
+
+    private fun loadCosmicGeneNode(gene: CosmicGeneCensus):String =
+        Neo4jConnectionService.executeCypherCommand(gene.generateCosmicGeneCypher())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.loadSomaticTumors(genes: ReceiveChannel<CosmicGeneCensus>) =
@@ -67,9 +65,35 @@ object CosmicGeneCensusLoader {
                 delay(20)
             }
         }
+    private fun loadTumorList(geneSymbol: String, tumorList: List<String>, tumorType: String) {
+        tumorList.map { tt -> TumorTypeService.resolveTumorType(tt) }
+            .filter { tt -> tt.isNotEmpty() }
+            .forEach { tt ->
+                run {
+                    Neo4jConnectionService.executeCypherCommand(
+                        "MERGE (ca:CosmicAnnotation{annotation_value: \"$tt\"})"
+                    )
+                    // add TumorType label if novel
+                    val labelExistsQuery = "MERGE (ca:CosmicAnnotation{annotation_value:\"$tt\"})" +
+                            "RETURN apoc.label.exists(ca, \"TumorType\") AS output;"
+                    if (Neo4jConnectionService.executeCypherCommand(labelExistsQuery).uppercase() == "FALSE") {
+                        Neo4jConnectionService.executeCypherCommand(
+                            "MATCH (ca:CosmicAnnotation{annotation_value:\"$tt\"} )" +
+                                    "CALL apoc.create.addLabels(ca,[\"TumorType\"]) YIELD node RETURN node"
+                        )
+                    }
+                    // create CosmicGene -> CosmicAnnotation
+                    Neo4jConnectionService.executeCypherCommand(
+                        "MATCH (cg:CosmicGene), (ca:CosmicAnnotation) WHERE cg.gene_symbol = \"$geneSymbol\" " +
+                                " AND ca.annotation_value = \"$tt\" MERGE (cg) -" +
+                                "[r: HAS_TUMOR_TYPE {type: \"$tumorType\"}] ->(ca) "
+                    )
+                }
+            }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.loadSynonymAnnotations(genes: ReceiveChannel<CosmicGeneCensus>) =
+    private fun CoroutineScope.processSynonymAnnotations(genes: ReceiveChannel<CosmicGeneCensus>) =
         produce<CosmicGeneCensus> {
             for (gene in genes){
                 loadSynonymAnnotations(gene.geneSymbol, gene.synonymList)
@@ -78,8 +102,31 @@ object CosmicGeneCensusLoader {
             }
         }
 
+    private fun loadSynonymAnnotations(geneSymbol: String, synonymList: List<String>) {
+        synonymList.forEach { syn ->
+            run {
+                Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$syn\"})")
+                // add Synonym label if novel
+                val labelExistsQuery = "MERGE (ca:CosmicAnnotation{annotation_value:\"$syn\"}) " +
+                        "RETURN apoc.label.exists(ca, \"Synonym\") AS output;"
+                if (Neo4jConnectionService.executeCypherCommand(labelExistsQuery).uppercase() == "FALSE") {
+                    Neo4jConnectionService.executeCypherCommand(
+                        "MATCH (ca:CosmicAnnotation{annotation_value:\"$syn\"}) " +
+                                " CALL apoc.create.addLabels(ca,[\"Synonym\"]) YIELD node RETURN node"
+                    )
+                }
+                // CosmicGene -> CosmicAnnotation
+                Neo4jConnectionService.executeCypherCommand(
+                    "MATCH (cg:CosmicGene), (ca:CosmicAnnotation) WHERE cg.gene_symbol = \"$geneSymbol\" " +
+                            " AND ca.annotation_value = \"$syn\" MERGE (cg) -" +
+                            "[r: HAS_SYNONYM] ->(ca) "
+                )
+            }
+        }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.loadRoleInCancerAnnotations( genes: ReceiveChannel<CosmicGeneCensus>) =
+    private fun CoroutineScope.processRoleInCancerAnnotations(genes: ReceiveChannel<CosmicGeneCensus>) =
         produce<CosmicGeneCensus> {
             for (gene in genes) {
                 loadRoleInCancerAnnotations(gene.geneSymbol, gene.roleInCancerList)
@@ -88,8 +135,41 @@ object CosmicGeneCensusLoader {
             }
         }
 
+    fun loadRoleInCancerAnnotations(geneSymbol: String, roleList: List<String>) {
+        roleList.forEach { role ->
+            run {
+                Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$role\"})")
+                // add RoleInCancer label if novel
+                addAnnotationLabel(role, "RoleInCancer")
+                // CosmicGene -> CosmicAnnotation
+                completeBasicRelationship(geneSymbol, role, "HAS_ROLE_IN_CANCER")
+            }
+        }
+    }
+    private fun completeBasicRelationship(
+        geneSymbol: String, annotationValue: String,
+        relationshipName: String
+    ) {
+        Neo4jConnectionService.executeCypherCommand(
+            "MATCH (cg:CosmicGene), (ca:CosmicAnnotation) WHERE cg.gene_symbol = \"$geneSymbol\" " +
+                    " AND ca.annotation_value = \"$annotationValue\" MERGE (cg) -" +
+                    "[r: ${relationshipName.uppercase()}] ->(ca) "
+        )
+    }
+
+    fun addAnnotationLabel(value: String, label: String) {
+        val labelExistsQuery = "MERGE (ca:CosmicAnnotation{annotation_value:\"$value\"}) " +
+                "RETURN apoc.label.exists(ca, \"$label\") AS output;"
+        if (Neo4jConnectionService.executeCypherCommand(labelExistsQuery).uppercase() == "FALSE") {
+            Neo4jConnectionService.executeCypherCommand(
+                "MATCH (ca:CosmicAnnotation{annotation_value:\"$value\"}) " +
+                        "CALL apoc.create.addLabels(ca,[\"$label\"]) YIELD node RETURN node"
+            )
+        }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.loadMutationTypeAnnotations( genes: ReceiveChannel<CosmicGeneCensus>) =
+    private fun CoroutineScope.processMutationTypeAnnotations(genes: ReceiveChannel<CosmicGeneCensus>) =
         produce<CosmicGeneCensus> {
             for (gene in genes) {
                 loadMutationTypeAnnotations(gene.geneSymbol, gene.mutationTypeList)
@@ -97,9 +177,20 @@ object CosmicGeneCensusLoader {
                 delay(20)
             }
         }
+    private fun loadMutationTypeAnnotations(geneSymbol: String, mutationTypeList: List<String>) {
+        mutationTypeList.forEach { mut ->
+            run {
+                Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$mut\"})")
+                // add MutationType label if novel
+                addAnnotationLabel(mut, "MutationType")
+                // CosmicGene -> CosmicAnnotation
+                completeBasicRelationship(geneSymbol, mut, "HAS_MUTATION_TYPE")
+            }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.loadTissueTypeAnnotations( genes: ReceiveChannel<CosmicGeneCensus>) =
+    private fun CoroutineScope.processTissueTypeAnnotations(genes: ReceiveChannel<CosmicGeneCensus>) =
         produce<CosmicGeneCensus> {
             for (gene in genes) {
                 loadTissueTypeAnnotations(gene.geneSymbol, gene.tissueTypeList)
@@ -107,9 +198,18 @@ object CosmicGeneCensusLoader {
                 delay(20)
             }
         }
+    private fun loadTissueTypeAnnotations(geneSymbol: String, tissueTypeList: List<String>) {
+        tissueTypeList.forEach { tissue ->
+            run {
+                Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$tissue\"})")
+                addAnnotationLabel(tissue, "TissueType")
+                completeBasicRelationship(geneSymbol, tissue, "HAS_TISSUE_TYPE")
+            }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.loadOtherSyndromeAnnotations( genes: ReceiveChannel<CosmicGeneCensus>) =
+    private fun CoroutineScope.processOtherSyndromeAnnotations(genes: ReceiveChannel<CosmicGeneCensus>) =
         produce<CosmicGeneCensus> {
             for (gene in genes) {
                 loadOtherSyndromeAnnotations(gene.geneSymbol, gene.otherSyndromeList)
@@ -117,9 +217,18 @@ object CosmicGeneCensusLoader {
                 delay(20)
             }
         }
+    private fun loadOtherSyndromeAnnotations(geneSymbol: String, otherSyndromeList: List<String>) {
+        otherSyndromeList.forEach { syn ->
+            run {
+                Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$syn\"})")
+                addAnnotationLabel(syn, "OtherSyndrome")
+                completeBasicRelationship(geneSymbol, syn, "HAS_OTHER_SYNDROME")
+            }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.loadTranslocPartnerList( genes: ReceiveChannel<CosmicGeneCensus>) =
+    private fun CoroutineScope.processTranslocPartnerList(genes: ReceiveChannel<CosmicGeneCensus>) =
         produce<String> {
             for (gene in genes) {
                 loadTranslocPartnerList(gene.geneSymbol,gene.translocationPartnerList)
@@ -127,6 +236,15 @@ object CosmicGeneCensusLoader {
                 delay(20)
             }
         }
+    fun loadTranslocPartnerList(geneSymbol: String, transPartnerList: List<String>) {
+        transPartnerList.forEach { trans ->
+            run {
+                Neo4jConnectionService.executeCypherCommand("MERGE (ca:CosmicAnnotation{annotation_value: \"$trans\"})")
+                addAnnotationLabel(trans, "TranslocationPartner")
+                completeBasicRelationship(geneSymbol, trans, "HAS_TRANSLOCATION_PARTNER")
+            }
+        }
+    }
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.addCensusLabel( geneSymbols: ReceiveChannel<String>) =
         produce<String> {
@@ -136,6 +254,23 @@ object CosmicGeneCensusLoader {
                 delay(10)
             }
         }
+    private fun addGeneCensusLabel(geneSymbol: String): String {
+        val label = "CensusGene"
+        // add CensusGene label if novel to node
+        val labelCypher = "MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
+                " WHERE apoc.label.exists(cg,\"$label\")  = false " +
+                "    CALL apoc.create.addLabels(cg, [\"$label\"] ) yield node return node"
+        return Neo4jConnectionService.executeCypherCommand(labelCypher)
+//        val labelExistsQuery = "MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
+//                "RETURN apoc.label.exists(cg, \"$label\") AS output;"
+//        val addLabelCypher = "MATCH (cg:CosmicGene{gene_symbol: \"$geneSymbol\" }) " +
+//                " CALL apoc.create.addLabels(pma, [\"$label\"] ) yield node return node"
+//        if (Neo4jConnectionService.executeCypherCommand(labelExistsQuery).uppercase() == "FALSE") {
+//            return Neo4jConnectionService.executeCypherCommand(addLabelCypher)
+//        }
+        // logger.atWarning().log("CosmicGene $geneSymbol already has label $label")
+        //return ""
+    }
 /*
 Public function load CosmicGeneCensus nodes and associated annotations
  */
@@ -144,12 +279,12 @@ Public function load CosmicGeneCensus nodes and associated annotations
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
         val geneSymbols = addCensusLabel(
-            loadTranslocPartnerList(
-            loadOtherSyndromeAnnotations(
-                loadTissueTypeAnnotations(
-                    loadMutationTypeAnnotations(
-                        loadRoleInCancerAnnotations(
-                            loadSynonymAnnotations(
+            processTranslocPartnerList(
+            processOtherSyndromeAnnotations(
+                processTissueTypeAnnotations(
+                    processMutationTypeAnnotations(
+                        processRoleInCancerAnnotations(
+                            (
                                 loadGermlineTumors(
                                     loadSomaticTumors(
                                        loadCosmicGeneCensusData(
@@ -166,11 +301,4 @@ Public function load CosmicGeneCensus nodes and associated annotations
         )
 
     }
-}
-/*
-main function for integration testing
- */
-fun main(args: Array<String>) {
-    val filename = if (args.isNotEmpty()) args[0] else "./data/sample_cancer_gene_census.csv"
-    CosmicGeneCensusLoader.loadCosmicGeneCensusData(filename)
 }

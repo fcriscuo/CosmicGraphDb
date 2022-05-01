@@ -1,7 +1,7 @@
 package org.batteryparkdev.pubmed.dao
 
 import com.google.common.flogger.FluentLogger
-import org.batteryparkdev.cosmicgraphdb.neo4j.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import org.batteryparkdev.pubmed.loader.PubMedLoader
 import org.batteryparkdev.pubmed.model.PubMedEntry
 import org.batteryparkdev.pubmed.model.PubMedIdentifier

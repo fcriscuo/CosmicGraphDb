@@ -9,7 +9,6 @@ data class CosmicTumor(
     val site: CosmicType, val histology: CosmicType,
     val tumorOrigin: String, val age: String,
 ) {
-
     fun generateCosmicTumorCypher():String {
         val tumorNodeIdentifier = NodeIdentifier("CosmicTumor",
         "tumor_id", tumorId.toString())
@@ -36,12 +35,9 @@ data class CosmicTumor(
                     .plus(site.generateCosmicTypeCypher(CosmicTumor.nodename))
                     .plus(histology.generateCosmicTypeCypher(CosmicTumor.nodename))
 
-
-
    private  fun generateTumorMatchCypher(): String =
        "CALL apoc.merge.node ([${CosmicTumor.nodename}],{tumor_id: $tumorId},{} ) " +
                " YIELD node AS ${CosmicTumor.nodename}\n"
-
 
     fun generateTumorSampleRelationshipCypher(): String {
         val relationship = "HAS_SAMPLE"
@@ -79,7 +75,6 @@ data class CosmicTumor(
                 value["Histology subtype 2"].asString(),
                 value["Histology subtype 3"].asString()
             )
-
 
         fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +
                 " {tumor_id = $tumorId, created: datetime()} " +
