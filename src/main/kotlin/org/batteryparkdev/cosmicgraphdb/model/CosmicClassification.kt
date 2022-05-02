@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 import java.util.*
 
@@ -10,7 +11,12 @@ data class CosmicClassification(
     val cosmicSiteType: CosmicType,
     val nciCode: String,
     val efoUrl: String
-) {
+ ) : CosmicModel
+{
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicClassification", "classification_id",
+            resolveClassificationId().toString())
+
     fun resolveClassificationId(): Int =
         UUID.randomUUID().hashCode()
 

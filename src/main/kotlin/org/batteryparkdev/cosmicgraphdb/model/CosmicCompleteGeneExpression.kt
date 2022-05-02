@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 
 // n.b The GENE_NAME column really contains the gene symbol
@@ -11,9 +12,13 @@ data class CosmicCompleteGeneExpression(
     val zScore: Float,
     val studyId: Int,
     val key:Int
-    )
+    ): CosmicModel
 {
     val nodename = "expression"
+
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CompleteGeneExpression", "key",
+            key.toString())
 
     fun generateCompleteGeneExpressionCypher(): String =
         generateMergeCypher().plus(generateGeneRelationshipCypher())

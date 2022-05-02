@@ -8,12 +8,9 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.cosmicgraphdb.model.CosmicHallmark
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.cosmicgraphdb.dao.addCosmicHallmarkLabel
-import org.batteryparkdev.cosmicgraphdb.dao.createCosmicGeneRelationship
-import org.batteryparkdev.cosmicgraphdb.dao.createPubMedRelationship
-import org.batteryparkdev.cosmicgraphdb.dao.loadCosmicHallmark
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import java.nio.file.Paths
 
 /*
@@ -27,10 +24,12 @@ object CosmicHallmarkLoader {
     private fun CoroutineScope.parseCosmicHallmarkFile(cosmicHallmarkFile: String) =
         produce<CosmicHallmark> {
             val path = Paths.get(cosmicHallmarkFile)
-            TsvRecordSequenceSupplier(path).get()
+            ApocFileReader.processDelimitedFile(cosmicHallmarkFile)
+                .map { record -> record.get("map") }
+                .map { CosmicHallmark.parseValueMap(it) }
                 .forEach {
-                    send(CosmicHallmark.parseCsvRecord(it))
-                    delay(20)
+                    send(it)
+                    delay(20L)
                 }
         }
 
@@ -38,29 +37,7 @@ object CosmicHallmarkLoader {
     private fun CoroutineScope.loadCosmicHallmarks(hallmarks: ReceiveChannel<CosmicHallmark>) =
         produce<CosmicHallmark> {
             for (hallmark in hallmarks) {
-                loadCosmicHallmark(hallmark)
-                send(hallmark)
-                delay(20)
-            }
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.addHallmarkLabels(hallmarks: ReceiveChannel<CosmicHallmark>) =
-        produce<CosmicHallmark> {
-            for (hallmark in hallmarks) {
-                addCosmicHallmarkLabel(hallmark.hallmarkId, hallmark.hallmark)
-                send(hallmark)
-                delay(20)
-            }
-        }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.addGeneRelationship(hallmarks: ReceiveChannel<CosmicHallmark>) =
-        produce<CosmicHallmark> {
-            for (hallmark in hallmarks) {
-                if (hallmark.geneSymbol.isNotEmpty()) {
-                    createCosmicGeneRelationship(hallmark)
-                }
+               Neo4jConnectionService.executeCypherCommand(hallmark.generateCosmicHallmarkCypher())
                 send(hallmark)
                 delay(20)
             }
@@ -70,9 +47,7 @@ object CosmicHallmarkLoader {
     private fun CoroutineScope.addPubMedRelationship(hallmarks: ReceiveChannel<CosmicHallmark>) =
         produce<String> {
             for (hallmark in hallmarks) {
-                if (hallmark.pubmedId.isNotEmpty()) {
-                    createPubMedRelationship(hallmark)
-                }
+                hallmark.createPubMedRelationship(hallmark.pubmedId)
                 send(hallmark.geneSymbol)
                 delay(20)
             }
@@ -83,14 +58,11 @@ object CosmicHallmarkLoader {
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
         val geneSymbols = addPubMedRelationship(
-            addGeneRelationship(
-                addHallmarkLabels(
                     loadCosmicHallmarks(
                         parseCosmicHallmarkFile(filename)
                     )
                 )
-            )
-        )
+
         for (symbol in geneSymbols) {
             // pipeline stream is lazy - need to consume output
             nodeCount += 1

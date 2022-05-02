@@ -39,7 +39,7 @@ data class CosmicTumor(
        "CALL apoc.merge.node ([${CosmicTumor.nodename}],{tumor_id: $tumorId},{} ) " +
                " YIELD node AS ${CosmicTumor.nodename}\n"
 
-    fun generateTumorSampleRelationshipCypher(): String {
+    private fun generateTumorSampleRelationshipCypher(): String {
         val relationship = "HAS_SAMPLE"
         val relname = "rel_mut_sample"
         return CosmicSample.generateMatchCosmicSampleCypher(sampleId)

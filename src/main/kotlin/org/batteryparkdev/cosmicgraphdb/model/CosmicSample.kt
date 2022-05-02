@@ -48,7 +48,6 @@ data class CosmicSample(
         generateMergeCypher()
             .plus(site.generateCosmicTypeCypher(CosmicSample.nodename))
             .plus(histology.generateCosmicTypeCypher(CosmicSample.nodename))
-           // .plus(CosmicTumor.generateChildRelationshipCypher(tumorId, CosmicSample.nodename))
             .plus(CosmicClassification.generateChildRelationshipCypher(resolveClassificationId(),CosmicSample.nodename ))
             .plus(" RETURN ${CosmicSample.nodename}\n")
 

@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.service.generateNeo4jNodeKey
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 
 data class CosmicResistanceMutation(
@@ -12,7 +13,11 @@ data class CosmicResistanceMutation(
     val transcript: String,
     val drugName: String,
     val pubmedId: Int
-) {
+): CosmicModel
+{
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("DrugResistance", "resistance_id",
+            resistanceId.toString())
 
     fun generateCosmicResistanceCypher(): String =generateMergeCypher()
         .plus(CosmicMutation.generateChildRelationshipCypher(mutationId, CosmicResistanceMutation.nodename))

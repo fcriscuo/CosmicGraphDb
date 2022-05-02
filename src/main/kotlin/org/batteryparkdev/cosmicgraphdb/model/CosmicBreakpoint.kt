@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 import java.util.*
 
@@ -13,7 +14,11 @@ data class CosmicBreakpoint(
     val locationFromMin: Int, val locationFromMax: Int,
     val strandFrom: String, val chromosomeTo: String, val locationToMin: Int, val locationToMax: Int,
     val strandTo: String, val pubmedId: Int = 0, val studyId: Int
-) {
+ ): CosmicModel
+{
+    override fun getNodeIdentifier(): NodeIdentifier =
+       NodeIdentifier("CosmicBreakpoint", "breakpoint_id", breakpointId.toString())
+
     fun generateBreakpointCypher(): String = generateMergeCypher()
         .plus(site.generateCosmicTypeCypher(CosmicBreakpoint.nodename))
         .plus(histology.generateCosmicTypeCypher(CosmicBreakpoint.nodename))
@@ -91,6 +96,10 @@ data class CosmicBreakpoint(
             CosmicType(
                 "Mutation", value["Mutation Type"].asString()
             )
+
+
     }
+
+
 }
 

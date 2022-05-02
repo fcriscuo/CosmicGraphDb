@@ -1,12 +1,15 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
+import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
+
 /**
  * Created by fcriscuo on 2021Jul29
  */
 interface AbstractModel {
-    /*
-   def isValidString(x:String):Boolean = x != null && x.trim.length> 0
-   */
+
+
+
     fun isValidString(s: String?):Boolean =  !s.isNullOrBlank()
 
     fun parseStringOnSemiColon(s: String): List<String> = parseStringOnDelimiter(s, ";")

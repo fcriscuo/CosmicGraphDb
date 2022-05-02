@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 
 data class CosmicMutation(
@@ -15,9 +16,12 @@ data class CosmicMutation(
     val pubmedId: Int, val genomeWideScreen:Boolean,
     val hgvsp: String, val hgvsc: String, val hgvsg: String, val tier: String,
     val tumor: CosmicTumor
+): CosmicModel
+{
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicMutation", "mutation_id",
+            mutationId.toString())
 
-
-) {
     fun generateCosmicMutationCypher(): String = generateMergeCypher()
         .plus(tumor.generateCosmicTumorCypher())
         .plus(generateTumorMutationRelationshipCypher())

@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 import java.util.*
 
@@ -8,7 +9,12 @@ data class CosmicHallmark(
     val hallmarkId: Int,   // needed to establish unique database identifier
     val geneSymbol: String, val cellType: String, val pubmedId: Int,
     val hallmark: String, val impact: String, val description: String
-) {
+): CosmicModel
+{
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicHallmark", "hallmark_id",
+            hallmarkId.toString())
+
     fun generateCosmicHallmarkCypher(): String =
         generateMergeCypher()
             .plus(generateMergeHallmarkCollectionCypher())

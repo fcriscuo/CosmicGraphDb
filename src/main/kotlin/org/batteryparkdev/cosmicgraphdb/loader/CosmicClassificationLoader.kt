@@ -48,6 +48,7 @@ object CosmicClassificationLoader {
     private fun loadCosmicClassification(classification: CosmicClassification): String =
         Neo4jConnectionService.executeCypherCommand(classification.generateCosmicClassificationCypher())
 
+
     fun loadCosmicClassificationData(filename: String) = runBlocking {
         logger.atInfo().log("Loading CosmicClassification data from file $filename")
         var nodeCount = 0

@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 import java.util.*
 
@@ -11,8 +12,13 @@ data class CosmicCompleteCNA(
     val sampleName:String, val totalCn:Int, val minorAllele: String,
     val mutationType: CosmicType, val studyId: Int, val grch:String= "38",
     val chromosomeStartStop:String
-) {
+) :CosmicModel
+{
      val nodename = "complete_cna"
+
+override fun getNodeIdentifier(): NodeIdentifier =
+    NodeIdentifier("CosmicCompleteCNA", "cna_id",
+        cnaId.toString())
 
     fun generateCompleteCNACypher():String =
         generateMergeCypher().plus(generateGeneRelationshipCypher())

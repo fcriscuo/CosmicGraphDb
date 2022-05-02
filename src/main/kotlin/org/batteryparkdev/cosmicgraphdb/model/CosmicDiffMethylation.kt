@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 
 data class CosmicDiffMethylation(
@@ -12,7 +13,8 @@ data class CosmicDiffMethylation(
     val geneName: String, val methylation: String,
     val avgBetaValueNormal: Float, val betaValue: Float,
     val twoSidedPValue: Double
-) {
+)
+{
     val nodename = "methylation"
 
     fun generateDiffMethylationCypher():String =

@@ -9,9 +9,7 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteCNA
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import java.nio.file.Paths
 
 object CosmicCompleteCNALoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()

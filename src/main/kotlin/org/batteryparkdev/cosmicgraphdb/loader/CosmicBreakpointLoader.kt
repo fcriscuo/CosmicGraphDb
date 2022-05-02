@@ -34,9 +34,10 @@ object CosmicBreakpointLoader {
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.loadCosmicBreakpoints(breakpoints: ReceiveChannel<CosmicBreakpoint>)=
-        produce<String> {
+        produce<CosmicBreakpoint> {
             for (breakpoint in breakpoints){
-                send(executeLoadCypher(breakpoint))
+                executeLoadCypher(breakpoint)
+                send(breakpoint)
                 delay(20)
             }
         }
@@ -44,13 +45,27 @@ object CosmicBreakpointLoader {
     private fun executeLoadCypher(breakpoint: CosmicBreakpoint): String =
         Neo4jConnectionService.executeCypherCommand(breakpoint.generateBreakpointCypher())
 
+    /*
+    Function to establish a CosmicBreakpoint -[HAS_PUBLICATION] -> Publication relationship
+    if the breakpoint entry has a PubMed Id
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.loadPubMedRelationship(breakpoints: ReceiveChannel<CosmicBreakpoint>) =
+        produce<String> {
+            for (breakpoint in breakpoints){
+                    breakpoint.createPubMedRelationship(breakpoint.pubmedId)
+                send(breakpoint.breakpointId.toString())
+                delay(20L)
+            }
+        }
+
     fun loadCosmicBreakpointData(filename: String) = runBlocking {
         logger.atInfo().log("Loading CosmicBreakpointData from file: $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val ids = loadCosmicBreakpoints(
+        val ids = loadPubMedRelationship(loadCosmicBreakpoints(
             parseCosmicBreakpointFile(filename)
-        )
+        ))
         for (id in ids) {
             // pipeline stream is lazy - need to consume output
             nodeCount += 1
