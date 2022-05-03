@@ -4,9 +4,10 @@ import com.google.common.base.Stopwatch
 import com.google.common.flogger.FluentLogger
 import kotlinx.coroutines.*
 import org.batteryparkdev.cosmicgraphdb.loader.*
-import org.batteryparkdev.cosmicgraphdb.property.DatafilePropertiesService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.pubmed.loader.CosmicPubMedArticleLoader
+import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import org.batteryparkdev.property.service.ConfigurationPropertiesService.resolveCosmicSampleFileLocation
+import org.batteryparkdev.publication.pubmed.loader.AsyncPubMedPublicationLoader
 import kotlin.coroutines.CoroutineContext
 
 /*
@@ -17,35 +18,39 @@ n.b. This application deletes all existing COSMIC nodes and relationships from t
      Neo4j database
  */
 
-class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
+class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass();
-    private val cosmicHGNCFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.hgnc")
-    private val cosmicCompleteCNAFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.complete.cna")
-    private val cosmicDiffMethylationFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.complete.differential.methylation")
-    private val cosmicGeneExpressionFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.complete.gene.expression")
-    private val cosmicGeneCensusFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.gene.census")
-    private val cosmicClassificationFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.classification")
-    private val cosmicSampleFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.sample")
-    private val cosmicMutationExportCensusFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.mutant.export.census")
-    private val cosmicHallmarkFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.gene.census.hallmarks.of.cancer")
-    private val cosmicBreakpointsFile = fileDirectory +
-            DatafilePropertiesService.resolvePropertyAsString("file.cosmic.breakpoints.export")
+
+    private fun resolveSampleFile(fileProperty: String): String =
+        resolveCosmicSampleFileLocation(fileProperty)
+
+    private fun resolveCompleteFile(fileProperty: String): String =
+        ConfigurationPropertiesService.resolveCosmicCompleteFileLocation(fileProperty)
+
+    fun resolveCosmicDataFile(fileProperty: String): String =
+        when (runMode.lowercase().equals("complete")) {
+            true -> resolveCompleteFile(fileProperty)
+            false -> resolveSampleFile(fileProperty)
+        }
+
+    private val cosmicHGNCFile = resolveCosmicDataFile("file.cosmic.hgnc")
+    private val cosmicCompleteCNAFile = resolveCosmicDataFile("file.cosmic.complete.cna")
+    private val cosmicDiffMethylationFile = resolveCosmicDataFile("file.cosmic.complete.differential.methylation")
+    private val cosmicGeneExpressionFile = resolveCosmicDataFile("file.cosmic.complete.gene.expression")
+    private val cosmicGeneCensusFile = resolveCosmicDataFile("file.cosmic.gene.census")
+    private val cosmicClassificationFile = resolveCosmicDataFile("file.cosmic.classification")
+    private val cosmicSampleFile = resolveCosmicDataFile("file.cosmic.sample")
+    private val cosmicMutationExportCensusFile = resolveCosmicDataFile("file.cosmic.mutant.export.census")
+    private val cosmicHallmarkFile = resolveCosmicDataFile("file.cosmic.gene.census.hallmarks.of.cancer")
+    private val cosmicBreakpointsFile = resolveCosmicDataFile("file.cosmic.breakpoints.export")
 
     private val nodeNameList = listOf<String>(
         "CosmicHallmark", "CosmicTumor", "CosmicMutation",
         "CosmicSample", "CosmicClassification", "CosmicGene", "CosmicType",
         "CosmicCompleteDNA", "CosmicGeneExpression", "CosmicDiffMethylation",
-        "CosmicArticle","CosmicBreakpoint","Reference"
+        "CosmicArticle", "CosmicBreakpoint", "Reference"
     )
+
     @OptIn(DelicateCoroutinesApi::class)
     val job = GlobalScope.launch() {
         delay(2000)
@@ -59,14 +64,16 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
     // source:source https://stackoverflow.com/questions/53921470/how-to-run-two-jobs-in-parallel-but-wait-for-another-job-to-finish-using-kotlin
     fun <T> CoroutineScope.asyncIO(ioFun: () -> T) = async(Dispatchers.IO) { ioFun() }
     fun <T> CoroutineScope.asyncDefault(defaultFun: () -> T) = async(Dispatchers.Default) { defaultFun() }
-    fun loadCosmicDatabase() = runBlocking{
+    fun loadCosmicDatabase() = runBlocking {
         // load order is import for establishing parent to child relationships
         val stopwatch = Stopwatch.createStarted()
         deleteCosmicNodes()
         loadData()
         logger.atInfo().log("All currently supported COSMIC data have been loaded into Neo4j")
-        logger.atInfo().log("CosmicDatabase Loader elapsed time = ${stopwatch.elapsed(java.util.concurrent.TimeUnit.MINUTES)} " +
-                " minutes")
+        logger.atInfo().log(
+            "CosmicDatabase Loader elapsed time = ${stopwatch.elapsed(java.util.concurrent.TimeUnit.MINUTES)} " +
+                    " minutes"
+        )
     }
 
     /*
@@ -74,7 +81,7 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
     prior to reloading the database
     n.b. PubMed-related nodes are NOT deleted
      */
-    fun deleteCosmicNodes():String {
+    fun deleteCosmicNodes(): String {
         nodeNameList.forEach { nodeName -> Neo4jUtils.detachAndDeleteNodesByName(nodeName) }
         return "CosmicDatabase nodes deleted"
     }
@@ -89,7 +96,7 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
             // run Job1, Job2, and Job4 in parallel, asyncIO - is an extension function on CoroutineScope
             val task01 = asyncDefault { loadPubmedJob() }
             val task04 = asyncIO { loadClassificationJob() }
-            val task02 = asyncIO {  loadGeneCensusJob() }
+            val task02 = asyncIO { loadGeneCensusJob() }
             // waiting for result of Job1 , Job2, & Job4
             val job4Result = task04.await()
             val job2Result = task02.await()
@@ -99,115 +106,116 @@ class CosmicDatabaseLoader(fileDirectory: String): CoroutineScope {
             // Job3 waits for Job2 to complete
             val task03 = asyncIO { loadHallmarkJob(job2Result) }
             // Job6 waits for Job5
-            val task06 = asyncIO { loadMutantExportJob( job5Result) }
+            val task06 = asyncIO { loadMutantExportJob(job5Result) }
             // Job8 waits for Job5
             val task08 = asyncIO { loadDiffMethylationJob(job5Result) }
             val job3Result = task03.await()
             val job6Result = task06.await()
             // Job7 and Job9 depend on Job3 & Job6
-            val task07 = asyncIO{ loadCompleteCNAJob(job2Result, job6Result)}
-            val task09 = asyncIO{ loadGeneExpressionJob(job2Result, job6Result)}
+            val task07 = asyncIO { loadCompleteCNAJob(job2Result, job6Result) }
+            val task09 = asyncIO { loadGeneExpressionJob(job2Result, job6Result) }
             // Job 10 depends on Job 6
-            val task10 =asyncIO { loadBreakpoints(job6Result) }
+            val task10 = asyncIO { loadBreakpoints(job6Result) }
             // wait for last tier of jobs to complete
-            onDone(task01.await(),task07.await(), task08.await(), task09.await(), task10.await())
+            onDone(task01.await(), task07.await(), task08.await(), task09.await(), task10.await())
         }
     }
-    fun onDone(job1Result:String, job7Result: String, job8Result: String, job9Result: String, job10Result: String) {
+
+    private fun onDone(job1Result: String, job7Result: String, job8Result: String, job9Result: String, job10Result: String) {
         logger.atInfo().log("Executing onDone function")
-        logger.atInfo().log("task01 = $job1Result   task07 = $job7Result   " +
-                " task08 = $job8Result   task09 = $job9Result   task10 =$job10Result")
+        logger.atInfo().log(
+            "task01 = $job1Result   task07 = $job7Result   " +
+                    " task08 = $job8Result   task09 = $job9Result   task10 =$job10Result"
+        )
         job.cancel()
     }
 
-  /*
-  Loading PubMed data into Neo4j is performed on a periodic basis concurrently with the other specialized
-  loaders. The PubMed loader queries the database for placeholder nodes created by other loaders and
-  queries NCBI to complete them.
-   */
-    fun loadPubmedJob(): String {  // job 1
+    /*
+    Loading PubMed data into Neo4j is performed on a periodic basis concurrently with the other specialized
+    loaders. The PubMed loader queries the database for placeholder nodes created by other loaders and
+    queries NCBI to complete them.
+     */
+    private fun loadPubmedJob(): String {  // job 1
         logger.atInfo().log("1 - Starting PubMed loader")
-      val taskDuration = 172_800_000L
-      val timerInterval = 60_000L
-      val scanTimer = CosmicPubMedArticleLoader.scheduledPlaceHolderNodeScan(timerInterval)
-      try {
-          Thread.sleep(taskDuration)
-      } finally {
-          scanTimer.cancel();
-      }
+        val taskDuration = 172_800_000L
+        val timerInterval = 60_000L
+        val scanTimer = AsyncPubMedPublicationLoader.scheduledPlaceHolderNodeScan(timerInterval)
+        try {
+            Thread.sleep(taskDuration)
+        } finally {
+            scanTimer.cancel();
+        }
         return "PubMed loaded"
     }
 
-    fun loadGeneCensusJob(): String {  // job 2
+    private fun loadGeneCensusJob(): String {  // job 2
         logger.atInfo().log("2 - Starting GeneCensus loader")
         CosmicGeneCensusLoader.loadCosmicGeneCensusData(cosmicGeneCensusFile)
         return "GeneCensus loaded"
     }
 
-    fun loadHallmarkJob(job2Result: String): String {  // job 3
+    private fun loadHallmarkJob(job2Result: String): String {  // job 3
         logger.atInfo().log("3 - Starting Hallmark loader")
         CosmicHallmarkLoader.processCosmicHallmarkData(cosmicHallmarkFile)
         return "Hallmark loaded"
     }
 
-    fun loadClassificationJob(): String {   // job 4
+    private fun loadClassificationJob(): String {   // job 4
         logger.atInfo().log("4 - Starting Classification loader")
         CosmicClassificationLoader.loadCosmicClassificationData(cosmicClassificationFile)
         return "Classifications loaded"
     }
 
-    fun loadSampleJob( job4Result: String): String { // job 5
+    private fun loadSampleJob(job4Result: String): String { // job 5
         logger.atInfo().log("5 - Starting Sample loader")
         CosmicSampleLoader.processCosmicSampleData(cosmicSampleFile)
         return "Result of sampleJob"
     }
 
-    fun loadMutantExportJob(job5Result: String): String {  //job 6
+    private fun loadMutantExportJob(job5Result: String): String {  //job 6
         logger.atInfo().log("6 - Starting MutantExport loader")
         CosmicMutantExportLoader.loadMutantExportFile(cosmicMutationExportCensusFile)
         return "MutantExport loaded"
     }
 
-    fun loadCompleteCNAJob(job3Result: String, job6Result: String): String {  // job 7
+    private fun loadCompleteCNAJob(job3Result: String, job6Result: String): String {  // job 7
         logger.atInfo().log("7 - Starting CompleteCNA loader")
         CosmicCompleteCNALoader.loadCosmicCompleteCNAData(cosmicCompleteCNAFile)
         return "CompleteCNA"
     }
 
-    fun loadDiffMethylationJob(job3Result: String): String {  // job 8
+    private fun loadDiffMethylationJob(job3Result: String): String {  // job 8
         logger.atInfo().log("8 - Starting DiffMethylation loader")
         CosmicDiffMethylationLoader.loadCosmicDiffMethylationData(cosmicDiffMethylationFile)
         return "Result of DiffMethylation loaded"
     }
 
-    fun loadGeneExpressionJob(job3Result: String, job6Result: String): String { // job 9
+    private fun loadGeneExpressionJob(job3Result: String, job6Result: String): String { // job 9
         logger.atInfo().log("9 - Starting GeneExpression loader")
         CosmicCompleteGeneExpressionLoader.loadCosmicCompleteGeneExpressionData(cosmicGeneExpressionFile)
         return "Result of GeneExpression loaded"
     }
 
-    fun loadBreakpoints(job6Result:String): String {   // job 10
+    private fun loadBreakpoints(job6Result: String): String {   // job 10
         logger.atInfo().log("10 - Starting Breakpoints loader")
         CosmicBreakpointLoader.loadCosmicBreakpointData(cosmicBreakpointsFile)
         return "Result of CosmicBreakpoints loaded"
     }
 }
-    fun main(args: Array<String>) = runBlocking {
-        val fileDirectory =
-            when (args.isNotEmpty()) {
-                true -> args[0]
-                false -> DatafilePropertiesService.resolvePropertyAsString("cosmic.sample.data.directory")
-            }
-        println("WARNING: Invoking this application will delete all COSMIC data from the database")
-        println("There will be a 20 second delay period to cancel this execution (CTRL-C) if this is not your intent")
-       // Thread.sleep(20_000L)
-        println("Cosmic data will now be loaded from: $fileDirectory")
-        if (fileDirectory.isNotEmpty()) {
-            val loader = CosmicDatabaseLoader(fileDirectory)
-            loader.deleteCosmicNodes()
-            loader.loadData()
-            awaitCancellation()
+
+fun main(args: Array<String>): Unit = runBlocking {
+    val runMode =
+        when (args.isNotEmpty()) {
+            true -> args[0]
+            false -> "sample"
         }
-        println("CosmicDatabaseLoader has completed")
-    }
+    println("WARNING: Invoking this application will delete all COSMIC data from the database")
+    println("There will be a 20 second delay period to cancel this execution (CTRL-C) if this is not your intent")
+    // Thread.sleep(20_000L)
+    println("Cosmic data will now be loaded from the $runMode set of files")
+    val loader = CosmicDatabaseLoader(runMode)
+    loader.deleteCosmicNodes()
+    loader.loadData()
+    awaitCancellation()
+}
 
