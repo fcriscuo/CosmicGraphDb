@@ -26,12 +26,14 @@ data class CosmicCompleteGeneExpression(
             .plus(" RETURN $nodename")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CompleteGeneExpression\"], " +
-            "  {key: $key, regulation: ${Neo4jUtils.formatPropertyValue(regulation)}," +
-            " z_score: $zScore, study_id: $studyId, created: datetime} " +
+            "  {key: $key, regulation: ${Neo4jUtils.formatPropertyValue(regulation)}, " +
+            "  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)} ," +
+            "  sample_id: $sampleId, " +
+            " z_score: $zScore, study_id: $studyId, created: datetime()}, " +
             " { last_mod: datetime()}) YIELD node AS $nodename \n"
 
     private fun generateGeneRelationshipCypher() =
-        CosmicGeneCensus.generateHasGeneRelationshipCypher(geneSymbol,nodename)
+        CosmicGeneCensus.generateGeneParentRelationshipCypher(geneSymbol,nodename)
 
     private fun generateSampleRelationshipCypher() =
         CosmicSample.generateChildRelationshipCypher(sampleId, nodename)
@@ -39,12 +41,12 @@ data class CosmicCompleteGeneExpression(
     companion object: AbstractModel {
 
          fun parseValueMap(value: Value): CosmicCompleteGeneExpression =
-             CosmicCompleteGeneExpression(value["SAMPLE_ID"].asInt(),
+             CosmicCompleteGeneExpression(value["SAMPLE_ID"].asString().toInt(),
                  value["GENE_NAME"].asString(),
                  value["REGULATION"].asString(),
-                 value["Z_SCORE"].asFloat(),
-                 value["ID_STUDY"].asInt(),
-                 value["GENE_NAME"].asString().plus(value["SAMPLE_ID"].asInt().toString()).hashCode()
+                 value["Z_SCORE"].asString().toFloat(),
+                 value["ID_STUDY"].asString().toInt(),
+                 value["GENE_NAME"].asString().plus(value["SAMPLE_ID"].asString()).hashCode()
              )
          }
 

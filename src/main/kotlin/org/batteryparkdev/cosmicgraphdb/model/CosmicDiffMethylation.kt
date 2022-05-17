@@ -27,38 +27,38 @@ data class CosmicDiffMethylation(
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicDiffMethylation\"], " +
             " { key: apoc.create.uuid()}," +
-            "{ study_id: $studyId, " +
+            "{ study_id: $studyId, tumor_id: $tumorId, sample_id: $sampleId, " +
             " fragment_id: ${Neo4jUtils.formatPropertyValue(fragmentId)}, genome_version: " +
             " ${Neo4jUtils.formatPropertyValue(genomeVersion)}, chromosome: $chromosome," +
             " position: $position, strand: ${Neo4jUtils.formatPropertyValue(strand)}," +
             " gene_name: ${Neo4jUtils.formatPropertyValue(geneName)}, " +
             " methylation: ${Neo4jUtils.formatPropertyValue(methylation)}," +
             " avg_beta_value_normal: $avgBetaValueNormal, beta_value: $betaValue," +
-            " two_sided_p_value: $twoSidedPValue, created: datetime}, " +
+            " two_sided_p_value: $twoSidedPValue, created: datetime()}, " +
             " { last_mod: datetime()}) YIELD node AS $nodename \n"
 
     companion object : AbstractModel {
 
         fun parseValueMap(value: Value): CosmicDiffMethylation =
             CosmicDiffMethylation(
-                value["STUDY_ID"].asInt(),
-                value["ID_SAMPLE"].asInt(),
-                value["ID_TUMOUR"].asInt(),
+                value["STUDY_ID"].asString().toInt(),
+                value["ID_SAMPLE"].asString().toInt(),
+                value["ID_TUMOUR"].asString().toInt(),
                 resolveSiteType(value),
                 resolveHistologySite(value),
                 value["FRAGMENT_ID"].asString(),
                 value["GENOME_VERSION"].asString(),
-                value["CHROMOSOME"].asInt(),  //Integer is OK here (x=23, y=24)
-                value["POSITION"].asInt(),
-                when (value["STRAND"].asInt()) {
+                value["CHROMOSOME"].asString().toInt(),  //Integer is OK here (x=23, y=24)
+                value["POSITION"].asString().toInt(),
+                when (value["STRAND"].asString().toInt()) {
                     1 -> "+"
                     else ->"-"
                 },
                 value["GENE_NAME"].asString(),
                 value["METHYLATION"].asString(),
-                value["AVG_BETA_VALUE_NORMAL"].asFloat(),
-                value["BETA_VALUE"].asFloat(),
-                value["TWO_SIDED_P_VALUE"].asDouble()
+                value["AVG_BETA_VALUE_NORMAL"].asString().toFloat(),
+                value["BETA_VALUE"].asString().toFloat(),
+                value["TWO_SIDED_P_VALUE"].asString().toDouble()
             )
 
         private fun resolveSiteType(value: Value): CosmicType =

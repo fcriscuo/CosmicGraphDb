@@ -4,10 +4,11 @@ package org.batteryparkdev.cosmicgraphdb.model
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.cosmicgraphdb.model.CosmicBreakpoint
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 
 class TestCosmicBreakpoint {
-    private val LIMIT = 200L
+    private val LIMIT = Long.MAX_VALUE
     /*
     Test parsing sample Cosmic breakpoints TSV file and mapping data to
     CosmicBreakpoint model class
@@ -15,8 +16,7 @@ class TestCosmicBreakpoint {
      */
     fun parseBreakpointFile(filename: String): Int {
         // limit the number of records processed
-
-        var recordCount = 0
+       deleteBreakpointNodes()
         ApocFileReader.processDelimitedFile(filename)
             .stream().limit(LIMIT)
             .map { record -> record.get("map") }
@@ -24,13 +24,15 @@ class TestCosmicBreakpoint {
             .forEach { breakpoint ->
                 println("Loading breakpoint  ${breakpoint.mutationId}")
                 Neo4jConnectionService.executeCypherCommand(breakpoint.generateBreakpointCypher())
-                recordCount += 1
             }
-        return recordCount
+        return Neo4jConnectionService.executeCypherCommand("MATCH (cb: CosmicBreakpoint) RETURN COUNT(cb)").toInt()
     }
+    private fun deleteBreakpointNodes() =
+        Neo4jConnectionService.executeCypherCommand("MATCH (cb: CosmicBreakpoint) DETACH DELETE (cb)")
 }
 fun main() {
+    val cosmicBreakpointFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicBreakpointsExport.tsv")
 val recordCount =
-    TestCosmicBreakpoint().parseBreakpointFile("/Volumes/SSD870/COSMIC_rel95/sample/CosmicBreakpointsExport.tsv")
+    TestCosmicBreakpoint().parseBreakpointFile(cosmicBreakpointFile)
     println("Breakpoint record count = $recordCount")
 }

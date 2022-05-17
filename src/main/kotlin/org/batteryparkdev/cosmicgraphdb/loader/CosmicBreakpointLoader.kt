@@ -54,7 +54,7 @@ object CosmicBreakpointLoader {
         produce<String> {
             for (breakpoint in breakpoints){
                     breakpoint.createPubMedRelationship(breakpoint.pubmedId)
-                send(breakpoint.breakpointId.toString())
+                send(breakpoint.mutationId.toString())
                 delay(20L)
             }
         }

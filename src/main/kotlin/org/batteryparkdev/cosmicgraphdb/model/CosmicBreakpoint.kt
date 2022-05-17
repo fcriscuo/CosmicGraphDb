@@ -6,7 +6,7 @@ import org.neo4j.driver.Value
 import java.util.*
 
 data class CosmicBreakpoint(
-    val breakpointId: Int,
+    //val breakpointId: Int,
     val sampleName: String, val sampleId: Int, val tumorId: Int,
     val site: CosmicType, val histology: CosmicType,
     val mutationType: CosmicType, val mutationId: Int,
@@ -17,17 +17,17 @@ data class CosmicBreakpoint(
  ): CosmicModel
 {
     override fun getNodeIdentifier(): NodeIdentifier =
-       NodeIdentifier("CosmicBreakpoint", "breakpoint_id", breakpointId.toString())
+       NodeIdentifier("CosmicBreakpoint", "breakpoint_id", mutationId.toString())
 
     fun generateBreakpointCypher(): String = generateMergeCypher()
         .plus(site.generateCosmicTypeCypher(CosmicBreakpoint.nodename))
         .plus(histology.generateCosmicTypeCypher(CosmicBreakpoint.nodename))
-        .plus(generateTumorRelationshipCypher())
-        .plus(generateMutationRelationshipCypher())
+        //.plus(generateTumorRelationshipCypher())
+        .plus(generateStructRelationshipCypher())
         .plus(" RETURN ${CosmicBreakpoint.nodename}\n")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
-            " {breakpoint_id: $breakpointId}, " +
+            " {mutation_id: $mutationId}, " +
             " {sample_id: $sampleId," +
             " sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}, " +
             "chromosome_from: \"$chromosomeFrom\" , " +
@@ -48,6 +48,9 @@ data class CosmicBreakpoint(
     private fun generateMutationRelationshipCypher(): String =
         CosmicMutation.generateChildRelationshipCypher(mutationId, CosmicBreakpoint.nodename)
 
+    private fun generateStructRelationshipCypher(): String =
+        CosmicStruct.generateChildRelationshipCypher(mutationId,nodename)
+
     companion object : AbstractModel {
          const val  nodename = "breakpoint"
         fun parseValueMap(value: Value): CosmicBreakpoint {
@@ -67,14 +70,12 @@ data class CosmicBreakpoint(
             val studyId = parseValidIntegerFromString(value["ID_STUDY"].asString()) ?: 0
 
             return CosmicBreakpoint(
-                UUID.randomUUID().hashCode(),
                 sampleName, sampleId, tumorId, resolveSiteType(value),
                 resolveHistologySite(value), resolveMutationType(value),
                 mutationId, chromFrom, locationFromMin, locationFromMax, strandFrom,
                 chromTo, locationToMin, locationToMax, strandTo, pubmedId, studyId
             )
         }
-
 
         private fun resolveSiteType(value: Value): CosmicType =
             CosmicType(

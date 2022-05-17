@@ -1,31 +1,43 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicGeneCensus {
-    private val LIMIT = 20L
-    /*
+    private val LIMIT = Long.MAX_VALUE
 
-    n.b. file name specification must be full path since it is resolved by Neo4j server
+    /*
+    n.b. file name specification must be a full path since it is resolved by the Neo4j server
      */
     fun parseCosmicGeneCensusFile(filename: String): Int {
-        // limit the number of records processed
-
-        var recordCount = 0
+        // delete existing CosmicGene nodes & annotations
+        deleteCosmicGeneNodes()
+        deleteCosmicGeneAnnotation()
         ApocFileReader.processDelimitedFile(filename)
             .stream().limit(LIMIT)
             .map { record -> record.get("map") }
             .map { CosmicGeneCensus.parseValueMap(it) }
-            .forEach { gene->
-                println(gene.generateCosmicGeneCypher())
-                recordCount += 1
+            .forEach { gene ->
+                Neo4jConnectionService.executeCypherCommand(gene.generateCosmicGeneCypher())
+                println("Loading cosmic census gene: ${gene.geneSymbol}")
+
             }
-        return recordCount
+        return Neo4jConnectionService.executeCypherCommand("MATCH (cg: CosmicGene) RETURN COUNT(cg)").toInt()
+    }
+
+    private fun deleteCosmicGeneNodes() {
+        Neo4jConnectionService.executeCypherCommand("MATCH (cg: CosmicGene) DETACH DELETE(cg)")
+    }
+
+    private fun deleteCosmicGeneAnnotation() {
+        Neo4jConnectionService.executeCypherCommand("MATCH (ca: CosmicAnnotation) DETACH DELETE(ca)")
     }
 }
+
 fun main() {
+    val cosmicGeneCensusFile = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("cancer_gene_census.csv")
     val recordCount =
-        TestCosmicGeneCensus().
-            parseCosmicGeneCensusFile("/Volumes/SSD870/COSMIC_rel95/sample/cancer_gene_census.csv")
-    println("Breakpoint record count = $recordCount")
+        TestCosmicGeneCensus().parseCosmicGeneCensusFile(cosmicGeneCensusFile)
+    println("Processed $cosmicGeneCensusFile  record count = $recordCount")
 }

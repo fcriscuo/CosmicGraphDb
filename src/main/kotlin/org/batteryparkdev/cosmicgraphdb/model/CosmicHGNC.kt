@@ -28,11 +28,11 @@ data class CosmicHGNC(
 
     /*
    Function to generate Cypher commands to create a
-   HGNC - [HAS_GENE] -> Gene relationship
+   CosmicGene - [HAS_HGNC] -> CosmicHGNC relationship
     */
     private fun generateGeneRelationshipCypher(): String =
         when (isCancerCensus) {
-            true -> CosmicGeneCensus.generateHasGeneRelationshipCypher(hgncGeneSymbol, CosmicHGNC.nodename)
+            true -> CosmicGeneCensus.generateGeneParentRelationshipCypher(hgncGeneSymbol, CosmicHGNC.nodename)
             false -> " "
         }
 
@@ -48,10 +48,10 @@ data class CosmicHGNC(
 
         fun parseValueMap(value: Value): CosmicHGNC =
             CosmicHGNC(
-                value["COSMIC_ID"].asString().toInt(),
+                parseValidIntegerFromString(value["COSMIC_ID"].asString()),
                 value["COSMIC_GENE_NAME"].asString(),
-                value["Entrez_id"].asString().toInt(),
-                value["HGNC_ID"].asString().toInt(),
+                parseValidIntegerFromString(value["Entrez_id"].asString()),
+                parseValidIntegerFromString(value["HGNC_ID"].asString()),
                 convertYNtoBoolean(value["Mutated?"].asString()),
                 convertYNtoBoolean(value["Cancer_census?"].asString()),
                 convertYNtoBoolean(value["Expert Curated?"].asString())

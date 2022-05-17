@@ -1,20 +1,31 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicCompleteExpression {
 
-    fun parseCosmicCompleteExpressionFile (filename:String){
-        val LIMIT = 100L
+    fun parseCosmicCompleteExpressionFile (filename:String):Int {
+        val LIMIT = Long.MAX_VALUE
+        deleteGeneExpressionNodes()
         ApocFileReader.processDelimitedFile(filename).stream()
             .limit(LIMIT)
             .map { record -> record.get("map") }
             .map{CosmicCompleteGeneExpression.parseValueMap(it)}
-            .forEach { println("CosmicCompleteExpression: ${it.generateCompleteGeneExpressionCypher()}") }
+            .forEach {
+                Neo4jConnectionService.executeCypherCommand(it.generateCompleteGeneExpressionCypher())
+                println("CosmicCompleteExpression for gene: ${it.geneSymbol}")
+            }
+        return Neo4jConnectionService.executeCypherCommand("MATCH (exp: CompleteGeneExpression) RETURN COUNT(exp)").toInt()
     }
+    private fun deleteGeneExpressionNodes() =
+        Neo4jConnectionService.executeCypherCommand("MATCH (exp: CompleteGeneExpression) DETACH DELETE (exp)")
 }
 fun main (args:Array<String>) {
-    val filename = if (args.isNotEmpty()) args[0]
-    else "/Volumes/SSD870/COSMIC_rel95/sample/CosmicCompleteGeneExpression.tsv"
-    TestCosmicCompleteExpression().parseCosmicCompleteExpressionFile(filename)
+    val cosmicExpressionFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicCompleteGeneExpression.tsv")
+    val recordCount =
+        TestCosmicCompleteExpression().parseCosmicCompleteExpressionFile(cosmicExpressionFile)
+    println("Processed $cosmicExpressionFile  record count = $recordCount")
+
 }

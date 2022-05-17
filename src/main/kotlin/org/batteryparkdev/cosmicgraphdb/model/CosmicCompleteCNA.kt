@@ -39,10 +39,10 @@ override fun getNodeIdentifier(): NodeIdentifier =
 
     /*
     Function to generate Cypher commands to create a
-    CNA - [HAS_GENE] -> Gene relationship
+    CosmicGene- [HAS_CNA] -> CosmicCNA relationship
      */
     private fun generateGeneRelationshipCypher(): String =
-        CosmicGeneCensus.generateHasGeneRelationshipCypher(geneSymbol,nodename)
+        CosmicGeneCensus.generateGeneParentRelationshipCypher(geneSymbol,nodename)
 
     /*
     Function to generate the Cypher commands to create a

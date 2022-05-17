@@ -44,7 +44,7 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
     private val cosmicHallmarkFile = resolveCosmicDataFile("file.cosmic.gene.census.hallmarks.of.cancer")
     private val cosmicBreakpointsFile = resolveCosmicDataFile("file.cosmic.breakpoints.export")
 
-    private val nodeNameList = listOf<String>(
+    private val nodeNameList = listOf<String>("CosmicHGNC",
         "CosmicHallmark", "CosmicTumor", "CosmicMutation",
         "CosmicSample", "CosmicClassification", "CosmicGene", "CosmicType",
         "CosmicCompleteDNA", "CosmicGeneExpression", "CosmicDiffMethylation",
@@ -60,8 +60,8 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Main + job
 
-    // extension function
-    // source:source https://stackoverflow.com/questions/53921470/how-to-run-two-jobs-in-parallel-but-wait-for-another-job-to-finish-using-kotlin
+    // extension function published on stackoverflow
+    // source: https://stackoverflow.com/questions/53921470/how-to-run-two-jobs-in-parallel-but-wait-for-another-job-to-finish-using-kotlin
     fun <T> CoroutineScope.asyncIO(ioFun: () -> T) = async(Dispatchers.IO) { ioFun() }
     fun <T> CoroutineScope.asyncDefault(defaultFun: () -> T) = async(Dispatchers.Default) { defaultFun() }
     fun loadCosmicDatabase() = runBlocking {
@@ -105,17 +105,19 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
             val job5Result = task05.await()
             // Job3 waits for Job2 to complete
             val task03 = asyncIO { loadHallmarkJob(job2Result) }
+            val task3b = asyncIO { loadHGNCJob(job2Result) }
             // Job6 waits for Job5
             val task06 = asyncIO { loadMutantExportJob(job5Result) }
             // Job8 waits for Job5
             val task08 = asyncIO { loadDiffMethylationJob(job5Result) }
             val job3Result = task03.await()
+            val job3bResult = task3b.await()
             val job6Result = task06.await()
             // Job7 and Job9 depend on Job3 & Job6
             val task07 = asyncIO { loadCompleteCNAJob(job2Result, job6Result) }
             val task09 = asyncIO { loadGeneExpressionJob(job2Result, job6Result) }
             // Job 10 depends on Job 6
-            val task10 = asyncIO { loadBreakpoints(job6Result) }
+            val task10 = asyncIO { loadBreakpointsJob(job6Result) }
             // wait for last tier of jobs to complete
             onDone(task01.await(), task07.await(), task08.await(), task09.await(), task10.await())
         }
@@ -196,11 +198,18 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
         return "Result of GeneExpression loaded"
     }
 
-    private fun loadBreakpoints(job6Result: String): String {   // job 10
+    private fun loadBreakpointsJob(job6Result: String): String {   // job 10
         logger.atInfo().log("10 - Starting Breakpoints loader")
         CosmicBreakpointLoader.loadCosmicBreakpointData(cosmicBreakpointsFile)
         return "Result of CosmicBreakpoints loaded"
     }
+
+    private fun loadHGNCJob(job2Result: String): String {
+        logger.atInfo().log("2b -Starting HGNC loader ")   // job 3b
+        CosmicHGNCLoader.loadCosmicHGNCData(cosmicHGNCFile)
+        return "Result of CosmicHGNC loading"
+    }
+
 }
 
 fun main(args: Array<String>): Unit = runBlocking {

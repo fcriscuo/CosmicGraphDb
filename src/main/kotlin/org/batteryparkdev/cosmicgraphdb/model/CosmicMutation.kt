@@ -26,7 +26,7 @@ data class CosmicMutation(
         .plus(tumor.generateCosmicTumorCypher())
         .plus(generateTumorMutationRelationshipCypher())
         .plus(generateGeneRelationshipCypher())
-        .plus(generateHGNCRelationshipCypher())
+       // .plus(generateHGNCRelationshipCypher())
         .plus(" RETURN ${CosmicMutation.nodename}")
 
      private fun generateTumorMutationRelationshipCypher(): String {
@@ -64,10 +64,10 @@ data class CosmicMutation(
 
     /*
    Function to generate Cypher commands to create a
-   Mutation - [HAS_GENE] -> Gene   relationship
+   CosmicGene - [HAS_MUTATION] -> CosmicMutation relationship
     */
     private fun generateGeneRelationshipCypher(): String =
-        CosmicGeneCensus.generateHasGeneRelationshipCypher(geneSymbol,CosmicMutation.nodename)
+        CosmicGeneCensus.generateGeneParentRelationshipCypher(geneSymbol,CosmicMutation.nodename)
 
   private fun generateHGNCRelationshipCypher(): String =
       CosmicHGNC.generateHasHGNCRelationshipCypher(hgncId, CosmicMutation.nodename)
@@ -77,7 +77,7 @@ data class CosmicMutation(
 
         private fun generateMutationPlaceholderCypher(mutationId: Int): String =
             "CALL apoc.merge.node( [\"CosmicMutation\"], " +
-                    " {mutation_id: $mutationId,  created: datetime()}) " +
+                    " {mutation_id: $mutationId},  {created: datetime()},{}) " +
                     " YIELD node AS ${CosmicMutation.nodename}\n "
 
         fun generateChildRelationshipCypher(mutationId: Int, childLabel: String): String {
@@ -117,8 +117,6 @@ data class CosmicMutation(
                 resolveTier(value),
                 CosmicTumor.parseValueMap(value)
             )
-
-
         /*
                Not all mutation files have a Tier column
           */

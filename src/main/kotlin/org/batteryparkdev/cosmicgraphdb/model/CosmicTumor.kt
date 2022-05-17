@@ -16,7 +16,6 @@ data class CosmicTumor(
             true -> generateTumorMatchCypher().plus(generateTumorSampleRelationshipCypher())
             false -> generateTumorMergeCypher().plus(generateTumorSampleRelationshipCypher())
         }
-        println("Tumor: $cypher")
         return cypher
     }
 
@@ -36,7 +35,7 @@ data class CosmicTumor(
                     .plus(histology.generateCosmicTypeCypher(CosmicTumor.nodename))
 
    private  fun generateTumorMatchCypher(): String =
-       "CALL apoc.merge.node ([${CosmicTumor.nodename}],{tumor_id: $tumorId},{} ) " +
+       "CALL apoc.merge.node ([\"CosmicTumor\"],{tumor_id: $tumorId},{} ) " +
                " YIELD node AS ${CosmicTumor.nodename}\n"
 
     private fun generateTumorSampleRelationshipCypher(): String {
@@ -77,7 +76,7 @@ data class CosmicTumor(
             )
 
         fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +
-                " {tumor_id = $tumorId, created: datetime()} " +
+                " {tumor_id: $tumorId}, {created: datetime()}) " +
                 " YIELD node as ${CosmicTumor.nodename}  \n"
 
         fun generateChildRelationshipCypher (tumorId: Int, childLabel: String ) :String{
@@ -86,7 +85,7 @@ data class CosmicTumor(
             return  generatePlaceholderCypher(tumorId).plus(
             " CALL apoc.merge.relationship (${CosmicTumor.nodename}, '$relationship', " +
                     " {}, {created: datetime()}, " +
-                    " $childLabel, {} YIELD rel AS $relname \n")
+                    " $childLabel, {} ) YIELD rel AS $relname \n")
         }
     }
 }

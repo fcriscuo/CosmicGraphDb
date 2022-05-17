@@ -30,14 +30,14 @@ data class CosmicHallmark(
                 "  hallmark: ${Neo4jUtils.formatPropertyValue(hallmark)}, " +
                 "  impact: ${Neo4jUtils.formatPropertyValue(impact)}, " +
                 "  description: ${Neo4jUtils.formatPropertyValue(description)}, " +
-                "  created: datetime()} YIELD node as ${CosmicHallmark.nodename} \n"
+                "  created: datetime()}) YIELD node as ${CosmicHallmark.nodename} \n"
 
 
     private fun generateMergeHallmarkCollectionCypher(): String =
         " CALL apoc.merge.node( [\"CosmicHallmarkCollection\"], " +
                 "{ gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
                 "  {created: datetime()}, {lastSeen: datetime()} ) YIELD node as $collectionname \n " +
-                " CALL apoc.merge.node( [\"CosmicGene, CosmicCensus\"]," +
+                " CALL apoc.merge.node( [\"CosmicGene\"]," +
                 "{  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
                 "  {created: datetime()},{} ) YIELD node as hallmark_gene \n" +
                 " CALL apoc.merge.relationship (  hallmark_gene, 'HAS_HALLMARK_COLLECTION', " +
@@ -49,7 +49,7 @@ data class CosmicHallmark(
         val relName = "rel_hallmark"
         return "CALL apoc.merge.relationship (  $collectionname, '$relationship'," +
                 " {}, {created: datetime()}, " +
-                " ${CosmicHallmark.nodename}, {} YIELD rel AS $relName \n"
+                " ${CosmicHallmark.nodename}, {} )YIELD rel AS $relName \n"
     }
 
     companion object : AbstractModel {
@@ -60,7 +60,7 @@ data class CosmicHallmark(
                 UUID.randomUUID().hashCode(),  // unique identifier for key
                 value["GENE_NAME"].asString(),
                 value["CELL_TYPE"].asString(),
-                value["PUBMED_PMID"].asInt(),
+                parseValidIntegerFromString(value["PUBMED_PMID"].asString()),
                 removeInternalQuotes(value["HALLMARK"].asString()),
                 value["IMPACT"].asString(),
                 removeInternalQuotes(value["DESCRIPTION"].asString())
