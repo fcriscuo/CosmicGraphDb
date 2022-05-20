@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 
 data class CosmicSample(
@@ -48,7 +49,12 @@ data class CosmicSample(
         generateMergeCypher()
             .plus(site.generateCosmicTypeCypher(CosmicSample.nodename))
             .plus(histology.generateCosmicTypeCypher(CosmicSample.nodename))
-            .plus(CosmicClassification.generateChildRelationshipCypher(resolveClassificationId(),CosmicSample.nodename ))
+            .plus(
+                CosmicClassification.generateChildRelationshipCypher(
+                    resolveClassificationId(),
+                    CosmicSample.nodename
+                )
+            )
             .plus(" RETURN ${CosmicSample.nodename}\n")
 
     private fun generateMergeCypher(): String =
@@ -83,7 +89,8 @@ data class CosmicSample(
     companion object : AbstractModel {
         const val nodename = "sample"
         const val classificationPrefix = "COSO"  // the classification file uses a prefix, the sample file does not
-                                               // COSO36736185  vs  36736185
+
+        // COSO36736185  vs  36736185
         fun parseValueMap(value: Value): CosmicSample =
             CosmicSample(
                 value["sample_id"].asString().toInt(), value["sample_name"].asString(),
@@ -131,22 +138,14 @@ data class CosmicSample(
                 value["histology_subtype_3"].asString()
             )
 
-        fun generateMatchCosmicSampleCypher(sampleId: Int)  =
-            "CALL apoc.merge.node ([\"CosmicSample\"],{sample_id: $sampleId},{} ) YIELD node AS sample\n"
-
-        /*
-        Functions to generate Cypher a placeholder CosmicSample node if necessary
-        and Cypher to create a Sample -[HAS child] -> child  relationship
-         */
-        private fun generateSamplePlaceholderCypher(sampleId: Int): String =
-            " CALL apoc.merge.node( [\"CosmicSample\"], " +
-                    "{sample_id: $sampleId, created: datetime()}) " +
-                    " YIELD node as ${CosmicSample.nodename} \n"
+        fun generateMatchCosmicSampleCypher(sampleId: Int) =
+            "CALL apoc.merge.node ([\"CosmicSample\"],{sample_id: $sampleId},{created: datetime()},{} )" +
+                    " YIELD node AS ${CosmicSample.nodename}\n"
 
         fun generateChildRelationshipCypher(sampleId: Int, childLabel: String): String {
             val relationship = "HAS_".plus(childLabel.uppercase())
             val relname = "rel_sample"
-            return generateSamplePlaceholderCypher(sampleId).plus(
+            return generateMatchCosmicSampleCypher(sampleId).plus(
                 "CALL apoc.merge.relationship( ${CosmicSample.nodename}, '$relationship', " +
                         " {}, {created: datetime()}, $childLabel,{} )" +
                         " YIELD rel AS $relname \n"
@@ -154,4 +153,3 @@ data class CosmicSample(
         }
     }
 }
-

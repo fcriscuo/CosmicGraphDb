@@ -2,13 +2,14 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicStruct {
     private val LIMIT = Long.MAX_VALUE
 
     fun parseCosmicStructFile(filename: String): Int {
-        deleteStructNodes()
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicStruct")
         ApocFileReader.processDelimitedFile(filename)
             .stream().limit(LIMIT)
             .map { record -> record.get("map") }
@@ -16,12 +17,10 @@ class TestCosmicStruct {
             .forEach { struct ->
                 println("Loading CosmicStruct  ${struct.mutationId}")
                 Neo4jConnectionService.executeCypherCommand(struct.generateStructCypher())
+                struct.createPubMedRelationship(struct.pubmedId)
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (cs:CosmicStruct) RETURN COUNT(cs)").toInt()
     }
-
-    private fun deleteStructNodes() =
-        Neo4jConnectionService.executeCypherCommand("MATCH (cs: CosmicStruct) DETACH DELETE (cs)")
 }
 
 fun main() {

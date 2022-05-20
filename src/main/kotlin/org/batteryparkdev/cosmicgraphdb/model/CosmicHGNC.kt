@@ -57,14 +57,14 @@ data class CosmicHGNC(
                 convertYNtoBoolean(value["Expert Curated?"].asString())
             )
 
-        private fun generatePlaceholderCypher(hgncId: Int): String = " CALL apoc.merge.node([\"CosmicHGNC\"]," +
-                " { hgnc_id: $hgncId}, {created: datetime()} ) " +
+        private fun generateMatchHGNCNodeCypher(hgncId: Int): String = " CALL apoc.merge.node([\"CosmicHGNC\"]," +
+                " { hgnc_id: $hgncId}, {created: datetime()},{} ) " +
                 " YIELD node as ${CosmicHGNC.nodename} \n"
 
         fun generateHasHGNCRelationshipCypher(hgncId: Int, parentNodeName: String): String {
             val relationship = "HAS_HGNC"
             val relName = "rel_hgnc"
-            return generatePlaceholderCypher(hgncId).plus(
+            return generateMatchHGNCNodeCypher(hgncId).plus(
                 " CALL apoc.merge.relationship ($parentNodeName, '$relationship' ," +
                         " {}, {created: datetime()}," +
                         " ${CosmicHGNC.nodename}, {}) YIELD rel AS $relName \n"

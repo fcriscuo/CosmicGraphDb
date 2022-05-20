@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicGeneCensus {
@@ -12,8 +13,7 @@ class TestCosmicGeneCensus {
      */
     fun parseCosmicGeneCensusFile(filename: String): Int {
         // delete existing CosmicGene nodes & annotations
-        deleteCosmicGeneNodes()
-        deleteCosmicGeneAnnotation()
+        deleteExistingGeneNodes()
         ApocFileReader.processDelimitedFile(filename)
             .stream().limit(LIMIT)
             .map { record -> record.get("map") }
@@ -26,12 +26,10 @@ class TestCosmicGeneCensus {
         return Neo4jConnectionService.executeCypherCommand("MATCH (cg: CosmicGene) RETURN COUNT(cg)").toInt()
     }
 
-    private fun deleteCosmicGeneNodes() {
-        Neo4jConnectionService.executeCypherCommand("MATCH (cg: CosmicGene) DETACH DELETE(cg)")
-    }
-
-    private fun deleteCosmicGeneAnnotation() {
-        Neo4jConnectionService.executeCypherCommand("MATCH (ca: CosmicAnnotation) DETACH DELETE(ca)")
+    private fun deleteExistingGeneNodes() {
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicAnnotation")
+        Neo4jUtils.detachAndDeleteNodesByName("GeneMutationCollection")
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicGene")
     }
 }
 

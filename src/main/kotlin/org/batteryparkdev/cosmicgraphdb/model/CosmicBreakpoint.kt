@@ -3,8 +3,14 @@ package org.batteryparkdev.cosmicgraphdb.model
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
-import java.util.*
 
+/*
+Represents the data in the CosmicBreakpointsExport files
+Key: mutationId
+Relationships:  Struct -[HAS_BREAKPOINT]->  Breakpoint
+                Breakpoint - [HAS_PUBLICATION] -> Publication
+
+ */
 data class CosmicBreakpoint(
     //val breakpointId: Int,
     val sampleName: String, val sampleId: Int, val tumorId: Int,
@@ -66,8 +72,8 @@ data class CosmicBreakpoint(
             val locationToMin = value["Location To min"].asString().toInt()
             val locationToMax = value["Location To max"].asString().toInt()
             val strandTo = value["Strand To"].asString()
-            val pubmedId = parseValidIntegerFromString(value["Pubmed_PMID"].asString()) ?: 0
-            val studyId = parseValidIntegerFromString(value["ID_STUDY"].asString()) ?: 0
+            val pubmedId = parseValidIntegerFromString(value["Pubmed_PMID"].asString())
+            val studyId = parseValidIntegerFromString(value["ID_STUDY"].asString())
 
             return CosmicBreakpoint(
                 sampleName, sampleId, tumorId, resolveSiteType(value),

@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 
@@ -31,11 +32,24 @@ object CosmicAnnotationFunctions {
         return cypher
     }
 
-    fun generateTranslocationCypher(transPartnerList: List<String>): String {
+    /*
+    Private function to determine if two genes have already been
+    paired as translocation partners
+     */
+    private fun translocationExists(gene1: String, gene2: String): Boolean
+         = Neo4jConnectionService.executeCypherCommand(
+            "RETURN EXISTS ((:CosmicGene{gene_symbol:${Neo4jUtils.formatPropertyValue(gene1)}}) " +
+                    " -[:HAS_TRANSLOCATION_PARTNER]-> " +
+                    " (:CosmicGene{gene_symbol:${Neo4jUtils.formatPropertyValue(gene2)}}) )"
+        ).toBoolean()
+
+
+    fun generateTranslocationCypher(geneSymbol: String, transPartnerList: List<String>): String {
         var index = 0
         val relationship = "HAS_TRANSLOCATION_PARTNER"
         var cypher: String = ""
-        transPartnerList.forEach { trans ->
+        transPartnerList.filter { translocationExists(it,geneSymbol ).not() }
+            .forEach { trans ->
             run {
                 index += 1
                 val relname = "translocation".plus(index.toString())

@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicHallmark {
@@ -19,12 +20,14 @@ class TestCosmicHallmark {
             .forEach { hall ->
                 Neo4jConnectionService.executeCypherCommand(hall.generateCosmicHallmarkCypher())
                 println("Loaded Cosmic Hallmark ${hall.geneSymbol}")
+                // create a Publication node if a PubMed id is present
+                hall.createPubMedRelationship(hall.pubmedId)
                 recordCount += 1
             }
         return recordCount
     }
     private fun deleteCosmicHallmarkNodes(){
-        Neo4jConnectionService.executeCypherCommand("MATCH (cg: CosmicHallmark) DETACH DELETE(cg)")
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicHallmark")
     }
 }
 fun main() {

@@ -14,59 +14,81 @@ data class CosmicGeneCensus(
     val cancerSyndrome: String, val tissueTypeList: List<String>, val molecularGenetics: String,
     val roleInCancerList: List<String>, val mutationTypeList: List<String>,
     val translocationPartnerList: List<String>,
-    val otherGermlineMut: String, val otherSyndromeList: List<String>, val synonymList: List<String>
-) {
-    val nodeIdentifier = NodeIdentifier("CosmicGene","gene_symbol", geneSymbol)
+    val otherGermlineMut: String, val otherSyndromeList: List<String>,
+    val cosmicId: String, val cosmicGeneName: String,
+    val synonymList: List<String>
+) : CosmicModel {
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicGene", "gene_symbol", geneSymbol)
+
     fun generateCosmicGeneCypher(): String =
         generateMergeCypher()
+            .plus(generateGeneMutationCollectionNodeCypher())
+            .plus(generateGeneAnnotationCollectionCypher())
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     somaticTumorTypeList,
-                    "SomaticTumorType", CosmicGeneCensus.nodename
+                    "SomaticTumorType", annoCollNodename
                 )
             )
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     germlineTumorTypeList, "GermlineTumorType",
-                    CosmicGeneCensus.nodename
+                    annoCollNodename
                 )
             )
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     tissueTypeList,
-                    "TissueType", CosmicGeneCensus.nodename
+                    "TissueType", annoCollNodename
                 )
             )
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     roleInCancerList,
-                    "RoleInCancer", CosmicGeneCensus.nodename
+                    "RoleInCancer", annoCollNodename
                 )
             )
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     mutationTypeList, "MutationType",
-                    CosmicGeneCensus.nodename
+                    annoCollNodename
                 )
             )
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     otherSyndromeList, "OtherSyndrome",
-                    CosmicGeneCensus.nodename
+                    annoCollNodename
                 )
             )
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     synonymList, "Synonym",
-                    CosmicGeneCensus.nodename
+                    annoCollNodename
                 )
             )
-            .plus(CosmicAnnotationFunctions.generateTranslocationCypher(translocationPartnerList))
-            .plus(" RETURN ${CosmicGeneCensus.nodename}")
+            .plus(CosmicAnnotationFunctions.generateTranslocationCypher(geneSymbol,translocationPartnerList))
+
+            .plus(" RETURN $nodename")
+
+    private fun generateGeneMutationCollectionNodeCypher(): String =
+        "CALL apoc.merge.node([\"GeneMutationCollection\"], " +
+                " {gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
+                " {created: datetime()},{}) YIELD node as ${CosmicGeneCensus.mutCollNodename} \n " +
+                " CALL apoc.merge.relationship (${CosmicGeneCensus.nodename}, \"HAS_MUTATION_COLLECTION\", " +
+                "  {},{created: datetime()}, ${CosmicGeneCensus.mutCollNodename},{} ) YIELD rel AS mut_rel \n "
+
+    private fun generateGeneAnnotationCollectionCypher(): String =
+        "CALL apoc.merge.node([\"GeneAnnotationCollection\"], " +
+                " {gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
+                " {created: datetime()},{}) YIELD node as ${CosmicGeneCensus.annoCollNodename} \n " +
+                " CALL apoc.merge.relationship (${CosmicGeneCensus.nodename}, \"HAS_ANNOTATION_COLLECTION\", " +
+                "  {},{created: datetime()}, ${CosmicGeneCensus.annoCollNodename},{} ) YIELD rel AS anno_rel \n "
 
     private fun generateMergeCypher(): String =
-        when (Neo4jUtils.nodeExistsPredicate(nodeIdentifier)) {
-            true ->  "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\"]," +
+        when (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {
+            //update an existing CosmicGene node (i.e. placeholder)
+            true -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\"]," +
                     "{  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}, " +
                     "{}," +
                     " {gene_name: ${Neo4jUtils.formatPropertyValue(geneName)}," +
@@ -77,8 +99,11 @@ data class CosmicGeneCensus(
                     " somatic: $somatic, germline: $germline, " +
                     " cancer_syndrome: ${Neo4jUtils.formatPropertyValue(cancerSyndrome)}," +
                     " molecular_genetics: $molecularGenetics, " +
-                    " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}," +
-                    "  created: datetime()}) YIELD node as ${CosmicGeneCensus.nodename} \n"
+                    " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}, " +
+                    " cosmic_id: ${Neo4jUtils.formatPropertyValue(cosmicId)}, " +
+                    " cosmic_gene_name: ${Neo4jUtils.formatPropertyValue(cosmicGeneName)}, " +
+                    "  created: datetime()}) YIELD node as $nodename \n"
+            // create a new CosmicGene new node
             false -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\"]," +
                     "{  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
                     " {gene_name: ${Neo4jUtils.formatPropertyValue(geneName)}," +
@@ -90,36 +115,48 @@ data class CosmicGeneCensus(
                     " cancer_syndrome: ${Neo4jUtils.formatPropertyValue(cancerSyndrome)}," +
                     " molecular_genetics: $molecularGenetics, " +
                     " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}," +
-                    "  created: datetime()},{}) YIELD node as ${CosmicGeneCensus.nodename} \n"
+                    " cosmic_id: ${Neo4jUtils.formatPropertyValue(cosmicId)}, " +
+                    "cosmic_gene_name: ${Neo4jUtils.formatPropertyValue(cosmicGeneName)}, " +
+                    "  created: datetime()},{}) YIELD node as $nodename \n"
         }
 
 
     companion object : AbstractModel {
         const val nodename = "gene"
+        const val mutCollNodename = "mut_collection"
+        const val annoCollNodename = "anno_collection"
+        private fun resolveGeneNodeIdentifier(geneSymbol: String): NodeIdentifier =
+            NodeIdentifier("CosmicGene", "gene_symbol", geneSymbol)
 
-        private fun generatePlaceholderCypher(geneSymbol: String): String = " CALL apoc.merge.node([\"CosmicGene\"]," +
-                " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}, {created: datetime()} ) " +
-                " YIELD node as ${CosmicGeneCensus.nodename} \n"
+        /*
+        Private function to MATCH an existing CosmicGene node if it exists or
+        create a placeholder node if the gene is novel
+         */
+        private fun generateMatchCosmicGeneCypher( geneSymbol:String) =
+            " CALL apoc.merge.node([\"CosmicGene\"]," +
+                    " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}, {created: datetime()},{} ) " +
+                    " YIELD node as $nodename \n"
 
-        fun generateHasGeneRelationshipCypher(geneSymbol: String, parentNodeName: String): String {
-            val relationship = "HAS_GENE"
-            val relName = "rel_gene"
-            return generatePlaceholderCypher(geneSymbol).plus(
-                " CALL apoc.merge.relationship($parentNodeName, '$relationship' ," +
-                        " {}, {created: datetime()}," +
-                        " ${CosmicGeneCensus.nodename}, {}) YIELD rel AS $relName \n"
-            )
-        }
+        private fun generatePlaceholderCypher(geneSymbol: String): String =
+            when (Neo4jUtils.nodeExistsPredicate(resolveGeneNodeIdentifier(geneSymbol))) {
+                // Cypher MATCH
+                true -> " CALL apoc.merge.node([\"CosmicGene\"]," +
+                        " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}, {},{} ) " +
+                        " YIELD node as $nodename \n"
+                // Cypher MERGE
+                false -> " CALL apoc.merge.node([\"CosmicGene\"]," +
+                        " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}, {created: datetime()},{} ) " +
+                        " YIELD node as $nodename \n"
+            }
 
         /*
         Function to create a relationship between a CosmicGene and a child node (e.g. CosmicMutation)
          */
-
         fun generateGeneParentRelationshipCypher(geneSymbol: String, parentNodeName: String): String {
             val relationship = "HAS_".plus(parentNodeName.uppercase())
             val relName = "rel".plus(parentNodeName.lowercase())
-            return generatePlaceholderCypher(geneSymbol).plus(
-                " CALL apoc.merge.relationship(${CosmicGeneCensus.nodename}, '$relationship' ," +
+            return generateMatchCosmicGeneCypher(geneSymbol).plus(
+                " CALL apoc.merge.relationship($nodename, '$relationship' ," +
                         " {}, {created: datetime()}," +
                         " $parentNodeName, {}) YIELD rel AS $relName \n"
             )
@@ -146,6 +183,8 @@ data class CosmicGeneCensus(
                 parseStringOnComma(value["Translocation Partner"].asString()),
                 value["Other Germline Mut"].asString(),
                 parseStringOnSemiColon(value["Other Syndrome"].asString()),
+                value["COSMIC ID"].asString(),
+                value["cosmic gene name"].asString(),
                 parseStringOnComma(value["Synonyms"].asString())
             )
 

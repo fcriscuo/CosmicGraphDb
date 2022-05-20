@@ -20,10 +20,10 @@ data class CosmicResistanceMutation(
             resistanceId.toString())
 
     fun generateCosmicResistanceCypher(): String =generateMergeCypher()
-        .plus(CosmicMutation.generateChildRelationshipCypher(mutationId, CosmicResistanceMutation.nodename))
-        .plus(CosmicSample.generateChildRelationshipCypher(sampleId, CosmicResistanceMutation.nodename))
+        .plus(CosmicMutation.generateChildRelationshipCypher(mutationId, nodename))
+        .plus(CosmicSample.generateChildRelationshipCypher(sampleId, nodename))
         .plus(generateDrugRelationshipCypher())
-        .plus(" RETURN node AS ${CosmicResistanceMutation.nodename}\n")
+        .plus(" RETURN node AS $nodename\n")
 
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node([\"DrugResistance\"], " +
@@ -32,17 +32,18 @@ data class CosmicResistanceMutation(
                 " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}," +
                 " transcript: ${Neo4jUtils.formatPropertyValue(transcript)}, " +
                 " pubmed_id: $pubmedId, " +
-                "  created: datetime()}) YIELD node as ${CosmicResistanceMutation.nodename} \n"
+                "  created: datetime()}) YIELD node as $nodename \n"
 
-    private fun generateDrugMergeCypher(): String  =
+    private fun generateMatchDrugCypher(): String  =
         "CALL apoc.merge.node( [\"CosmicDrug\"], " +
-                " {drug_name: ${Neo4jUtils.formatPropertyValue(drugName.lowercase())}},  {created: datetime()} )" +
-                " YIELD node AS drug \n"
+                " {drug_name: ${Neo4jUtils.formatPropertyValue(drugName.lowercase())}},  {created: datetime()},{} )" +
+                " YIELD node AS $nodename \n"
+
     private fun generateDrugRelationshipCypher(): String {
         val relationship = "RESISTANT_TO"
         val relname = "rel_drug"
-        return generateDrugMergeCypher().plus(
-            "CALL apoc.merge.relationship(${CosmicResistanceMutation.nodename}, '$relationship', " +
+        return generateMatchDrugCypher().plus(
+            "CALL apoc.merge.relationship($nodename, '$relationship', " +
                     " {}, {created: datetime()}, drug,{} )" +
                     " YIELD rel as $relname \n"
         )

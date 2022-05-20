@@ -3,16 +3,22 @@ package org.batteryparkdev.cosmicgraphdb.model
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
-
+/*
+Represents the tumor data in the CosmicMutantExport or CosmicMutantExportCensus files
+Key: tumorId
+Relationships:  Tumor - [HAS_MUTATION] -> Mutation
+ */
 data class CosmicTumor(
     val tumorId: Int, val sampleId: Int,
     val site: CosmicType, val histology: CosmicType,
     val tumorOrigin: String, val age: String,
-) {
+): CosmicModel {
+
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicTumor", "tumor_id", tumorId.toString())
+
     fun generateCosmicTumorCypher():String {
-        val tumorNodeIdentifier = NodeIdentifier("CosmicTumor",
-        "tumor_id", tumorId.toString())
-        val cypher = when (Neo4jUtils.nodeExistsPredicate(tumorNodeIdentifier)) {
+        val cypher = when (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {
             true -> generateTumorMatchCypher().plus(generateTumorSampleRelationshipCypher())
             false -> generateTumorMergeCypher().plus(generateTumorSampleRelationshipCypher())
         }
@@ -76,7 +82,7 @@ data class CosmicTumor(
             )
 
         fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +
-                " {tumor_id: $tumorId}, {created: datetime()}) " +
+                " {tumor_id: $tumorId}, {created: datetime()},{}) " +
                 " YIELD node as ${CosmicTumor.nodename}  \n"
 
         fun generateChildRelationshipCypher (tumorId: Int, childLabel: String ) :String{
@@ -88,6 +94,8 @@ data class CosmicTumor(
                     " $childLabel, {} ) YIELD rel AS $relname \n")
         }
     }
+
+
 }
 
 

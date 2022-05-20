@@ -4,6 +4,13 @@ import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 
+/*
+Represents the data in the CosmicStructExport file
+Key: mutationId
+Node Relationships: Mutation -[HAS_STRUCT] -> Struct
+                    Struct - [HAS_PUBLICATION] -> Publication
+ */
+
 data class CosmicStruct(
     val mutationId: Int,
     val sampleId: Int,
@@ -21,8 +28,7 @@ data class CosmicStruct(
 
     fun generateStructCypher(): String = generateMergeCypher()
         .plus(generateMutationRelationshipCypher())
-        //.plus(generateTumorRelationshipCypher())
-        .plus(" RETURN ${CosmicStruct.nodename}\n")
+        .plus(" RETURN $nodename\n")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicStruct\"," +
             "${Neo4jUtils.formatPropertyValue(resolveStructType())} ], " +
@@ -32,8 +38,7 @@ data class CosmicStruct(
             "  pubmed_id: $pubmedId, created: datetime() }, " +
             " { last_mod: datetime()}) YIELD node AS $nodename \n"
 
-    private fun generateTumorRelationshipCypher(): String =
-        CosmicTumor.generateChildRelationshipCypher(tumorId, nodename)
+
 
     private fun generateMutationRelationshipCypher(): String =
         CosmicMutation.generateChildRelationshipCypher(mutationId, nodename)
@@ -60,23 +65,16 @@ data class CosmicStruct(
                 parseValidIntegerFromString(value["PUBMED_PMID"].asString())
             )
 
-        private fun generateStructPlaceholderCypher(mutationId: Int): String {
-           val structId = NodeIdentifier("CosmicStruct", "mutation_id", mutationId.toString())
-            return when(Neo4jUtils.nodeExistsPredicate(structId)) {
-                false -> "CALL apoc.merge.node( [\"CosmicStruct\",\"Breakpoint\"], " +
-                        " {mutation_id: $mutationId},  {created: datetime()},{}) " +
-                        " YIELD node AS ${CosmicStruct.nodename}\n "
-                true -> "CALL apoc.merge.node( [\"CosmicStruct\"], " +
-                        " {mutation_id: $mutationId},  {},{}) " +
-                        " YIELD node AS ${CosmicStruct.nodename}\n "
-            }
-        }
+        private fun generateMatchCosmicStructCypher(mutationId: Int): String  =
+            "CALL apoc.merge.node( [\"CosmicStruct\"], " +
+                    " {mutation_id: $mutationId},  {created: datetime()},{}) " +
+                    " YIELD node AS $nodename\n "
 
         fun generateChildRelationshipCypher(mutationId: Int, childLabel: String) : String {
             val relationship = "HAS_".plus(childLabel.uppercase())
             val relname = "rel_struct"
-            return generateStructPlaceholderCypher(mutationId).plus(
-                "CALL apoc.merge.relationship(${CosmicStruct.nodename}, '$relationship', " +
+            return generateMatchCosmicStructCypher(mutationId).plus(
+                "CALL apoc.merge.relationship($nodename, '$relationship', " +
                         " {}, {created: datetime()}, ${childLabel.lowercase()},{} )" +
                         " YIELD rel as $relname \n")
         }
