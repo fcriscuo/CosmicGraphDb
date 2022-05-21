@@ -51,8 +51,6 @@ data class CosmicBreakpoint(
   private fun generateTumorRelationshipCypher(): String =
       CosmicTumor.generateChildRelationshipCypher(tumorId,CosmicBreakpoint.nodename )
 
-    private fun generateMutationRelationshipCypher(): String =
-        CosmicMutation.generateChildRelationshipCypher(mutationId, CosmicBreakpoint.nodename)
 
     private fun generateStructRelationshipCypher(): String =
         CosmicStruct.generateChildRelationshipCypher(mutationId,nodename)

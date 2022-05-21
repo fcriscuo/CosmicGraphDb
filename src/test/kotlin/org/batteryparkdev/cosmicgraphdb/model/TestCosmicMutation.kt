@@ -25,7 +25,7 @@ class TestCosmicMutation {
                 )
             }
             .forEach { mutation ->
-                println("Loading mutation ${mutation.mutationId} for gene: ${mutation.geneSymbol}")
+                println("Loading mutation ${mutation.genomicMutationId} for gene: ${mutation.geneSymbol}")
                 Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicMutationCypher())
                 // create a Publication node if a PubMed id is present
                 mutation.createPubMedRelationship(mutation.pubmedId)

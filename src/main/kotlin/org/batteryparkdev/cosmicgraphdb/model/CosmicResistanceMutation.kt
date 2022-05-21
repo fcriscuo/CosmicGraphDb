@@ -20,7 +20,7 @@ data class CosmicResistanceMutation(
             resistanceId.toString())
 
     fun generateCosmicResistanceCypher(): String =generateMergeCypher()
-        .plus(CosmicMutation.generateChildRelationshipCypher(mutationId, nodename))
+        //.plus(CosmicMutation.generateChildRelationshipCypher(mutationId, nodename))
         .plus(CosmicSample.generateChildRelationshipCypher(sampleId, nodename))
         .plus(generateDrugRelationshipCypher())
         .plus(" RETURN node AS $nodename\n")

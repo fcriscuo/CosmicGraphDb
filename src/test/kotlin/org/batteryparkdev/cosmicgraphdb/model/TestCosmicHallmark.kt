@@ -34,5 +34,5 @@ fun main() {
     val cosmicHallmarkFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv")
     val recordCount =
         TestCosmicHallmark().parseCosmicGeneCensusFile(cosmicHallmarkFile)
-    println("Loaded COSMIC gene census file: $cosmicHallmarkFile  record count = $recordCount")
+    println("Loaded COSMIC gene census hallmark file: $cosmicHallmarkFile  record count = $recordCount")
 }

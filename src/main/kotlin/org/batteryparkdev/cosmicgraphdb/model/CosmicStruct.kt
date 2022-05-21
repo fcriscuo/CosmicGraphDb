@@ -27,7 +27,7 @@ data class CosmicStruct(
         )
 
     fun generateStructCypher(): String = generateMergeCypher()
-        .plus(generateMutationRelationshipCypher())
+       // .plus(generateMutationRelationshipCypher())
         .plus(" RETURN $nodename\n")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicStruct\"," +
@@ -40,8 +40,8 @@ data class CosmicStruct(
 
 
 
-    private fun generateMutationRelationshipCypher(): String =
-        CosmicMutation.generateChildRelationshipCypher(mutationId, nodename)
+ //   private fun generateMutationRelationshipCypher(): String =
+//        CosmicMutation.generateChildRelationshipCypher(mutationId, nodename)
 
     private fun resolveStructType(): String =
         with(description) {

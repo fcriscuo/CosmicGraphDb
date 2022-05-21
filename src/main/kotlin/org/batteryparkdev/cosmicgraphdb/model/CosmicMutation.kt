@@ -51,10 +51,10 @@ data class CosmicMutation(
         }
 
     private val mergeNewNodeCypher = " CALL apoc.merge.node( [\"CosmicMutation\"], " +
-            " {mutation_id: $mutationId}, " +
+            " {genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)}}, " + // key
             " { legacy_mutation_id: ${Neo4jUtils.formatPropertyValue(legacyMutationId)} ," +
             " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
-            "  genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)}," +
+            " mutation_id: $mutationId, " +
             "  gene_cds_length: $geneCDSLength, " +
             " mutation_cds: ${Neo4jUtils.formatPropertyValue(mutationCds)}," +
             " mutation_aa: ${Neo4jUtils.formatPropertyValue(mutationAA)}, " +
@@ -77,10 +77,10 @@ data class CosmicMutation(
 
     // Cypher to complete an existing placeholder node
     private val mergeExistingNodeCypher = " CALL apoc.merge.node( [\"CosmicMutation\"], " +
-            " {mutation_id: $mutationId}, {}," +
+            " {genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)}}, {}," +
             " { legacy_mutation_id: ${Neo4jUtils.formatPropertyValue(legacyMutationId)}, " +
             " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
-            "  genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)}," +
+            " mutation_id: $mutationId, " +
             "  gene_cds_length: $geneCDSLength, " +
             " mutation_cds: ${Neo4jUtils.formatPropertyValue(mutationCds)}," +
             " mutation_aa: ${Neo4jUtils.formatPropertyValue(mutationAA)}, " +
@@ -120,15 +120,16 @@ data class CosmicMutation(
         Private function to match or create a CosmicMutationNode based on the specified
         mutation id
          */
-        private fun resolveMutationNodeCypher(mutationId: Int): String =
+        private fun resolveMutationNodeCypher(genomicMutationId: String): String =
             "CALL apoc.merge.node( [\"CosmicMutation\"], " +
-                    " {mutation_id: $mutationId},  {created: datetime()},{}) " +
+                    " {genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)}}," +
+                    "  {created: datetime()},{}) " +
                     " YIELD node AS ${CosmicMutation.nodename}\n "
 
-        fun generateChildRelationshipCypher(mutationId: Int, childLabel: String): String {
+        fun generateChildRelationshipCypher(genomicMutationId: String, childLabel: String): String {
             val relationship = "HAS_".plus(childLabel.uppercase())
             val relname = "rel_mutation"
-            return resolveMutationNodeCypher(mutationId).plus(
+            return resolveMutationNodeCypher(genomicMutationId).plus(
                 "CALL apoc.merge.relationship(${CosmicMutation.nodename}, '$relationship', " +
                         " {}, {created: datetime()}, ${childLabel.lowercase()},{} )" +
                         " YIELD rel as $relname \n"
