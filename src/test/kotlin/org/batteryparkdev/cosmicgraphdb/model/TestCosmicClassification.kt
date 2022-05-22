@@ -2,13 +2,11 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicClassification {
-    /*
-    Test function to parse 100 records from the Cosmic classification.csv file
-     */
-
     fun parseClassificationFile(filename: String): Int {
         val LIMIT = Long.MAX_VALUE
         deleteClassificationNodes()
@@ -17,13 +15,17 @@ class TestCosmicClassification {
             .map { record -> record.get("map") }
             .map { CosmicClassification.parseValueMap(it) }
             .forEach {
-                println(
-                    "CosmicClassification: ${it.resolveClassificationId()} " +
-                            " NCIcode: ${it.nciCode}" +
-                            " Primary Site: ${it.siteType.primary} " +
-                            " Histology: ${it.histologyType.primary}"
-                )
-                Neo4jConnectionService.executeCypherCommand(it.generateCosmicClassificationCypher())
+                if (Neo4jUtils.nodeExistsPredicate(it.getNodeIdentifier()).not()) {
+                    Neo4jConnectionService.executeCypherCommand(it.generateCosmicClassificationCypher())
+                    println(
+                        "CosmicClassification: ${it.cosmicPhenotypeId} " +
+                                " NCIcode: ${it.nciCode}" +
+                                " Primary Site: ${it.siteType.primary} " +
+                                " Histology: ${it.histologyType.primary}"
+                    )
+                } else {
+                    println("+++++ Duplicate phenotype id: ${it.cosmicPhenotypeId} skipped.")
+                }
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (cc: CosmicClassification) RETURN COUNT(cc)").toInt()
     }

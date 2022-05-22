@@ -6,12 +6,11 @@ import org.neo4j.driver.Value
 /*
 Represents the tumor data in the CosmicMutantExport or CosmicMutantExportCensus files
 Key: tumorId
-Relationships:  Tumor - [HAS_MUTATION] -> Mutation
+Relationships:  Tumor - [HAS_SAMPLE] -> Sample
  */
 data class CosmicTumor(
     val tumorId: Int, val sampleId: Int,
-    val site: CosmicType, val histology: CosmicType,
-    val tumorOrigin: String, val age: String,
+    val tumorOrigin: String, val age: Int,
 ): CosmicModel {
 
     override fun getNodeIdentifier(): NodeIdentifier =
@@ -26,19 +25,19 @@ data class CosmicTumor(
     }
 
     /*
-    Function to generate Cypher statements to create tumor, site, and histology
+    Function to generate Cypher statements to create tumor
     nodes and relationships in the Neo4j database if the tumor id is novel
     n.b. the generated Cypher is intended to be used within a larger
     transaction and as a result it does not have a RETURN component
      */
    private fun generateTumorMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicTumor\"], " +
-                "{tumor_id: $tumorId,  tumor_origin: " +
+                "{tumor_id: $tumorId} ," +
+                " {tumor_origin: " +
                 "${Neo4jUtils.formatPropertyValue(tumorOrigin)} ," +
-                " age: ${Neo4jUtils.formatPropertyValue(age)}, " +
-                "  created: datetime()}) YIELD node as ${CosmicTumor.nodename} \n"
-                    .plus(site.generateCosmicTypeCypher(CosmicTumor.nodename))
-                    .plus(histology.generateCosmicTypeCypher(CosmicTumor.nodename))
+                " age: $age , " +
+                "  created: datetime()},{}) YIELD node as ${CosmicTumor.nodename} \n"
+
 
    private  fun generateTumorMatchCypher(): String =
        "CALL apoc.merge.node ([\"CosmicTumor\"],{tumor_id: $tumorId},{} ) " +
@@ -59,30 +58,12 @@ data class CosmicTumor(
             CosmicTumor(
                 value["ID_tumour"].asString().toInt(),
                 value["ID_sample"].asString().toInt(),
-                resolveSiteType(value),
-                resolveHistologySite(value),
                 value["Tumour origin"].asString(),
-                value["Age"].asString()
-            )
-
-        private fun resolveSiteType(value: Value): CosmicType =
-            CosmicType(
-                "Site", value["Primary site"].asString(),
-                value["Site subtype 1"].asString(),
-                value["Site subtype 2"].asString(),
-                value["Site subtype 3"].asString()
-            )
-
-        private fun resolveHistologySite(value: Value): CosmicType =
-            CosmicType(
-                "Histology", value["Primary histology"].asString(),
-                value["Histology subtype 1"].asString(),
-                value["Histology subtype 2"].asString(),
-                value["Histology subtype 3"].asString()
+                parseValidIntegerFromString(value["Age"].asString())
             )
 
         fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +
-                " {tumor_id: $tumorId}, {created: datetime()},{}) " +
+                " {tumor_id: $tumorId}, {created: datetime()},{modified: datetime()}) " +
                 " YIELD node as ${CosmicTumor.nodename}  \n"
 
         fun generateChildRelationshipCypher (tumorId: Int, childLabel: String ) :String{
@@ -93,6 +74,7 @@ data class CosmicTumor(
                     " {}, {created: datetime()}, " +
                     " $childLabel, {} ) YIELD rel AS $relname \n")
         }
+
     }
 
 

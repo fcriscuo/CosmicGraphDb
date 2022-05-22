@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicSample {
@@ -15,13 +16,17 @@ class TestCosmicSample {
             .map { CosmicSample.parseValueMap(it) }
             .forEach {sample->
                 println("Loading sample ${sample.sampleId}")
+//                val cypher = sample.generateCosmicSampleCypher()
+//                println(cypher)
+//                Neo4jConnectionService.executeCypherCommand(cypher)
                 Neo4jConnectionService.executeCypherCommand(sample.generateCosmicSampleCypher())
 
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (cs: CosmicSample) RETURN COUNT(cs)").toInt()
     }
     private fun deleteCosmicSampleNodes(){
-        Neo4jConnectionService.executeCypherCommand("MATCH (cs: CosmicSample) DETACH DELETE(cs)")
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicTumor")
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicSample")
     }
 }
 fun main() {

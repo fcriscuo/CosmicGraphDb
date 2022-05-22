@@ -10,7 +10,8 @@ any initial data.
  */
 val constraints by lazy {
     listOf<String>(
-        "CREATE CONSTRAINT unique_classification_id IF NOT EXISTS ON (c:CosmicClassification) ASSERT c.cosmic_phenotype_id IS UNIQUE",
+        "CREATE CONSTRAINT unique_classification_id IF NOT EXISTS ON (c:CosmicClassification) ASSERT c.phenotype_id IS UNIQUE",
+        "CREATE CONSTRAINT unique_individual_id IF NOT EXISTS ON (i:CosmicIndividual) ASSERT i.individual_id IS UNIQUE",
         "CREATE CONSTRAINT unique_classification_type_id IF NOT EXISTS ON (t:ClassificationType) ASSERT t.type_id IS UNIQUE",
         "CREATE CONSTRAINT unique_cosmic_gene_symbol IF NOT EXISTS ON (cg: CosmicGene) ASSERT cg.gene_symbol IS UNIQUE",
         "CREATE CONSTRAINT unique_cosmic_hgnc_id IF NOT EXISTS ON (hgnc: CosmicHGNC) ASSERT hgnc.hgnc_id IS UNIQUE",

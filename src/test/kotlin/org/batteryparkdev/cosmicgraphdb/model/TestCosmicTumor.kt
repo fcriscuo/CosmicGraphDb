@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicTumor {
@@ -15,7 +16,7 @@ class TestCosmicTumor {
             .map { record -> record.get("map") }
             .map { CosmicTumor.parseValueMap(it) }
             .forEach { tumor ->
-                println("Loading tumor ${tumor.sampleId}")
+                println("Loading tumor ${tumor.tumorId}")
                 val cypher = tumor.generateCosmicTumorCypher().plus(
                     " RETURN ${CosmicTumor.nodename}"
                 )
@@ -25,7 +26,7 @@ class TestCosmicTumor {
     }
 
     private fun deleteTumorNodes() =
-        Neo4jConnectionService.executeCypherCommand("MATCH (ct: CosmicTumor) DETACH DELETE (ct)")
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicTumor")
 }
 
 fun main() {

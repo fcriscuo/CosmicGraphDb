@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 import java.util.*
@@ -11,14 +12,12 @@ data class CosmicClassification(
     val cosmicSiteType: CosmicType,
     val nciCode: String,
     val efoUrl: String
- ) : CosmicModel
-{
+) : CosmicModel {
     override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("CosmicClassification", "classification_id",
-            resolveClassificationId().toString())
-
-    fun resolveClassificationId(): Int =
-        UUID.randomUUID().hashCode()
+        NodeIdentifier(
+            "CosmicClassification", "phenotype_id",
+            cosmicPhenotypeId
+        )
 
     fun generateCosmicClassificationCypher(): String =
         generateMergeCypher()
@@ -26,10 +25,10 @@ data class CosmicClassification(
             .plus(histologyType.generateCosmicTypeCypher(CosmicClassification.nodename))
             .plus(" RETURN ${CosmicClassification.nodename}\n")
 
+
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicClassification\"]," +
-            "{ classification_id: ${resolveClassificationId()}}," +
-            " { phenotype_id: \"${cosmicPhenotypeId}\", " +
-            " nci_code: \"${nciCode}\"," +
+            "{ phenotype_id: \"${cosmicPhenotypeId}\"}," +
+            " { nci_code: \"${nciCode}\"," +
             " efo_url: \"${efoUrl}\"," +
             " created: datetime() }," +
             "{ last_mod: datetime()}) YIELD node AS $nodename \n "
@@ -74,14 +73,15 @@ data class CosmicClassification(
                 value["SITE_SUBTYPE3_COSMIC"].asString()
             )
 
-        fun generateChildRelationshipCypher(classificationId: Int, parentNodeName: String): String {
+        fun generateChildRelationshipCypher(phenotypeId: String, parentNodeName: String): String {
             val relationship = "HAS_COSMIC_CLASSIFICATION"
             val relName = "rel_class"
-            return " MATCH (cc:CosmicClassification) WHERE cc.classification_id =  " +
-                    " $classificationId  \n" +
-                    " CALL apoc.merge.relationship( $parentNodeName, '$relationship', " +
-                    " {},  {created: datetime()}, cc, {} ) " +
-                    " YIELD rel as $relName \n"
+            return "CALL apoc.merge.node(['CosmicClassification'], {phenotype_id: " +
+                    " ${Neo4jUtils.formatPropertyValue(phenotypeId)}}, {},{}) " +
+                    " YIELD node AS $nodename\n " +
+                    " CALL apoc.merge.relationship( $parentNodeName, '$relationship', {}, " +
+                    " {created: datetime()}, $nodename, {} ) " +
+                    " YIELD rel AS $relName \n"
         }
     }
 }
