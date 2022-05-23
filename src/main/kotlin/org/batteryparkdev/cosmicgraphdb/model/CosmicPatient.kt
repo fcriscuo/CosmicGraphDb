@@ -16,9 +16,10 @@ data class CosmicPatient(
     val normal_tissue_tested: Boolean
 ) {
 
+
     fun generateCosmicPatientCypher() =
         generateMergeCypher()
-            .plus(generateSampleRelationshipCypher())
+            .plus(generateTumorRelationshipCypher())
             //.plus(" RETURN $nodename\n")
 
     private fun generateMergeCypher(): String =
@@ -34,10 +35,10 @@ data class CosmicPatient(
                 " created: datetime() }," +
                 "{ last_mod: datetime()}) YIELD node AS $nodename \n "
 
-    private fun generateSampleRelationshipCypher():String
+    private fun generateTumorRelationshipCypher():String
        =  "CALL apoc.merge.relationship( $nodename, " +
-                    " 'HAS_SAMPLE', {}, {created: datetime()}," +
-                    " ${CosmicSample.nodename},{} ) " +
+                    " 'HAS_TUMOR', {}, {created: datetime()}," +
+                    " ${CosmicTumor.nodename},{} ) " +
                     " YIELD rel as pat_rel \n"
 
     companion object : AbstractModel {

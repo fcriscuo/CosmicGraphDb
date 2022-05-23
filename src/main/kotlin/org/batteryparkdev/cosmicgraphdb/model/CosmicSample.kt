@@ -22,13 +22,12 @@ data class CosmicSample(
     val stage: String,
     val cytogenetics: String,
     val metastaticSite: String,
-    val tumorSource: String,
-    val tumorRemark: String,
     val germlineMutation: String,
     val nciCode: String,
     val sampleType: String,
     val cosmicPhenotypeId: String,
-    val cosmicPatient: CosmicPatient
+    val cosmicPatient: CosmicPatient,
+    val cosmicTumor: CosmicTumor
 
 ) {
 
@@ -40,8 +39,8 @@ data class CosmicSample(
                     nodename
                 )
             )
-            .plus(generateTumorRelationshipCypher())
-            .plus(cosmicPatient.generateCosmicPatientCypher())
+            .plus(cosmicTumor.generateCosmicTumorCypher())
+            //.plus(cosmicPatient.generateCosmicPatientCypher())
             .plus(" RETURN $nodename\n")
 
     private fun generateMergeCypher(): String =
@@ -56,11 +55,11 @@ data class CosmicSample(
                 " ${Neo4jUtils.formatPropertyValue(averagePloidy)}, whole_genome_screen: $wholeGeneomeScreen, " +
                 " whole_exome_screen: $wholeExomeScreen, sample_remark: ${Neo4jUtils.formatPropertyValue(sampleRemark)}, " +
                 " drug_respose: ${Neo4jUtils.formatPropertyValue(drugResponse)}, " +
-                " grade: ${Neo4jUtils.formatPropertyValue(grade)}, age_at_tumor_recurrance: $ageAtTumorRecurrence, " +
+                " grade: ${Neo4jUtils.formatPropertyValue(grade)}, " +
+                "age_at_tumor_recurrance: $ageAtTumorRecurrence, " +
                 " stage: ${Neo4jUtils.formatPropertyValue(stage)}, cytogenetics: " +
                 " ${Neo4jUtils.formatPropertyValue(cytogenetics)}, metastatic_site: " +
-                " ${Neo4jUtils.formatPropertyValue(metastaticSite)}, tumor_source: " +
-                " ${Neo4jUtils.formatPropertyValue(tumorSource)}, tumor_remark: " +
+                " ${Neo4jUtils.formatPropertyValue(metastaticSite)}, germline_mutation: " +
                 " ${Neo4jUtils.formatPropertyValue(germlineMutation)}, " +
                 " nci_code: ${Neo4jUtils.formatPropertyValue(nciCode)}, sample_type: " +
                 " ${Neo4jUtils.formatPropertyValue(sampleType)}, cosmic_phenotype_id: " +
@@ -104,15 +103,16 @@ data class CosmicSample(
                 value["drug_response"].asString(),
                 value["grade"].asString(),
                 parseValidIntegerFromString(value["age_at_tumour_recurrence"].asString()),
-                value["stage"].asString(), value["cytogenetics"].asString(),
+                value["stage"].asString(),
+                value["cytogenetics"].asString(),
                 value["metastatic_site"].asString(),
-                value["tumour_source"].asString(),
-                removeInternalQuotes(value["tumour_remark"].asString()),
                 value["germline_mutation"].asString(),
                 value["nci_code"].asString(),
                 value["sample_type"].asString(),
                 classificationPrefix.plus(value["cosmic_phenotype_id"].asString()),
-                CosmicPatient.parseValueMap(value)
+                CosmicPatient.parseValueMap(value),
+                CosmicTumor.parseValueMap(value)
+
             )
 
 

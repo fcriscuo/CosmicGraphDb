@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collect
 //import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.cosmicgraphdb.model.CosmicMutation
+import org.batteryparkdev.cosmicgraphdb.model.CosmicCodingMutation
 import org.batteryparkdev.cosmicgraphdb.model.CosmicTumor
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import org.neo4j.driver.Value
@@ -78,25 +78,25 @@ class MutationReceiver(
     var mutationNodeCount = 0
 
     private suspend fun parseMutationRecord(value:Value) {
-        loadCosmicMutationModel(CosmicMutation.parseValueMap(value))
+        loadCosmicCodingMutationModel(CosmicCodingMutation.parseValueMap(value))
         mutationNodeCount += 1
         delay(20)
     }
 
-    suspend fun loadCosmicMutationModel(mutation: CosmicMutation) {
-        Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicMutationCypher())
+    suspend fun loadCosmicCodingMutationModel(mutation: CosmicCodingMutation) {
+        Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicCodingMutationCypher())
         delay(20)
         loadMutationPubMedRelationship(mutation)
     }
 
-    suspend fun loadMutationPubMedRelationship(mutation: CosmicMutation) {
+    suspend fun loadMutationPubMedRelationship(mutation: CosmicCodingMutation) {
         mutation.createPubMedRelationship(mutation.pubmedId)
         delay(20)
         logCosmicMutation(mutation)
     }
 
 
-     fun logCosmicMutation(mutation: CosmicMutation) {
+     fun logCosmicMutation(mutation: CosmicCodingMutation) {
         logger.atInfo().log("CosmicMutation id: ${mutation.mutationId}   loaded into Neo4j}")
     }
 }

@@ -25,6 +25,7 @@ class TestCosmicSample {
         return Neo4jConnectionService.executeCypherCommand("MATCH (cs: CosmicSample) RETURN COUNT(cs)").toInt()
     }
     private fun deleteCosmicSampleNodes(){
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicPatient")
         Neo4jUtils.detachAndDeleteNodesByName("CosmicTumor")
         Neo4jUtils.detachAndDeleteNodesByName("CosmicSample")
     }

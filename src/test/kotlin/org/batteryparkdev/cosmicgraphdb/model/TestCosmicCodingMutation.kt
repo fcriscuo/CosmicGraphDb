@@ -6,7 +6,7 @@ import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
-class TestCosmicMutation {
+class TestCosmicCodingMutation {
     fun parseCosmicMutationFile(filename: String): Int {
         val LIMIT = Long.MAX_VALUE
         // limit the number of records processed
@@ -14,7 +14,7 @@ class TestCosmicMutation {
         ApocFileReader.processDelimitedFile(filename)
             .stream().limit(LIMIT)
             .map { record -> record.get("map") }
-            .map { CosmicMutation.parseValueMap(it) }
+            .map { CosmicCodingMutation.parseValueMap(it) }
             // only process COSMIC census genes
             .filter { mutation ->
                 Neo4jUtils.nodeExistsPredicate(
@@ -26,16 +26,14 @@ class TestCosmicMutation {
             }
             .forEach { mutation ->
                 println("Loading mutation ${mutation.genomicMutationId} for gene: ${mutation.geneSymbol}")
-                Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicMutationCypher())
+                Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicCodingMutationCypher())
                 // create a Publication node if a PubMed id is present
-                mutation.createPubMedRelationship(mutation.pubmedId)
+               // mutation.createPubMedRelationship(mutation.pubmedId)
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (cm:CosmicMutation) RETURN COUNT(cm)").toInt()
     }
     private fun deleteExistingNodes(){
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicTumor")
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicMutation")
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicSample")
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicCodingMutation")
     }
 
 }
@@ -43,6 +41,6 @@ class TestCosmicMutation {
 fun main() {
     val filename = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicMutantExportCensus.tsv")
     val recordCount =
-        TestCosmicMutation().parseCosmicMutationFile(filename)
+        TestCosmicCodingMutation().parseCosmicMutationFile(filename)
     println("Mutation record count = $recordCount")
 }
