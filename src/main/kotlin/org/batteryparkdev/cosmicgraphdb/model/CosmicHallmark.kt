@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
+import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
 import org.neo4j.driver.Value
 import java.util.*
 
@@ -9,17 +10,19 @@ data class CosmicHallmark(
     val hallmarkId: Int,   // needed to establish unique database identifier
     val geneSymbol: String, val cellType: String, val pubmedId: Int,
     val hallmark: String, val impact: String, val description: String
-): CosmicModel
-{
+) : CosmicModel {
     override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("CosmicHallmark", "hallmark_id",
-            hallmarkId.toString())
+        NodeIdentifier(
+            "CosmicHallmark", "hallmark_id",
+            hallmarkId.toString()
+        )
 
     fun generateCosmicHallmarkCypher(): String =
         generateMergeCypher()
             .plus(generateMergeHallmarkCollectionCypher())
             .plus(generateHasHallmarkRelationshipCypher())
-            .plus(" RETURN ${CosmicHallmark.nodename}")
+            .plus(" RETURN $nodename")
+
 
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicHallmark\"]," +
@@ -30,7 +33,7 @@ data class CosmicHallmark(
                 "  hallmark: ${Neo4jUtils.formatPropertyValue(hallmark)}, " +
                 "  impact: ${Neo4jUtils.formatPropertyValue(impact)}, " +
                 "  description: ${Neo4jUtils.formatPropertyValue(description)}, " +
-                "  created: datetime()}) YIELD node as ${CosmicHallmark.nodename} \n"
+                "  created: datetime()}) YIELD node as $nodename \n"
 
 
     private fun generateMergeHallmarkCollectionCypher(): String =
@@ -44,17 +47,19 @@ data class CosmicHallmark(
                 " {}, {created: datetime()}, " +
                 " $collectionname, {}) YIELD rel AS rel_coll \n"
 
+
     private fun generateHasHallmarkRelationshipCypher(): String {
         val relationship = " HAS_HALLMARK"
         val relName = "rel_hallmark"
         return "CALL apoc.merge.relationship (  $collectionname, '$relationship'," +
                 " {}, {created: datetime()}, " +
-                " ${CosmicHallmark.nodename}, {} )YIELD rel AS $relName \n"
+                " $nodename, {} )YIELD rel AS $relName \n"
     }
 
     companion object : AbstractModel {
         const val nodename = "hallmark"
         const val collectionname = "hallmark_collect"
+        const val pubCollNodename = "hall_pub_coll"
         fun parseValueMap(value: Value): CosmicHallmark =
             CosmicHallmark(
                 UUID.randomUUID().hashCode(),  // unique identifier for key

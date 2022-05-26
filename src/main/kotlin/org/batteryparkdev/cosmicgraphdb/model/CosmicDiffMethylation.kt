@@ -3,26 +3,23 @@ package org.batteryparkdev.cosmicgraphdb.model
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
+import java.util.*
 
 data class CosmicDiffMethylation(
+    val key: String,
     val studyId: Int, val sampleId: Int,
-    val tumorId: Int, val site: CosmicType,
-    val histology: CosmicType, val fragmentId: String,
+    val tumorId: Int, val fragmentId: String,
     val genomeVersion: String, val chromosome: Int, // n.b. numeric values for chromosomes (x=23, y=24)
     val position: Int, val strand: String,
     val geneName: String, val methylation: String,
     val avgBetaValueNormal: Float, val betaValue: Float,
     val twoSidedPValue: Double
-)
+): CosmicModel
 {
-    val nodename = "methylation"
-
     fun generateDiffMethylationCypher():String =
         generateMergeCypher()
-            .plus(site.generateCosmicTypeCypher(nodename))
-            .plus(histology.generateCosmicTypeCypher(nodename))
-            .plus(CosmicTumor.generateChildRelationshipCypher(tumorId, nodename))
-            .plus(CosmicSample.generateChildRelationshipCypher(sampleId, nodename))
+            .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
+            .plus(generateGeneMutationCollectionRelationshipCypher(geneName, nodename))
             .plus(" RETURN  $nodename")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicDiffMethylation\"], " +
@@ -38,14 +35,13 @@ data class CosmicDiffMethylation(
             " { last_mod: datetime()}) YIELD node AS $nodename \n"
 
     companion object : AbstractModel {
-
+        val nodename = "methylation"
         fun parseValueMap(value: Value): CosmicDiffMethylation =
             CosmicDiffMethylation(
+                UUID.randomUUID().toString(),
                 value["STUDY_ID"].asString().toInt(),
                 value["ID_SAMPLE"].asString().toInt(),
                 value["ID_TUMOUR"].asString().toInt(),
-                resolveSiteType(value),
-                resolveHistologySite(value),
                 value["FRAGMENT_ID"].asString(),
                 value["GENOME_VERSION"].asString(),
                 value["CHROMOSOME"].asString().toInt(),  //Integer is OK here (x=23, y=24)
@@ -60,26 +56,9 @@ data class CosmicDiffMethylation(
                 value["BETA_VALUE"].asString().toFloat(),
                 value["TWO_SIDED_P_VALUE"].asString().toDouble()
             )
-
-        private fun resolveSiteType(value: Value): CosmicType =
-            CosmicType(
-                "Site", value["PRIMARY_SITE"].asString(),
-                value["SITE_SUBTYPE_1"].asString(),
-                value["SITE_SUBTYPE_2"].asString(),
-                value["SITE_SUBTYPE_3"].asString()
-            )
-
-        private fun resolveHistologySite(value: Value): CosmicType =
-            CosmicType(
-                "Histology", value["PRIMARY_HISTOLOGY"].asString(),
-                value["HISTOLOGY_SUBTYPE_1"].asString(),
-                value["HISTOLOGY_SUBTYPE_2"].asString(),
-                value["HISTOLOGY_SUBTYPE_3"].asString()
-            )
-
-        private fun resolveMutationType(value: Value): CosmicType =
-            CosmicType(
-                "Mutation", value["MUT_TYPE"].asString()
-            )
     }
+
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicDiffMethylation", "key", key)
+
 }

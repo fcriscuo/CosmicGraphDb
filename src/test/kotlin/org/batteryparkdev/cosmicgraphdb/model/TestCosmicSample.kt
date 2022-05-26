@@ -26,6 +26,7 @@ class TestCosmicSample {
     }
     private fun deleteCosmicSampleNodes(){
         Neo4jUtils.detachAndDeleteNodesByName("CosmicPatient")
+        Neo4jUtils.detachAndDeleteNodesByName("SampleMutationCollection")
         Neo4jUtils.detachAndDeleteNodesByName("CosmicTumor")
         Neo4jUtils.detachAndDeleteNodesByName("CosmicSample")
     }

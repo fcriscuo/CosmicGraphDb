@@ -27,7 +27,7 @@ data class CosmicStruct(
         )
 
     fun generateStructCypher(): String = generateMergeCypher()
-       // .plus(generateMutationRelationshipCypher())
+        .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
         .plus(" RETURN $nodename\n")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicStruct\"," +
@@ -37,11 +37,6 @@ data class CosmicStruct(
             " description: ${Neo4jUtils.formatPropertyValue(description)}, " +
             "  pubmed_id: $pubmedId, created: datetime() }, " +
             " { last_mod: datetime()}) YIELD node AS $nodename \n"
-
-
-
- //   private fun generateMutationRelationshipCypher(): String =
-//        CosmicMutation.generateChildRelationshipCypher(mutationId, nodename)
 
     private fun resolveStructType(): String =
         with(description) {

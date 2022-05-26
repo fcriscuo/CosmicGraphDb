@@ -21,8 +21,9 @@ data class CosmicCompleteGeneExpression(
             key.toString())
 
     fun generateCompleteGeneExpressionCypher(): String =
-        generateMergeCypher().plus(generateGeneRelationshipCypher())
-            .plus(generateSampleRelationshipCypher())
+        generateMergeCypher()
+            .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol,nodename))
+            .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
             .plus(" RETURN $nodename")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CompleteGeneExpression\"], " +

@@ -21,7 +21,7 @@ class TestCosmicHallmark {
                 Neo4jConnectionService.executeCypherCommand(hall.generateCosmicHallmarkCypher())
                 println("Loaded Cosmic Hallmark ${hall.geneSymbol}")
                 // create a Publication node if a PubMed id is present
-                hall.createPubMedRelationship(hall.pubmedId)
+                CosmicGeneCensus.registerGenePublication(hall.pubmedId, hall.geneSymbol)
                 recordCount += 1
             }
         return recordCount

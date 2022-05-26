@@ -1,8 +1,10 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
+import org.batteryparkdev.logging.service.LogService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
+import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
 import org.neo4j.driver.Value
 
 data class CosmicGeneCensus(
@@ -25,6 +27,7 @@ data class CosmicGeneCensus(
         generateMergeCypher()
             .plus(generateGeneMutationCollectionNodeCypher())
             .plus(generateGeneAnnotationCollectionCypher())
+            .plus(generateGenePublicationCollectionCypher())
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     somaticTumorTypeList,
@@ -75,15 +78,23 @@ data class CosmicGeneCensus(
         "CALL apoc.merge.node([\"GeneMutationCollection\"], " +
                 " {gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
                 " {created: datetime()},{}) YIELD node as ${CosmicGeneCensus.mutCollNodename} \n " +
-                " CALL apoc.merge.relationship (${CosmicGeneCensus.nodename}, \"HAS_MUTATION_COLLECTION\", " +
+                " CALL apoc.merge.relationship ($nodename, \"HAS_MUTATION_COLLECTION\", " +
                 "  {},{created: datetime()}, ${CosmicGeneCensus.mutCollNodename},{} ) YIELD rel AS mut_rel \n "
 
     private fun generateGeneAnnotationCollectionCypher(): String =
         "CALL apoc.merge.node([\"GeneAnnotationCollection\"], " +
                 " {gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}," +
-                " {created: datetime()},{}) YIELD node as ${CosmicGeneCensus.annoCollNodename} \n " +
-                " CALL apoc.merge.relationship (${CosmicGeneCensus.nodename}, \"HAS_ANNOTATION_COLLECTION\", " +
-                "  {},{created: datetime()}, ${CosmicGeneCensus.annoCollNodename},{} ) YIELD rel AS anno_rel \n "
+                " {created: datetime()},{}) YIELD node as $annoCollNodename \n " +
+                " CALL apoc.merge.relationship ($nodename, \"HAS_ANNOTATION_COLLECTION\", " +
+                "  {},{created: datetime()}, $annoCollNodename,{} ) YIELD rel AS anno_rel \n "
+
+    private fun generateGenePublicationCollectionCypher() : String =
+        "CALL apoc.merge.node([\"GenePublicationCollection\"], " +
+                "{gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}, " +
+                " {created: datetime()},{}) YIELD node as $pubCollNodename \n" +
+                " CALL apoc.merge.relationship($nodename, \"HAS_PUBLICATION_COLLECTION\"," +
+                " {}, {created: datetime()}, $pubCollNodename,{} ) YIELD rel AS gene_pub_rel \n "
+
 
     private fun generateMergeCypher(): String =
         when (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {
@@ -123,10 +134,27 @@ data class CosmicGeneCensus(
 
     companion object : AbstractModel {
         const val nodename = "gene"
-        const val mutCollNodename = "mut_collection"
-        const val annoCollNodename = "anno_collection"
+        const val mutCollNodename = "gene_mut_collection"
+        const val annoCollNodename = "gene_anno_collection"
+        const val pubCollNodename = "gene_pub_collection"
         private fun resolveGeneNodeIdentifier(geneSymbol: String): NodeIdentifier =
             NodeIdentifier("CosmicGene", "gene_symbol", geneSymbol)
+
+
+        // Public function to support adding a GenePublication -> Publication relationship
+        // The PubMed Ids are provided in the Hallmark file but they relate to specific genes
+
+        fun registerGenePublication(pubmedId: Int, geneSymbol: String) {
+            if( Neo4jUtils.nodeExistsPredicate(resolveGeneNodeIdentifier(geneSymbol))) {
+                val pub = PubMedPlaceholderNodeLoader(
+                    pubmedId.toString(), geneSymbol,
+                    "GenePublicationCollection", "gene_symbol"
+                )
+                pub.registerPubMedPublication()
+            } else {
+                LogService.logWarn("Unable to register PubMed Id: $pubmedId for Gene $geneSymbol")
+            }
+        }
 
         /*
         Private function to MATCH an existing CosmicGene node if it exists or
@@ -161,6 +189,7 @@ data class CosmicGeneCensus(
                         " $parentNodeName, {}) YIELD rel AS $relName \n"
             )
         }
+
 
         fun parseValueMap(value: Value): CosmicGeneCensus =
             CosmicGeneCensus(

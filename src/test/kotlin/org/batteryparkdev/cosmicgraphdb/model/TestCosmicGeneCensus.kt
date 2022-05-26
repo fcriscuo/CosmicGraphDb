@@ -29,6 +29,7 @@ class TestCosmicGeneCensus {
     private fun deleteExistingGeneNodes() {
         Neo4jUtils.detachAndDeleteNodesByName("CosmicAnnotation")
         Neo4jUtils.detachAndDeleteNodesByName("GeneMutationCollection")
+        Neo4jUtils.detachAndDeleteNodesByName("GenePublicationCollection")
         Neo4jUtils.detachAndDeleteNodesByName("CosmicGene")
     }
 }

@@ -14,7 +14,6 @@ Relationships:  Struct -[HAS_BREAKPOINT]->  Breakpoint
 data class CosmicBreakpoint(
     //val breakpointId: Int,
     val sampleName: String, val sampleId: Int, val tumorId: Int,
-    val site: CosmicType, val histology: CosmicType,
     val mutationType: CosmicType, val mutationId: Int,
     val chromosomeFrom: String,
     val locationFromMin: Int, val locationFromMax: Int,
@@ -26,9 +25,7 @@ data class CosmicBreakpoint(
        NodeIdentifier("CosmicBreakpoint", "breakpoint_id", mutationId.toString())
 
     fun generateBreakpointCypher(): String = generateMergeCypher()
-        .plus(site.generateCosmicTypeCypher(CosmicBreakpoint.nodename))
-        .plus(histology.generateCosmicTypeCypher(CosmicBreakpoint.nodename))
-        //.plus(generateTumorRelationshipCypher())
+        .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
         .plus(generateStructRelationshipCypher())
         .plus(" RETURN ${CosmicBreakpoint.nodename}\n")
 
@@ -74,28 +71,11 @@ data class CosmicBreakpoint(
             val studyId = parseValidIntegerFromString(value["ID_STUDY"].asString())
 
             return CosmicBreakpoint(
-                sampleName, sampleId, tumorId, resolveSiteType(value),
-                resolveHistologySite(value), resolveMutationType(value),
+                sampleName, sampleId, tumorId, resolveMutationType(value),
                 mutationId, chromFrom, locationFromMin, locationFromMax, strandFrom,
                 chromTo, locationToMin, locationToMax, strandTo, pubmedId, studyId
             )
         }
-
-        private fun resolveSiteType(value: Value): CosmicType =
-            CosmicType(
-                "Site", value["Primary site"].asString(),
-                value["Site subtype 1"].asString(),
-                value["Site subtype 2"].asString(),
-                value["Site subtype 3"].asString()
-            )
-
-        private fun resolveHistologySite(value: Value): CosmicType =
-            CosmicType(
-                "Histology", value["Primary histology"].asString(),
-                value["Histology subtype 1"].asString(),
-                value["Histology subtype 2"].asString(),
-                value["Histology subtype 3"].asString()
-            )
 
         private fun resolveMutationType(value: Value): CosmicType =
             CosmicType(

@@ -40,7 +40,8 @@ data class CosmicSample(
                 )
             )
             .plus(cosmicTumor.generateCosmicTumorCypher())
-            //.plus(cosmicPatient.generateCosmicPatientCypher())
+            .plus(generateSampleMutationCollectionCypher())
+            .plus(generateSamplePublicationCollectionCypher())
             .plus(" RETURN $nodename\n")
 
     private fun generateMergeCypher(): String =
@@ -66,6 +67,21 @@ data class CosmicSample(
                 " ${Neo4jUtils.formatPropertyValue(cosmicPhenotypeId)}," +
                 " created: datetime()}) YIELD node as $nodename \n"
 
+
+    private fun generateSampleMutationCollectionCypher():String =
+        "CALL apoc.merge.node( [\"SampleMutationCollection\"], " +
+                "{sample_id: $sampleId}," +
+                "{created: datetime()},{}) YIELD node as $mutCollNodename \n" +
+                "CALL apoc.merge.relationship( ${CosmicSample.nodename}, \"HAS_MUTATION_COLLECTION\" ," +
+                " {}, {created: datetime()}, $mutCollNodename, {}) YIELD rel AS mut_coll_rel \n"
+
+    private fun generateSamplePublicationCollectionCypher(): String =
+        "CALL apoc.merge.node([\"SamplePublicationCollection\"], " +
+                "{sample_id: $sampleId}, " +
+                " {created: datetime()},{}) YIELD node as $pubCollNodename \n" +
+                "CALL apoc.merge.relationship( $nodename , \"HAS_PUBLICATION_COLLECTION\"," +
+                " {}, {created: datetime()}, $pubCollNodename, {} ) YIELD rel AS pub_coll_rel \n "
+
     /*
     Private function to create a CosmicTumor - [HAS_SAMPLE] -> CosmicSample relationship
     Will create a placeholder Tumor node if tumorid is novel
@@ -85,6 +101,8 @@ data class CosmicSample(
 
     companion object : AbstractModel {
         const val nodename = "sample"
+        const val mutCollNodename = "sample_mut_coll"
+        const val pubCollNodename = "sample_pub_coll"
         private const val classificationPrefix = "COSO"  // the classification file uses a prefix, the sample file does not
 
         // COSO36736185  vs  36736185
@@ -112,7 +130,6 @@ data class CosmicSample(
                 classificationPrefix.plus(value["cosmic_phenotype_id"].asString()),
                 CosmicPatient.parseValueMap(value),
                 CosmicTumor.parseValueMap(value)
-
             )
 
 

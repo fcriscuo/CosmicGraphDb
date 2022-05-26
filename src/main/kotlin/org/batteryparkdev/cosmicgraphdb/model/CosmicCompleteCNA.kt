@@ -8,7 +8,7 @@ import java.util.*
 data class CosmicCompleteCNA(
     val cnaId: Int,
     val cnvId:String, val geneId:Int, val geneSymbol:String, val sampleId:Int,
-    val tumorId:Int, val site: CosmicType, val histology: CosmicType,
+    val tumorId:Int,
     val sampleName:String, val totalCn:Int, val minorAllele: String,
     val mutationType: CosmicType, val studyId: Int, val grch:String= "38",
     val chromosomeStartStop:String
@@ -22,11 +22,9 @@ override fun getNodeIdentifier(): NodeIdentifier =
 
     fun generateCompleteCNACypher():String =
         generateMergeCypher().plus(generateGeneRelationshipCypher())
-            .plus(site.generateCosmicTypeCypher(nodename))
-            .plus(histology.generateCosmicTypeCypher(nodename))
             .plus(mutationType.generateCosmicTypeCypher(nodename))
-            .plus(generateTumorRelationshipCypher())
-            .plus(generateSampleRelationshipCypher())
+            .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
+            .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, nodename))
             .plus(" RETURN  $nodename\n")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicCompleteCNA\"], " +
@@ -68,8 +66,6 @@ override fun getNodeIdentifier(): NodeIdentifier =
                 value["gene_name"].asString(),   // actually HGNC symbol
                 value["ID_SAMPLE"].asString().toInt(),
                 parseValidIntegerFromString(value["ID_TUMOR"].asString()),
-                resolveSiteType(value),
-                resolveHistologySite(value),
                 value["SAMPLE_NAME"].asString(),
                 value["TOTAL_CN"].asString().toInt(),
                 value["MINOR_ALLELE"].asString(),
@@ -77,22 +73,6 @@ override fun getNodeIdentifier(): NodeIdentifier =
                 value["ID_STUDY"].asString().toInt(),
                 value["GRCh"].asString(),
                 value["Chromosome:G_Start..G_Stop"].asString()
-            )
-
-        private fun resolveSiteType(value: Value): CosmicType =
-            CosmicType(
-                "Site", value["Primary site"].asString(),
-                value["Site subtype 1"].asString(),
-                value["Site subtype 2"].asString(),
-                value["Site subtype 3"].asString()
-            )
-
-        private fun resolveHistologySite(value: Value): CosmicType =
-            CosmicType(
-                "Histology", value["Primary histology"].asString(),
-                value["Histology subtype 1"].asString(),
-                value["Histology subtype 2"].asString(),
-                value["Histology subtype 3"].asString()
             )
 
         private fun resolveMutationType(value: Value): CosmicType =
