@@ -18,10 +18,10 @@ data class CosmicFusion(
     val five_genomeStartFrom: Int, val five_genomeStartTo: Int,
     val five_genomeStopFrom: Int, val five_genomeStopTo: Int,
     val three_chromosome: Int, val three_strand: String,
-    val three_geneId: Int, val three_geneSymbol: String, val three_lastObservedExon: Int,
+    val three_geneId: Int, val three_geneSymbol: String, val three_firstObservedExon: Int,
     val three_genomeStartFrom: Int, val three_genomeStartTo: Int,
     val three_genomeStopFrom: Int, val three_genomeStopTo: Int,
-    val fusionType:String, val pubmedId: Int
+    val fusionType: String, val pubmedId: Int
 ) : CosmicModel {
 
     override fun getNodeIdentifier(): NodeIdentifier =
@@ -30,23 +30,27 @@ data class CosmicFusion(
             fusionId.toString()
         )
 
+     fun isValid(): Boolean =
+        fusionId > 0 && sampleId > 0 && translocationName.isNotEmpty()
+
     fun generateCosmicFusionCypher(): String {
-        val cypher = when(Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {
+        val cypher = when (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {
             false -> generateMergeCypher()
                 .plus(generateGeneMutationCollectionRelationshipCypher(five_geneSymbol, nodename))
                 .plus(generateGeneMutationCollectionRelationshipCypher(three_geneSymbol, nodename))
                 .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
+                .plus(" RETURN  $nodename \n")
             true -> addSecondFusionTypeLabelCypher()
+                .plus(" RETURN  $nodename \n")
         }
-        println (cypher)
         return cypher
     }
 
     private fun addSecondFusionTypeLabelCypher(): String =
-        "CALL apoc,merge.node([\"CosmicFusion\"], {fusion_id: $fusionId}, " +
+        "CALL apoc.merge.node([\"CosmicFusion\"], {fusion_id: $fusionId}, " +
                 "{},{ last_mod: datetime()}) YIELD node AS $nodename  \n"
-                    .plus("CALL apoc.create.labels($nodename, ${Neo4jUtils.formatPropertyValue(fusionType)}) \n")
-
+                    .plus("CALL apoc.create.addLabels($nodename, [${Neo4jUtils.formatPropertyValue(fusionType)}]) " +
+                            " YIELD node AS label2 \n")
 
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node([\"CosmicFusion\", " +
@@ -66,7 +70,7 @@ data class CosmicFusion(
                 " three_prime_strand: ${Neo4jUtils.formatPropertyValue(three_strand)}," +
                 " three_prime_gene_id: $three_geneId, " +
                 " three_prime_gene_symbol: ${Neo4jUtils.formatPropertyValue(three_geneSymbol)}, " +
-                " three_prime_last_observed_exon: $three_lastObservedExon, " +
+                " three_prime_first_observed_exon: $three_firstObservedExon, " +
                 " three_prime_genome_start_from: $three_genomeStartFrom, " +
                 " three_prime_genome_start_to: $three_genomeStartTo, " +
                 " three_prime_genome_stop_from: $three_genomeStopFrom, " +
@@ -74,32 +78,32 @@ data class CosmicFusion(
                 " pubmed_id: $pubmedId, created: datetime()}, " +
                 "  { last_mod: datetime()}) YIELD node AS $nodename \n"
 
-                companion object : AbstractModel {
+    companion object : AbstractModel {
         const val nodename = "fusion"
         fun parseValueMap(value: Value): CosmicFusion =
             CosmicFusion(
-                value["FUSION_ID"].asString().toInt(),
-                value["SAMPLE_ID"].asString().toInt(),
+                parseValidIntegerFromString(value["FUSION_ID"].asString()),
+                parseValidIntegerFromString(value["SAMPLE_ID"].asString()),
                 value["SAMPLE_NAME"].asString(),
                 value["TRANSLOCATION_NAME"].asString(),
-                value["5'_CHROMOSOME"].asString().toInt(),
+                parseValidIntegerFromString(value["5'_CHROMOSOME"].asString()),
                 value["5'_STRAND"].asString(),
-                value["5'_GENE_ID"].asString().toInt(),
+                parseValidIntegerFromString(value["5'_GENE_ID"].asString()),
                 value["5'_GENE_NAME"].asString(),
-                value["5'_LAST_OBSERVED_EXON"].asString().toInt(),
-                value["5'_GENOME_START_FROM"].asString().toInt(),
-                value["5'_GENOME_START_TO"].asString().toInt(),
-                value["5'_GENOME_STOP_FROM"].asString().toInt(),
-                value["5'_GENOME_STOP_TO"].asString().toInt(),
-                value["3'_CHROMOSOME"].asString().toInt(),
+                parseValidIntegerFromString(value["5'_LAST_OBSERVED_EXON"].asString()),
+                parseValidIntegerFromString(value["5'_GENOME_START_FROM"].asString()),
+                parseValidIntegerFromString(value["5'_GENOME_START_TO"].asString()),
+                parseValidIntegerFromString(value["5'_GENOME_STOP_FROM"].asString()),
+                parseValidIntegerFromString(value["5'_GENOME_STOP_TO"].asString()),
+                parseValidIntegerFromString(value["3'_CHROMOSOME"].asString()),
                 value["3'_STRAND"].asString(),
-                value["3'_GENE_ID"].asString().toInt(),
+                parseValidIntegerFromString(value["3'_GENE_ID"].asString()),
                 value["3'_GENE_NAME"].asString(),
-                value["3'_LAST_OBSERVED_EXON"].asString().toInt(),
-                value["3'_GENOME_START_FROM"].asString().toInt(),
-                value["3'_GENOME_START_TO"].asString().toInt(),
-                value["3'_GENOME_STOP_FROM"].asString().toInt(),
-                value["3'_GENOME_STOP_TO"].asString().toInt(),
+                parseValidIntegerFromString(value["3'_FIRST_OBSERVED_EXON"].asString()),
+                parseValidIntegerFromString(value["3'_GENOME_START_FROM"].asString()),
+                parseValidIntegerFromString(value["3'_GENOME_START_TO"].asString()),
+                parseValidIntegerFromString(value["3'_GENOME_STOP_FROM"].asString()),
+                parseValidIntegerFromString(value["3'_GENOME_STOP_TO"].asString()),
                 value["FUSION_TYPE"].asString().filter { !it.isWhitespace() },
                 value["PUBMED_PMID"].asString().toInt()
             )

@@ -13,7 +13,7 @@ class TestCosmicFusion {
             .stream().limit(LIMIT)
             .map { record -> record.get("map") }
             .map {CosmicFusion.parseValueMap(it)}
-            .filter{ fusion -> fusion.translocationName.isNotEmpty()}
+            .filter{ fusion -> fusion.isValid()}
             .forEach { fusion ->
                 Neo4jConnectionService.executeCypherCommand(fusion.generateCosmicFusionCypher())
                 println("Loaded fusion id: ${fusion.fusionId}")

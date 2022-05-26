@@ -20,12 +20,15 @@ val constraints by lazy {
         "CREATE CONSTRAINT unique_entrez_id IF NOT EXISTS ON (ent:Entrez) ASSERT ent.entrez_id IS UNIQUE",
         "CREATE CONSTRAINT unique_annotation_id IF NOT EXISTS ON (ca:CosmicAnnotation) ASSERT ca.annotation_value IS UNIQUE",
         "CREATE CONSTRAINT unique_type_id IF NOT EXISTS ON (ct:CosmicType) ASSERT ct.type_id IS UNIQUE",
-        "CREATE CONSTRAINT unique_mutation_id IF NOT EXISTS ON (cm:CosmicMutation) ASSERT cm.genomic_mutation_id IS UNIQUE",
+        "CREATE CONSTRAINT unique_mutation_id IF NOT EXISTS ON (cm:CosmicCodingMutation) ASSERT cm.mutation_id IS UNIQUE",
         "CREATE CONSTRAINT unique_sample_id IF NOT EXISTS ON (cs:CosmicSample) ASSERT cs.sample_id IS UNIQUE",
         "CREATE CONSTRAINT unique_gene_expression_id IF NOT EXISTS ON (cge:CosmicGeneExpression) ASSERT cge.key IS UNIQUE",
         "CREATE CONSTRAINT unique_breakpoint_id IF NOT EXISTS ON (cb:CosmicBreakpoint) ASSERT cb.breakpoint_id IS UNIQUE",
         "CREATE CONSTRAINT unique_struct_id IF NOT EXISTS ON (cs:CosmicStruct) ASSERT cs.mutation_id IS UNIQUE",
         "CREATE CONSTRAINT unique_ncv_id IF NOT EXISTS ON (cn:CosmicNCV) ASSERT cn.key IS UNIQUE",
+        "CREATE CONSTRAINT unique_drug_resistance_mut_id IF NOT EXISTS ON (dr:DrugResistance) ASSERT dr.mutation_id IS UNIQUE",
+        "CREATE CONSTRAINT unique_cna_id IF NOT EXISTS ON (cna:CosmicCompleteCNA) ASSERT cna.cna_id IS UNIQUE",
+        "CREATE CONSTRAINT unique_fusion_mut_id IF NOT EXISTS ON (cf:CosmicFusion) ASSERT cf.fusion_id IS UNIQUE",
         "CREATE CONSTRAINT unique_diff_methylation_id IF NOT EXISTS ON (cdm:CosmicDiffMethylation) ASSERT cdm_key IS UNIQUE",
         "CREATE CONSTRAINT unique_complete_cna_id IF NOT EXISTS ON (cna:CosmicCompleteCNA) ASSERT cna.cnv_id IS UNIQUE"
     )

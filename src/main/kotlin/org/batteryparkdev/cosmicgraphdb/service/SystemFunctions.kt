@@ -22,12 +22,10 @@ fun executeCurlOperation( curlCommand:String): Either<Exception, InputStream> {
     }
 }
 
-fun generateNeo4jNodeKey():String  = generateUniqueString(6).single()
-    .plus(":").plus(generateUniqueString(6).single())
 /*
 Excerpted From
 Kotlin Coroutines Deep Dive
-Marcin Moskała
+author: Marcin Moskała
  */
 private fun generateUniqueString(
     length: Int,
