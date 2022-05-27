@@ -23,6 +23,8 @@ data class CosmicNCV(
     fun getKey():String = sampleName.plus(":").plus(genomicMutationId)
 
     fun generateCosmicNCVCypher(): String = generatemergeCypher()
+        .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
+        .plus(" RETURN  $nodename")
 
     private fun generatemergeCypher(): String =
         "CALL apoc.merge.node( [\"CosmicNCV\"], " +

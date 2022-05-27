@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicDiffMethylation {
@@ -19,7 +20,7 @@ class TestCosmicDiffMethylation {
         return Neo4jConnectionService.executeCypherCommand("MATCH (exp: CompleteGeneExpression) RETURN COUNT(exp)").toInt()
     }
     private fun deleteDiffMethylationNodes() =
-        Neo4jConnectionService.executeCypherCommand("MATCH (diff: CosmicDiffMethylation) DETACH DELETE (diff)")
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicDiffMethylation")
     }
 
 fun main (args:Array<String>) {

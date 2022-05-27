@@ -21,7 +21,7 @@ override fun getNodeIdentifier(): NodeIdentifier =
         cnaId.toString())
 
     fun generateCompleteCNACypher():String =
-        generateMergeCypher().plus(generateGeneRelationshipCypher())
+        generateMergeCypher()
             .plus(mutationType.generateCosmicTypeCypher(nodename))
             .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
             .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, nodename))
@@ -30,31 +30,13 @@ override fun getNodeIdentifier(): NodeIdentifier =
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicCompleteCNA\"], " +
             " {cna_id: ${cnaId} }, "+
             " { cnv_id: ${cnvId.toString()}, " +
+            "  tumor_id: $tumorId, " +
             " total_cn: ${totalCn.toString()}, minor_allele: ${Neo4jUtils.formatPropertyValue(minorAllele)}," +
             " study_id: ${studyId.toString()}, grch: \"$grch\"," +
             " chromosome_start_stop: \"$chromosomeStartStop\",created: datetime()  " +
             " }, { last_mod: datetime()}) YIELD node AS $nodename \n"
 
-    /*
-    Function to generate Cypher commands to create a
-    CosmicGene- [HAS_CNA] -> CosmicCNA relationship
-     */
-    private fun generateGeneRelationshipCypher(): String =
-        CosmicGeneCensus.generateGeneParentRelationshipCypher(geneSymbol,nodename)
 
-    /*
-    Function to generate the Cypher commands to create a
-    Tumor - [HAS_CNA] -> CNA relationship for this CNA
-     */
-    private fun generateTumorRelationshipCypher(): String =
-        CosmicTumor.generateChildRelationshipCypher(tumorId, nodename)
-
-    /*
-    Function to generate Cypher command to establish
-    a Sample -[HAS_CNA] -> CNA relationship
-     */
-    private fun generateSampleRelationshipCypher(): String =
-        CosmicSample.generateChildRelationshipCypher(sampleId, nodename)
 
     companion object: AbstractModel {
 
@@ -65,7 +47,7 @@ override fun getNodeIdentifier(): NodeIdentifier =
                 value["ID_GENE"].asString().toInt(),
                 value["gene_name"].asString(),   // actually HGNC symbol
                 value["ID_SAMPLE"].asString().toInt(),
-                parseValidIntegerFromString(value["ID_TUMOR"].asString()),
+                value["ID_TUMOUR"].asString().toInt(),
                 value["SAMPLE_NAME"].asString(),
                 value["TOTAL_CN"].asString().toInt(),
                 value["MINOR_ALLELE"].asString(),

@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicHGNC {
@@ -20,7 +21,7 @@ class TestCosmicHGNC {
         return Neo4jConnectionService.executeCypherCommand("MATCH (ch:CosmicHGNC) RETURN COUNT(ch)").toInt()
     }
     private fun deleteCosmicHGNCNodes(){
-        Neo4jConnectionService.executeCypherCommand("MATCH (ch: CosmicHGNC) DETACH DELETE(ch)")
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicHGNC")
     }
 }
 fun main() {

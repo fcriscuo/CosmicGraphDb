@@ -19,8 +19,18 @@ data class CosmicDiffMethylation(
     fun generateDiffMethylationCypher():String =
         generateMergeCypher()
             .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
-            .plus(generateGeneMutationCollectionRelationshipCypher(geneName, nodename))
+            .plus(generateGeneRelationshipCypher())
             .plus(" RETURN  $nodename")
+
+    /*
+    The gene symbol parameter is sparsely represented
+    Limit relationships to only those methylation entries that specify a gene
+     */
+    private fun generateGeneRelationshipCypher(): String =
+        when(geneName.isNotEmpty()) {
+            true -> generateGeneMutationCollectionRelationshipCypher(geneName, nodename)
+            false -> " "
+        }
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicDiffMethylation\"], " +
             " { key: apoc.create.uuid()}," +

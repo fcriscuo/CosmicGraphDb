@@ -6,6 +6,7 @@ import org.neo4j.driver.Value
 data class CosmicPatient(
     val sampleId: Int,
     val patientId: Int,
+    val tumorId: Int,
     val age: Int,
     val ethnicity: String,
     val environmental_variables: String,
@@ -47,6 +48,7 @@ data class CosmicPatient(
             CosmicPatient(
                 value["sample_id"].asString().toInt(),
                 value["id_individual"].asString().toInt(),
+                value["id_tumour"].asString().toInt(),
                 parseValidIntegerFromString(value["age"].asString()),
                 value["ethnicity"].asString(),
                 value["environmental_variables"].asString(),

@@ -23,7 +23,7 @@ class TestCosmicCompleteExpression {
         Neo4jConnectionService.executeCypherCommand("MATCH (exp: CompleteGeneExpression) DETACH DELETE (exp)")
 }
 fun main (args:Array<String>) {
-    val cosmicExpressionFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicCompleteGeneExpression.tsv")
+    val cosmicExpressionFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CompleteGeneExpression.tsv")
     val recordCount =
         TestCosmicCompleteExpression().parseCosmicCompleteExpressionFile(cosmicExpressionFile)
     println("Processed $cosmicExpressionFile  record count = $recordCount")

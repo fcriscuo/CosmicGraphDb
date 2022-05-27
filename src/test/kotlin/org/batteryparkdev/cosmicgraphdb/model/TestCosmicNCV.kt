@@ -11,7 +11,7 @@ class TestCosmicNCV {
     fun parseCosmicNCVFile(filename: String): Int {
         // limit the number of records processed
         var recordCount = 0
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicNCV")
+       deleteNCVNodes()
         ApocFileReader.processDelimitedFile(filename)
             .stream().limit(LIMIT)
             .map { record -> record.get("map") }
@@ -24,6 +24,9 @@ class TestCosmicNCV {
                 recordCount += 1
             }
         return recordCount
+    }
+    private fun deleteNCVNodes() {
+        Neo4jUtils.detachAndDeleteNodesByName("CosmicNCV")
     }
 }
 fun main() {

@@ -13,16 +13,16 @@ class TestCosmicCompleteCNA {
             .map { record -> record.get("map") }
             .map { CosmicCompleteCNA.parseValueMap(it) }
             .forEach { cna ->
+                Neo4jConnectionService.executeCypherCommand(cna.generateCompleteCNACypher())
                 println(
-                    "Loading CosmicCNA Id= ${cna.cnvId}  " +
+                    "Loaded CosmicCompleteCNA Id= ${cna.cnvId}  " +
                             " Tumor Id = ${cna.tumorId} " +
                             " Gene: ${cna.geneId}  ${cna.geneSymbol} " +
-                            " Sample Id: ${cna.sampleId} \n"
+                            " Sample Id: ${cna.sampleId} "
 
                 )
-                Neo4jConnectionService.executeCypherCommand(cna.generateCompleteCNACypher())
             }
-        return Neo4jConnectionService.executeCypherCommand("MATCH (cna: CosmicCNA) RETURN COUNT(cna)").toInt()
+        return Neo4jConnectionService.executeCypherCommand("MATCH (cna: CosmicCompleteCNA) RETURN COUNT(cna)").toInt()
     }
     private fun deleteCNANodes() =
         Neo4jConnectionService.executeCypherCommand("MATCH (cna: CosmicCNA) DETACH DELETE (cna)")
