@@ -28,7 +28,6 @@ data class CosmicSample(
     val cosmicPhenotypeId: String,
     val cosmicPatient: CosmicPatient,
     val cosmicTumor: CosmicTumor
-
 ) {
 
     fun generateCosmicSampleCypher(): String =

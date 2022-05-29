@@ -8,10 +8,9 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteGeneExpression
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
+import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteGeneExpression
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import java.nio.file.Paths
 
 object CosmicCompleteGeneExpressionLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
@@ -22,7 +21,6 @@ object CosmicCompleteGeneExpressionLoader {
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.parseCosmicGeneExpression(cosmicGeneExpressionFile: String) =
         produce<CosmicCompleteGeneExpression> {
-            val path = Paths.get(cosmicGeneExpressionFile)
             ApocFileReader.processDelimitedFile(cosmicGeneExpressionFile)
                 .map { record -> record.get("map") }
                 .map { CosmicCompleteGeneExpression.parseValueMap(it) }
@@ -33,14 +31,28 @@ object CosmicCompleteGeneExpressionLoader {
         }
 
     /*
+    Private function to generate the Cypher command that will load a CosmicCompleteGeneExpression
+    node into the Neo4j database
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.generateCypherCommand(expressions: ReceiveChannel<CosmicCompleteGeneExpression>) =
+        produce<String> {
+            for (expression in expressions){
+                send(expression.generateCompleteGeneExpressionCypher())
+                delay(20)
+            }
+        }
+
+    /*
     Private function to load data from CosmicCompleteGeneExpression model objects
     into a Neo4j database
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-     private fun CoroutineScope.loadCompleteGeneExpression(expressions: ReceiveChannel<CosmicCompleteGeneExpression>) = produce {
-         for (expression in expressions) {
-             Neo4jConnectionService.executeCypherCommand(expression.generateCompleteGeneExpressionCypher())
-             send(expression)
+     private fun CoroutineScope.loadCompleteGeneExpression(commands: ReceiveChannel<String>) =
+         produce<String> {
+         for (command in commands) {
+             Neo4jConnectionService.executeCypherCommand(command)
+             send(command)
              delay(50)
          }
     }
@@ -53,7 +65,9 @@ object CosmicCompleteGeneExpressionLoader {
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
         val ids =
-            loadCompleteGeneExpression(parseCosmicGeneExpression(filename))
+            loadCompleteGeneExpression(
+                generateCypherCommand(
+                parseCosmicGeneExpression(filename)))
         for (id in ids) {
             // pipeline stream is lazy - need to consume output
             nodeCount += 1

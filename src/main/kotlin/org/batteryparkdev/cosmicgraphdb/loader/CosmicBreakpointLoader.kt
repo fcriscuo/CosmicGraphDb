@@ -30,6 +30,7 @@ object CosmicBreakpointLoader {
                 }
         }
 
+
     /* Function to load CosmicBreakpoint data into Neo4j database
      */
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -9,9 +9,9 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
+import org.batteryparkdev.cosmicgraphdb.model.CosmicGeneCensus
 import org.batteryparkdev.cosmicgraphdb.model.CosmicHallmark
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import java.nio.file.Paths
 
 /*
 Responsible for loading data from the CosmicHallmark TSV file
@@ -23,7 +23,6 @@ object CosmicHallmarkLoader {
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.parseCosmicHallmarkFile(cosmicHallmarkFile: String) =
         produce<CosmicHallmark> {
-            val path = Paths.get(cosmicHallmarkFile)
             ApocFileReader.processDelimitedFile(cosmicHallmarkFile)
                 .map { record -> record.get("map") }
                 .map { CosmicHallmark.parseValueMap(it) }
@@ -47,7 +46,9 @@ object CosmicHallmarkLoader {
     private fun CoroutineScope.addPubMedRelationship(hallmarks: ReceiveChannel<CosmicHallmark>) =
         produce<String> {
             for (hallmark in hallmarks) {
-                hallmark.createPubMedRelationship(hallmark.pubmedId)
+                if (hallmark.pubmedId>0) {
+                    CosmicGeneCensus.registerGenePublication(hallmark.pubmedId, hallmark.geneSymbol)
+                }
                 send(hallmark.geneSymbol)
                 delay(20)
             }
@@ -72,12 +73,5 @@ object CosmicHallmarkLoader {
                     " $nodeCount nodes in " +
                     " ${stopwatch.elapsed(java.util.concurrent.TimeUnit.SECONDS)} seconds"
         )
-
     }
-}
-
-// main function for integration testing
-fun main(args: Array<String>) {
-    val filename = if (args.isNotEmpty()) args[0] else "./data/Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv"
-    CosmicHallmarkLoader.processCosmicHallmarkData(filename)
 }

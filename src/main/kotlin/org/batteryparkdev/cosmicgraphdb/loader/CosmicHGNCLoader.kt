@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.cosmicgraphdb.model.CosmicHGNC
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import java.util.concurrent.TimeUnit
@@ -20,13 +21,11 @@ object CosmicHGNCLoader {
     a coroutine channel
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.parseCosmicClassificationFile(cosmicHGNCFile: String) =
+    private fun CoroutineScope.parseCosmicHGNCFile(cosmicHGNCFile: String) =
         produce<CosmicHGNC> {
-            val cypher = "CALL apoc.load.csv(\"$cosmicHGNCFile\") " +
-                    "YIELD lineNo, map RETURN map;"
-            val records = Neo4jConnectionService.executeCypherQuery(cypher);
-            records.map { record -> record.get("map") }
-                .map{ CosmicHGNC.parseValueMap(it)}
+            ApocFileReader.processDelimitedFile(cosmicHGNCFile)
+                .map { record -> record.get("map") }
+                .map { CosmicHGNC.parseValueMap(it)}
                 .forEach {
                     send (it)
                     delay(20)
@@ -47,7 +46,7 @@ object CosmicHGNCLoader {
        logger.atInfo().log("Loading CosmicHGNC data from file $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val symbols = loadCosmicHGNCs( parseCosmicClassificationFile(filename))
+        val symbols = loadCosmicHGNCs( parseCosmicHGNCFile(filename))
         for (symbol in symbols) {
             // pipeline stream is lazy - need to consume output
             nodeCount += 1

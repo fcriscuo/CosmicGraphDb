@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteCNA
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 
@@ -22,13 +23,11 @@ object CosmicCompleteCNALoader {
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.parseCosmicCompleteCNAFile(cosmicCompleteCNAFile: String) =
         produce<CosmicCompleteCNA> {
-            val cypher = "CALL apoc.load.csv(\"$cosmicCompleteCNAFile\") " +
-                    "YIELD lineNo, map RETURN map;"
-            val records = Neo4jConnectionService.executeCypherQuery(cypher);
-            records.map { record -> record.get("map") }
-                .map{ CosmicCompleteCNA.parseValueMap(it)}
+            ApocFileReader.processDelimitedFile(cosmicCompleteCNAFile)
+                .map { record -> record.get("map") }
+                .map { CosmicCompleteCNA.parseValueMap(it) }
                 .forEach {
-                    send (it)
+                    send(it)
                     delay(20)
                 }
         }
@@ -51,18 +50,18 @@ object CosmicCompleteCNALoader {
         return Neo4jConnectionService.executeCypherCommand(cna.generateCompleteCNACypher())
     }
 
-/*
-Public function to complete parsing of CosmicCompleteCNA file and
-loaded data into the Neo4j database
- */
+    /*
+    Public function to complete parsing of CosmicCompleteCNA file and
+    loaded data into the Neo4j database
+     */
     fun loadCosmicCompleteCNAData(filename: String) = runBlocking {
         logger.atInfo().log("Loading CosmicCompleteCNA data from file: $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
         val ids =
-                loadCosmicCompleteCNA(
-                    parseCosmicCompleteCNAFile(filename)
-                )
+            loadCosmicCompleteCNA(
+                parseCosmicCompleteCNAFile(filename)
+            )
         for (id in ids) {
             // pipeline stream is lazy - need to consume output
             nodeCount += 1

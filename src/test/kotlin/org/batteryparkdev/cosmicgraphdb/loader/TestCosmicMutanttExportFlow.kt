@@ -31,8 +31,7 @@ class TestCosmicMutantExportFlow(val filename:String) {
 main function for Neo4j integration testing
  */
 fun main(args: Array<String>) = runBlocking {
-    val filename = ConfigurationPropertiesService
-        .resolveCosmicSampleFileLocation("file.cosmic.mutant.export.census")
+    val filename = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicMutantExportCensus.tsv")
    TestCosmicMutantExportFlow(filename).runTest()
 
 }

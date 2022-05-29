@@ -13,7 +13,7 @@ import org.batteryparkdev.cosmicgraphdb.model.CosmicDiffMethylation
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import java.util.concurrent.TimeUnit
 
-object CosmicDiffMethylationLoader {
+object TestCosmicDiffMethylationLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
     /*
