@@ -61,6 +61,7 @@ object CosmicCodingMutationLoader {
         produce<CosmicCodingMutation> {
             for (mutation in mutations) {
                 Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicCodingMutationCypher())
+                mutation.createPubMedRelationship(mutation.pubmedId)
                 send(mutation)
                 delay(20L)
             }

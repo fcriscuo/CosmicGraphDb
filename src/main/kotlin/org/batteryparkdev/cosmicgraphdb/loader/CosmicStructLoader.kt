@@ -33,6 +33,7 @@ object CosmicStructLoader {
         produce<Int> {
             for (struct in structs) {
                 Neo4jConnectionService.executeCypherCommand(struct.generateStructCypher())
+                struct.createPubMedRelationship(struct.pubmedId)
                 send(struct.sampleId)
                 delay(20L)
             }

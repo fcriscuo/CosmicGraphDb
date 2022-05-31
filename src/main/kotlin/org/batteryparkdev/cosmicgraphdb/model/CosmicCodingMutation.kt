@@ -10,6 +10,7 @@ Key: mutationId
 Relationships:  
    Sample - [HAS_MUTATION_COLLECTON] -> SampleMutationCollection - [HAS_CODING_MUTATION] -> CodingMutation
    Gene - [HAS_MUTATION_COLLECTION] -> GeneMutationCollection - [HAS_CODING_MUTATION] -> CodingMutation
+   CodingMutation - [HAS_PUBLICATION] -> Publication
 
  */
 data class CosmicCodingMutation(
