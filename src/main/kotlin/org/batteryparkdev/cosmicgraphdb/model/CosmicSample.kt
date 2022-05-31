@@ -8,6 +8,8 @@ data class CosmicSample(
     val sampleId: Int,
     val sampleName: String,
     val tumorId: Int,
+    val primarySite: String,
+    val primaryHistology: String,
     val therapyRelationship: String,
     val sampleDifferentiator: String,
     val mutationAlleleSpecification: String,
@@ -48,6 +50,8 @@ data class CosmicSample(
                 " {sample_id: $sampleId}, " +
                 " {sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}, " +
                 " tumor_id: $tumorId, " +
+                " primary_site: ${Neo4jUtils.formatPropertyValue(primarySite)}," +
+                " primary_histology: ${Neo4jUtils.formatPropertyValue(primaryHistology)}," +
                 " therapy_relationship: ${Neo4jUtils.formatPropertyValue(therapyRelationship)}," +
                 " sample_differentiator: ${Neo4jUtils.formatPropertyValue(therapyRelationship)}, " +
                 " mutation_allele_specfication: ${Neo4jUtils.formatPropertyValue(mutationAlleleSpecification)}, " +
@@ -110,6 +114,8 @@ data class CosmicSample(
                 value["sample_id"].asString().toInt(),
                 value["sample_name"].asString(),
                 value["id_tumour"].asString().toInt(),
+                value["primary_site"].asString(),
+                value["primary_histology"].asString(),
                 value["therapy_relationship"].asString(),
                 value["sample_differentiator"].asString(),
                 value["mutation_allele_specification"].asString(),

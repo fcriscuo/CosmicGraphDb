@@ -8,19 +8,19 @@ import org.batteryparkdev.property.service.ConfigurationPropertiesService
 class TestCosmicResistanceMutation {
     private val LIMIT = Long.MAX_VALUE
     fun parseCosmicFusionFile(filename: String): Int {
-        deleteExistingGeneNodes()
+        deleteExistingResistanceNodes()
         ApocFileReader.processDelimitedFile(filename)
             .stream().limit(LIMIT)
             .map { record -> record.get("map") }
             .map { CosmicResistanceMutation.parseValueMap(it) }
             .forEach { mutation ->
                 Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicResistanceCypher())
-                println("Loaded CosmicResistanceMuation: ${mutation.mutationId}")
+                println("Loaded CosmicResistanceMutation: ${mutation.mutationId}")
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (dr: DrugResistance) RETURN COUNT(dr)").toInt()
     }
 
-    private fun deleteExistingGeneNodes() {
+    private fun deleteExistingResistanceNodes() {
         Neo4jUtils.detachAndDeleteNodesByName("DrugResistance")
     }
 }

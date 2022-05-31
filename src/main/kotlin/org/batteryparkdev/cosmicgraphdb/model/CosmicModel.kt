@@ -27,7 +27,7 @@ n.b. It's possible to establish >1 gene-mutation relationship in the same Cypher
      so the relationship name must be unique
 */
     fun generateGeneMutationCollectionRelationshipCypher(geneSymbol: String, nodename:String): String {
-        val relationship = "HAS_".plus(nodename.uppercase()).plus("_MUTATION")
+        val relationship = "HAS_".plus(nodename.uppercase())
         val suffix = RandomStringUtils.randomAlphanumeric(6).lowercase()
         val gene_rel_name =  "gene_mut_rel_".plus(suffix)
         val gene_coll_name = "gene_mut_coll_".plus(suffix)
@@ -39,7 +39,7 @@ n.b. It's possible to establish >1 gene-mutation relationship in the same Cypher
     }
 
      fun generateSampleMutationCollectionRelationshipCypher(sampleId: Int, nodename:String): String {
-        val relationship = "HAS_".plus(nodename.uppercase()).plus("_MUTATION")
+        val relationship = "HAS_".plus(nodename.uppercase())
        return  "CALL apoc.merge.node([\"SampleMutationCollection\"], " +
                 " {sample_id: $sampleId}, " +
                 "{},{} ) YIELD node AS  sample_mut_coll \n " +

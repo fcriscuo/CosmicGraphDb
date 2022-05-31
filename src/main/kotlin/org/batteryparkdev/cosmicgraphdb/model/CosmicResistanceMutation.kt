@@ -14,7 +14,7 @@ data class CosmicResistanceMutation(
 ): CosmicModel
 {
     override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("DrugResistance", "resistance_id",
+        NodeIdentifier("CosmicResistanceMutation", "resistance_id",
             mutationId.toString())
 
     fun generateCosmicResistanceCypher(): String =generateMergeCypher()
@@ -24,7 +24,7 @@ data class CosmicResistanceMutation(
         .plus("  RETURN  $nodename \n")
 
     private fun generateMergeCypher(): String =
-        " CALL apoc.merge.node([\"DrugResistance\"], " +
+        " CALL apoc.merge.node([\"CosmicResistanceMutation\"], " +
                 "  { mutation_id: $mutationId} , " +
                 " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}," +
                 " transcript: ${Neo4jUtils.formatPropertyValue(transcript)}, " +

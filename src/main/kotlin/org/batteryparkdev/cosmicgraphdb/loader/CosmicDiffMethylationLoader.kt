@@ -11,10 +11,12 @@ import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.cosmicgraphdb.model.CosmicDiffMethylation
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.neo4j.service.Neo4jUtils
 import java.util.concurrent.TimeUnit
 
 object CosmicDiffMethylationLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
+
 
     /*
     Coroutine function to produce a channel of CosmicDiffMethylation model objects
