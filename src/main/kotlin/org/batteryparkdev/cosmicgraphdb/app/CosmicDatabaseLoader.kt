@@ -54,8 +54,8 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
         "CosmicSample", "CosmicClassification", "CosmicGene", "CosmicType",
         "CosmicCompleteDNA", "CosmicGeneExpression", "CosmicDiffMethylation",
          "CosmicBreakpoint", "CosmicPatient", "CosmicNCV", "CosmicFusion",
-        "CosmicResistanceMutation"
-    )
+        "CosmicResistanceMutation", "GeneMutationCollection", "SampleMutationCollection",
+        "GenePublicationCollection", "SamplePublicationCollection","Publication")
 
     @OptIn(DelicateCoroutinesApi::class)
     val job = GlobalScope.launch() {
@@ -123,20 +123,22 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
             val task11 = asyncIO { loadCosmicStructJob(job5Result) }
             val task12 = asyncIO { loadCosmicResistanceMutationJob(job5Result) }
             val task13 = asyncIO { loadCosmicNCVJob( job5Result) }
+            val task14 = asyncIO { loadCosmicFusionJob( job5Result) }
             // wait for last tier of jobs to complete
             onDone(task06.await() ,task01.await(), task07.await(), task08.await(), task09.await(), task10.await(),
-            task11.await(), task12.await(), task13.await())
+            task11.await(), task12.await(), task13.await(), task14.await())
         }
     }
 
     private fun onDone(job6Result: String, job1Result: String, job7Result: String, job8Result: String, job9Result: String,
-                       job10Result: String, job11Result: String, job12Result: String, job13Result:String) {
+                       job10Result: String, job11Result: String, job12Result: String, job13Result:String, job14Result:String) {
         logger.atInfo().log("Executing onDone function")
         logger.atInfo().log(
             "task06 = $job6Result " +
             "task01 = $job1Result   task07 = $job7Result   " +
                     " task08 = $job8Result   task09 = $job9Result   task10 =$job10Result " +
-                    "task11 = $job11Result   task12 = $job12Result   task13 =$job13Result"
+                    "task11 = $job11Result   task12 = $job12Result   task13 =$job13Result " +
+                    " task14 = $job14Result"
         )
         job.cancel()
     }
@@ -184,8 +186,8 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
     }
 
     private fun loadCodingMutations(job5Result: String): String {  //job 6
-        logger.atInfo().log("6 - Starting MutantExport loader")
-        CosmicMutantExportLoader.loadMutantExportFile(cosmicMutationExportCensusFile)
+        logger.atInfo().log("6 - Starting CosmicCodingMutation loader")
+       CosmicCodingMutationLoader.loadCosmicCodingMutationData(cosmicMutationExportCensusFile)
         return "MutantExport loaded"
     }
 
@@ -226,6 +228,11 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
     private fun loadCosmicNCVJob( job5Result: String): String {  // job 13
         CosmicNCVLoader.loadCosmicNCVFile(cosmicNCVFile)
         return "Result of CosmicNCV data loaded"
+    }
+
+    private fun loadCosmicFusionJob (Job5Result: String): String {
+        CosmicFusionLoader.loadCosmicFusionData(cosmicFusionFile)
+        return "Result of CosmicFusion Loader"
     }
 
     private fun loadHGNCJob(job2Result: String): String {

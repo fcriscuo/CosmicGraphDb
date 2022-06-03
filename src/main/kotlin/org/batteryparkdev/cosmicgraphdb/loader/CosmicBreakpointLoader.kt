@@ -38,6 +38,7 @@ object CosmicBreakpointLoader {
         produce<CosmicBreakpoint> {
             for (breakpoint in breakpoints){
                 executeLoadCypher(breakpoint)
+                breakpoint.createPubMedRelationship(breakpoint.pubmedId)
                 send(breakpoint)
                 delay(20)
             }
