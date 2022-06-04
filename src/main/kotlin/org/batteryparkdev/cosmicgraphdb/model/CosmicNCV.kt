@@ -16,9 +16,8 @@ data class CosmicNCV(
   val pubmedId: Int, val hgvsg: String
 ): CosmicModel  {
 
-    override fun getNodeIdentifier(): NodeIdentifier {
-        TODO("Not yet implemented")
-    }
+    override fun getNodeIdentifier(): NodeIdentifier = NodeIdentifier("CosmicNCV",
+    "sample_name", sampleName)
 
     fun getKey():String = sampleName.plus(":").plus(genomicMutationId)
 

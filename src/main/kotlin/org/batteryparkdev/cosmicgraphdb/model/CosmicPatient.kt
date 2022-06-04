@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 
 data class CosmicPatient(
@@ -15,8 +16,10 @@ data class CosmicPatient(
     val gender: String,
     val individual_remark: String,
     val normal_tissue_tested: Boolean
-) {
+): CosmicModel {
 
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicPatient", "patient_id", patientId.toString())
 
     fun generateCosmicPatientCypher() =
         generateMergeCypher()
@@ -59,4 +62,5 @@ data class CosmicPatient(
             )
 
     }
+
 }

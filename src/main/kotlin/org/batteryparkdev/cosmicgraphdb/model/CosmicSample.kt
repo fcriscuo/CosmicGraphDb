@@ -30,7 +30,10 @@ data class CosmicSample(
     val cosmicPhenotypeId: String,
     val cosmicPatient: CosmicPatient,
     val cosmicTumor: CosmicTumor
-) {
+): CosmicModel {
+
+     override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicSample", "sample_id", sampleId.toString())
 
     fun generateCosmicSampleCypher(): String =
         generateMergeCypher()

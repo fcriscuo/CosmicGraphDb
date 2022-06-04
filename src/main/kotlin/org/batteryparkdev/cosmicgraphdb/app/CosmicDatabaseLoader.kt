@@ -47,8 +47,6 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
     private val cosmicResistanceFile = resolveCosmicDataFile("CosmicResistanceMutation.tsv")
     private val cosmicStructFile = resolveCosmicDataFile("CosmicStructExport.tsv")
     private val cosmicNCVFile = resolveCosmicDataFile("CosmicNCV.tsv")
-
-
     private val nodeNameList = listOf<String>("CosmicHGNC",
         "CosmicHallmark", "CosmicTumor", "CosmicCodingMutation",
         "CosmicSample", "CosmicClassification", "CosmicGene", "CosmicType",
@@ -100,7 +98,7 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
         // launch coroutine
         GlobalScope.launch {
             // run Job1, Job2, and Job4 in parallel, asyncIO - is an extension function on CoroutineScope
-            val task01 = asyncDefault { loadPubmedJob() }     // PubMed
+          //  val task01 = asyncDefault { loadPubmedJob() }     // PubMed
             val task04 = asyncIO { loadClassificationJob() }  // CosmicClassification
             val task02 = asyncIO { loadGeneCensusJob() }      // CosmicGeneCensus
             // waiting for result of Job1 , Job2, & Job4
@@ -125,17 +123,22 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
             val task13 = asyncIO { loadCosmicNCVJob( job5Result) }
             val task14 = asyncIO { loadCosmicFusionJob( job5Result) }
             // wait for last tier of jobs to complete
-            onDone(task06.await() ,task01.await(), task07.await(), task08.await(), task09.await(), task10.await(),
+            onDone(task06.await() ,
+              //  task01.await(),
+                task07.await(), task08.await(), task09.await(), task10.await(),
             task11.await(), task12.await(), task13.await(), task14.await())
         }
     }
 
-    private fun onDone(job6Result: String, job1Result: String, job7Result: String, job8Result: String, job9Result: String,
+    private fun onDone(job6Result: String,
+                      // job1Result: String,
+                       job7Result: String, job8Result: String, job9Result: String,
                        job10Result: String, job11Result: String, job12Result: String, job13Result:String, job14Result:String) {
         logger.atInfo().log("Executing onDone function")
         logger.atInfo().log(
             "task06 = $job6Result " +
-            "task01 = $job1Result   task07 = $job7Result   " +
+          //  "task01 = $job1Result  " +
+                    " task07 = $job7Result   " +
                     " task08 = $job8Result   task09 = $job9Result   task10 =$job10Result " +
                     "task11 = $job11Result   task12 = $job12Result   task13 =$job13Result " +
                     " task14 = $job14Result"

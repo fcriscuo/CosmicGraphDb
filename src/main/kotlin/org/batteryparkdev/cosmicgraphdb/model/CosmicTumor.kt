@@ -88,8 +88,6 @@ data class CosmicTumor(
         }
 
     }
-
-
 }
 
 

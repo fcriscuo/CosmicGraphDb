@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
 
 data class CosmicHGNC(
@@ -11,7 +12,10 @@ data class CosmicHGNC(
     val isMutated: Boolean,
     val isCancerCensus: Boolean,
     val isExpertCurrated: Boolean
-) {
+): CosmicModel {
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicHGNC", "cosmicId", cosmicId.toString())
+
     fun generateCosmicHGNCCypher(): String =
         generateMergeCypher()
             .plus(generateGeneRelationshipCypher())
@@ -71,4 +75,6 @@ data class CosmicHGNC(
             )
         }
     }
+
+
 }
