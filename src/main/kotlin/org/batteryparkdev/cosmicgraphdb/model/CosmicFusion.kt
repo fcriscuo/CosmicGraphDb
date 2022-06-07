@@ -33,7 +33,7 @@ data class CosmicFusion(
      fun isValid(): Boolean =
         fusionId > 0 && sampleId > 0 && translocationName.isNotEmpty()
 
-    fun generateCosmicFusionCypher(): String {
+    override fun generateLoadCosmicModelCypher(): String {
         val cypher = when (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {
             false -> generateMergeCypher()
                 .plus(generateGeneMutationCollectionRelationshipCypher(five_geneSymbol, nodename))

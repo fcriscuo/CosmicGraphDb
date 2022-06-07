@@ -36,7 +36,7 @@ object CosmicHGNCLoader {
     private fun CoroutineScope.loadCosmicHGNCs (hgncs: ReceiveChannel<CosmicHGNC>) =
         produce<String> {
             for (hgnc in hgncs){
-                Neo4jConnectionService.executeCypherCommand(hgnc.generateCosmicHGNCCypher())
+                Neo4jConnectionService.executeCypherCommand(hgnc.generateLoadCosmicModelCypher())
                 send (hgnc.hgncGeneSymbol)
                 delay(20)
             }

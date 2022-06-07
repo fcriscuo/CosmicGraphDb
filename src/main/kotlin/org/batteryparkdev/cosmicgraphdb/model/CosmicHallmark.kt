@@ -2,7 +2,6 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
 import org.neo4j.driver.Value
 import java.util.*
 
@@ -17,7 +16,7 @@ data class CosmicHallmark(
             hallmarkId.toString()
         )
 
-    fun generateCosmicHallmarkCypher(): String =
+    override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(generateMergeHallmarkCollectionCypher())
             .plus(generateHasHallmarkRelationshipCypher())

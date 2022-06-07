@@ -16,7 +16,7 @@ data class CosmicHGNC(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicHGNC", "cosmicId", cosmicId.toString())
 
-    fun generateCosmicHGNCCypher(): String =
+    override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(generateGeneRelationshipCypher())
             .plus(generateEntrezRelationshipCypher())

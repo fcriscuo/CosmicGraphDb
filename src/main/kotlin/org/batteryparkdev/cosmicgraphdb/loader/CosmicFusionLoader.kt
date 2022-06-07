@@ -40,7 +40,7 @@ CosmicFusionLoader {
     private fun CoroutineScope.loadCosmicFusion(fusions: ReceiveChannel<CosmicFusion>) =
         produce<Int> {
             for (fusion in fusions) {
-                Neo4jConnectionService.executeCypherCommand(fusion.generateCosmicFusionCypher())
+                Neo4jConnectionService.executeCypherCommand(fusion.generateLoadCosmicModelCypher())
                 fusion.createPubMedRelationship(fusion.pubmedId)
                 send (fusion.fusionId)
                 delay(20L)

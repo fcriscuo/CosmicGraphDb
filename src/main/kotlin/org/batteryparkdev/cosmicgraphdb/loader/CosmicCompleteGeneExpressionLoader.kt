@@ -38,7 +38,7 @@ object CosmicCompleteGeneExpressionLoader {
     private fun CoroutineScope.generateCypherCommand(expressions: ReceiveChannel<CosmicCompleteGeneExpression>) =
         produce<String> {
             for (expression in expressions){
-                send(expression.generateCompleteGeneExpressionCypher())
+                send(expression.generateLoadCosmicModelCypher())
                 delay(20)
             }
         }

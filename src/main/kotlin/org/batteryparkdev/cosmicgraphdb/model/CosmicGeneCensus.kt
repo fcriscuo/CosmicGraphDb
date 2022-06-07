@@ -23,7 +23,7 @@ data class CosmicGeneCensus(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicGene", "gene_symbol", geneSymbol)
 
-    fun generateCosmicGeneCypher(): String =
+    override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(generateGeneMutationCollectionNodeCypher())
             .plus(generateGeneAnnotationCollectionCypher())

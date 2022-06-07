@@ -17,7 +17,7 @@ class TestCosmicNCV {
             .map { record -> record.get("map") }
             .map { CosmicNCV.parseValueMap(it) }
             .forEach { ncv ->
-                Neo4jConnectionService.executeCypherCommand(ncv.generateCosmicNCVCypher())
+                Neo4jConnectionService.executeCypherCommand(ncv.generateLoadCosmicModelCypher())
                 println("Loaded CosmicNCV key: ${ncv.getKey()}")
                 // create a Publication node if a PubMed id is present
                 //hall.createPubMedRelationship(hall.pubmedId)

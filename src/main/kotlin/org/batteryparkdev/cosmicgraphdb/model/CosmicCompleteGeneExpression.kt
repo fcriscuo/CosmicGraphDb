@@ -20,7 +20,7 @@ data class CosmicCompleteGeneExpression(
         NodeIdentifier("CompleteGeneExpression", "key",
             key.toString())
 
-    fun generateCompleteGeneExpressionCypher(): String =
+    override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol,nodename))
             .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))

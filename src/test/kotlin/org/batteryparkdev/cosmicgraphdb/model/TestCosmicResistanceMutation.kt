@@ -14,7 +14,7 @@ class TestCosmicResistanceMutation {
             .map { record -> record.get("map") }
             .map { CosmicResistanceMutation.parseValueMap(it) }
             .forEach { mutation ->
-                Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicResistanceCypher())
+                Neo4jConnectionService.executeCypherCommand(mutation.generateLoadCosmicModelCypher())
                 println("Loaded CosmicResistanceMutation: ${mutation.mutationId}")
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (dr: DrugResistance) RETURN COUNT(dr)").toInt()

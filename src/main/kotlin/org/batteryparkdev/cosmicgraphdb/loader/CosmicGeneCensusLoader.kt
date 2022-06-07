@@ -41,7 +41,7 @@ object CosmicGeneCensusLoader {
         }
 
     private fun loadCosmicGeneNode(gene: CosmicGeneCensus): String =
-        Neo4jConnectionService.executeCypherCommand(gene.generateCosmicGeneCypher())
+        Neo4jConnectionService.executeCypherCommand(gene.generateLoadCosmicModelCypher())
 
     /*
     Public function load CosmicGeneCensus nodes and associated annotations

@@ -13,7 +13,7 @@ class TestCosmicCompleteCNA {
             .map { record -> record.get("map") }
             .map { CosmicCompleteCNA.parseValueMap(it) }
             .forEach { cna ->
-                Neo4jConnectionService.executeCypherCommand(cna.generateCompleteCNACypher())
+                Neo4jConnectionService.executeCypherCommand(cna.generateLoadCosmicModelCypher())
                 println(
                     "Loaded CosmicCompleteCNA Id= ${cna.cnvId}  " +
                             " Tumor Id = ${cna.tumorId} " +

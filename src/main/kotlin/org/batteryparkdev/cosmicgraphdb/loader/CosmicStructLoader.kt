@@ -32,7 +32,7 @@ object CosmicStructLoader {
     private fun CoroutineScope.loadCosmicStructData(structs: ReceiveChannel<CosmicStruct>) =
         produce<Int> {
             for (struct in structs) {
-                Neo4jConnectionService.executeCypherCommand(struct.generateStructCypher())
+                Neo4jConnectionService.executeCypherCommand(struct.generateLoadCosmicModelCypher())
                 struct.createPubMedRelationship(struct.pubmedId)
                 send(struct.sampleId)
                 delay(20L)

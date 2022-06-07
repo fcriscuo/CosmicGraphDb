@@ -15,7 +15,7 @@ class TestCosmicFusion {
             .map {CosmicFusion.parseValueMap(it)}
             .filter{ fusion -> fusion.isValid()}
             .forEach { fusion ->
-                Neo4jConnectionService.executeCypherCommand(fusion.generateCosmicFusionCypher())
+                Neo4jConnectionService.executeCypherCommand(fusion.generateLoadCosmicModelCypher())
                 println("Loaded fusion id: ${fusion.fusionId}")
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (cf: CosmicFusion) RETURN COUNT(cf)").toInt()

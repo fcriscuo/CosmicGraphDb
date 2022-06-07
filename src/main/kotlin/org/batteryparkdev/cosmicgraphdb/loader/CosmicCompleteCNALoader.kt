@@ -47,7 +47,7 @@ object CosmicCompleteCNALoader {
         }
 
     private fun loadCosmicCompleteCNA(cna: CosmicCompleteCNA): String {
-        return Neo4jConnectionService.executeCypherCommand(cna.generateCompleteCNACypher())
+        return Neo4jConnectionService.executeCypherCommand(cna.generateLoadCosmicModelCypher())
     }
 
     /*

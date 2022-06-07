@@ -36,7 +36,7 @@ object CosmicNCVLoader {
     private fun CoroutineScope.loadCosmicNCVData(ncvs: ReceiveChannel<CosmicNCV>) =
         produce<Int> {
             for (ncv in ncvs) {
-                Neo4jConnectionService.executeCypherCommand(ncv.generateCosmicNCVCypher())
+                Neo4jConnectionService.executeCypherCommand(ncv.generateLoadCosmicModelCypher())
                 ncv.createPubMedRelationship(ncv.pubmedId)
                 send(ncv.sampleId)
                 delay(20L)

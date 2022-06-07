@@ -26,7 +26,8 @@ data class CosmicStruct(
             resolveStructType()
         )
 
-    fun generateStructCypher(): String = generateMergeCypher()
+    override fun generateLoadCosmicModelCypher(): String =
+        generateMergeCypher()
         .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
         .plus(" RETURN $nodename\n")
 

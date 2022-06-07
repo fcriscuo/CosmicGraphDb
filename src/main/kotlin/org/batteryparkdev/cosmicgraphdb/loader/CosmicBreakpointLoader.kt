@@ -45,7 +45,7 @@ object CosmicBreakpointLoader {
         }
 
     private fun executeLoadCypher(breakpoint: CosmicBreakpoint): String =
-        Neo4jConnectionService.executeCypherCommand(breakpoint.generateBreakpointCypher())
+        Neo4jConnectionService.executeCypherCommand(breakpoint.generateLoadCosmicModelCypher())
 
     /*
     Function to establish a CosmicBreakpoint -[HAS_PUBLICATION] -> Publication relationship

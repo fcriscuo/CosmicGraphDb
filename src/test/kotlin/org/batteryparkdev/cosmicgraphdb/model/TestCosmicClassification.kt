@@ -3,7 +3,6 @@ package org.batteryparkdev.cosmicgraphdb.model
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 class TestCosmicClassification {
@@ -16,7 +15,7 @@ class TestCosmicClassification {
             .map { CosmicClassification.parseValueMap(it) }
             .forEach {
                 if (Neo4jUtils.nodeExistsPredicate(it.getNodeIdentifier()).not()) {
-                    Neo4jConnectionService.executeCypherCommand(it.generateCosmicClassificationCypher())
+                    Neo4jConnectionService.executeCypherCommand(it.generateLoadCosmicModelCypher())
                     println(
                         "CosmicClassification: ${it.cosmicPhenotypeId} " +
                                 " NCIcode: ${it.nciCode}" +

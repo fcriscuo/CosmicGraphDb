@@ -35,6 +35,20 @@ data class CosmicSample(
      override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicSample", "sample_id", sampleId.toString())
 
+    override fun generateLoadCosmicModelCypher(): String =
+        generateMergeCypher()
+            .plus(
+                CosmicClassification.generateChildRelationshipCypher(
+                    cosmicPhenotypeId,
+                    nodename
+                )
+            )
+            .plus(cosmicTumor.generateLoadCosmicModelCypher())
+            .plus(generateSampleMutationCollectionCypher())
+            .plus(generateSamplePublicationCollectionCypher())
+            .plus(" RETURN $nodename\n")
+
+    //TODO: remove
     fun generateCosmicSampleCypher(): String =
         generateMergeCypher()
             .plus(
@@ -43,7 +57,7 @@ data class CosmicSample(
                     nodename
                 )
             )
-            .plus(cosmicTumor.generateCosmicTumorCypher())
+            .plus(cosmicTumor.generateLoadCosmicModelCypher())
             .plus(generateSampleMutationCollectionCypher())
             .plus(generateSamplePublicationCollectionCypher())
             .plus(" RETURN $nodename\n")

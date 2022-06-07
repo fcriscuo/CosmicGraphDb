@@ -8,7 +8,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.batteryparkdev.cosmicgraphdb.model.CosmicBreakpoint
 import org.batteryparkdev.cosmicgraphdb.model.CosmicClassification
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 
@@ -46,7 +45,7 @@ object CosmicClassificationLoader {
         }
 
     private fun loadCosmicClassification(classification: CosmicClassification): String =
-        Neo4jConnectionService.executeCypherCommand(classification.generateCosmicClassificationCypher())
+        Neo4jConnectionService.executeCypherCommand(classification.generateLoadCosmicModelCypher())
 
 
     fun loadCosmicClassificationData(filename: String) = runBlocking {

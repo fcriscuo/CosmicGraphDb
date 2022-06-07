@@ -7,6 +7,11 @@ import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
 
 interface CosmicModel {
     abstract fun getNodeIdentifier(): NodeIdentifier
+
+    abstract fun generateLoadCosmicModelCypher(): String
+
+
+
     /*
     Generic function to create a HAS_PUBLICATION relationship between a node and a
     Publication/PubMed node

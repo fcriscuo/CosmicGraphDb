@@ -17,7 +17,7 @@ data class CosmicResistanceMutation(
         NodeIdentifier("CosmicResistanceMutation", "resistance_id",
             mutationId.toString())
 
-    fun generateCosmicResistanceCypher(): String =generateMergeCypher()
+    override fun generateLoadCosmicModelCypher(): String = generateMergeCypher()
         .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, nodename))
         .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
         .plus(generateDrugRelationshipCypher())

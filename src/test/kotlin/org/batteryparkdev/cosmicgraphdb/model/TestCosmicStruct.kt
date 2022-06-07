@@ -16,7 +16,7 @@ class TestCosmicStruct {
             .map { CosmicStruct.parseValueMap(it) }
             .forEach { struct ->
                 println("Loading CosmicStruct  ${struct.mutationId}")
-                Neo4jConnectionService.executeCypherCommand(struct.generateStructCypher())
+                Neo4jConnectionService.executeCypherCommand(struct.generateLoadCosmicModelCypher())
                 struct.createPubMedRelationship(struct.pubmedId)
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (cs:CosmicStruct) RETURN COUNT(cs)").toInt()

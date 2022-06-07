@@ -24,7 +24,8 @@ data class CosmicBreakpoint(
     override fun getNodeIdentifier(): NodeIdentifier =
        NodeIdentifier("CosmicBreakpoint", "breakpoint_id", mutationId.toString())
 
-    fun generateBreakpointCypher(): String = generateMergeCypher()
+    override fun generateLoadCosmicModelCypher(): String =
+        generateMergeCypher()
         .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
         .plus(generateStructRelationshipCypher())
         .plus(" RETURN ${CosmicBreakpoint.nodename}\n")

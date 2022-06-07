@@ -21,7 +21,7 @@ data class CosmicPatient(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicPatient", "patient_id", patientId.toString())
 
-    fun generateCosmicPatientCypher() =
+    override fun generateLoadCosmicModelCypher() =
         generateMergeCypher()
             .plus(generateTumorRelationshipCypher())
             //.plus(" RETURN $nodename\n")

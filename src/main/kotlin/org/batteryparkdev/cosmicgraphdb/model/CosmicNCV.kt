@@ -21,7 +21,7 @@ data class CosmicNCV(
 
     fun getKey():String = sampleName.plus(":").plus(genomicMutationId)
 
-    fun generateCosmicNCVCypher(): String = generatemergeCypher()
+    override fun generateLoadCosmicModelCypher(): String = generatemergeCypher()
         .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
         .plus(" RETURN  $nodename")
 

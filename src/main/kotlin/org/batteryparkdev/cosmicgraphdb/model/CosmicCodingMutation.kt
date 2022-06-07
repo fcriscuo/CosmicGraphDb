@@ -32,7 +32,8 @@ data class CosmicCodingMutation(
             mutationId.toString()
         )
 
-    fun generateCosmicCodingMutationCypher(): String = generateMergeCypher()
+    override fun generateLoadCosmicModelCypher(): String =
+        generateMergeCypher()
         .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, nodename))
         .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
         .plus(" RETURN $nodename")

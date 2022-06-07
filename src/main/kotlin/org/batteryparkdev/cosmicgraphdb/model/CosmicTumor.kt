@@ -22,11 +22,11 @@ data class CosmicTumor(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicTumor", "tumor_id", tumorId.toString())
 
-    fun generateCosmicTumorCypher():String {
+    override fun generateLoadCosmicModelCypher():String {
         var cypher = ""
         if (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier()).not()) {
             cypher = cypher.plus( generateTumorMergeCypher())
-                .plus(patient.generateCosmicPatientCypher())
+                .plus(patient.generateLoadCosmicModelCypher())
         }else {
             cypher = cypher.plus(generateTumorMatchCypher())
         }

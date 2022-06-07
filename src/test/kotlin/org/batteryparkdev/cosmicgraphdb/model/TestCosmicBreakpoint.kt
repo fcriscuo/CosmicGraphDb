@@ -22,7 +22,7 @@ class TestCosmicBreakpoint {
             .map { CosmicBreakpoint.parseValueMap(it) }
             .forEach { breakpoint ->
                 println("Loading breakpoint  ${breakpoint.mutationId}")
-                Neo4jConnectionService.executeCypherCommand(breakpoint.generateBreakpointCypher())
+                Neo4jConnectionService.executeCypherCommand(breakpoint.generateLoadCosmicModelCypher())
                 // create a Publication node if a PubMed Id is present
                 breakpoint.createPubMedRelationship(breakpoint.pubmedId)
             }

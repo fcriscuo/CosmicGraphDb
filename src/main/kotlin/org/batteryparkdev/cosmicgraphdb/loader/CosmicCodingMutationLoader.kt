@@ -60,7 +60,7 @@ object CosmicCodingMutationLoader {
     private fun CoroutineScope.loadCosmicCodingMutations(mutations: ReceiveChannel<CosmicCodingMutation>) =
         produce<CosmicCodingMutation> {
             for (mutation in mutations) {
-                Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicCodingMutationCypher())
+                Neo4jConnectionService.executeCypherCommand(mutation.generateLoadCosmicModelCypher())
                 mutation.createPubMedRelationship(mutation.pubmedId)
                 send(mutation)
                 delay(20L)

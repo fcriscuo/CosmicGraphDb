@@ -36,7 +36,7 @@ object CosmicHallmarkLoader {
     private fun CoroutineScope.loadCosmicHallmarks(hallmarks: ReceiveChannel<CosmicHallmark>) =
         produce<CosmicHallmark> {
             for (hallmark in hallmarks) {
-               Neo4jConnectionService.executeCypherCommand(hallmark.generateCosmicHallmarkCypher())
+               Neo4jConnectionService.executeCypherCommand(hallmark.generateLoadCosmicModelCypher())
                 send(hallmark)
                 delay(20)
             }

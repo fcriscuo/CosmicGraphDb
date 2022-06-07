@@ -16,7 +16,7 @@ class TestCosmicHGNC {
             .map { CosmicHGNC.parseValueMap(it) }
             .forEach { hgnc->
                 println("Loading HGNC gene symbol ${hgnc.hgncGeneSymbol}")
-                Neo4jConnectionService.executeCypherCommand(hgnc.generateCosmicHGNCCypher())
+                Neo4jConnectionService.executeCypherCommand(hgnc.generateLoadCosmicModelCypher())
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (ch:CosmicHGNC) RETURN COUNT(ch)").toInt()
     }

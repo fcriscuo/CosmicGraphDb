@@ -14,7 +14,7 @@ class TestCosmicCompleteExpression {
             .map { record -> record.get("map") }
             .map{CosmicCompleteGeneExpression.parseValueMap(it)}
             .forEach {
-                Neo4jConnectionService.executeCypherCommand(it.generateCompleteGeneExpressionCypher())
+                Neo4jConnectionService.executeCypherCommand(it.generateLoadCosmicModelCypher())
                 println("CosmicCompleteExpression for gene: ${it.geneSymbol}")
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (exp: CompleteGeneExpression) RETURN COUNT(exp)").toInt()

@@ -32,7 +32,7 @@ object CosmicResistanceMutationLoader {
     private fun CoroutineScope.loadCosmicNCVData(muts: ReceiveChannel<CosmicResistanceMutation>) =
         produce<Int> {
             for (mut in muts) {
-                Neo4jConnectionService.executeCypherCommand(mut.generateCosmicResistanceCypher())
+                Neo4jConnectionService.executeCypherCommand(mut.generateLoadCosmicModelCypher())
                 send(mut.sampleId)
                 delay(20L)
             }

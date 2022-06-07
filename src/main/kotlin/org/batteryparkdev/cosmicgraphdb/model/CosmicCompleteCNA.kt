@@ -20,7 +20,7 @@ override fun getNodeIdentifier(): NodeIdentifier =
     NodeIdentifier("CosmicCompleteCNA", "cna_id",
         cnaId.toString())
 
-    fun generateCompleteCNACypher():String =
+    override fun generateLoadCosmicModelCypher():String =
         generateMergeCypher()
             .plus(mutationType.generateCosmicTypeCypher(nodename))
             .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))

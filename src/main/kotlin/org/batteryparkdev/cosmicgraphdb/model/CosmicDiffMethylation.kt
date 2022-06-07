@@ -16,7 +16,7 @@ data class CosmicDiffMethylation(
     val twoSidedPValue: Double
 ): CosmicModel
 {
-    fun generateDiffMethylationCypher():String =
+    override fun generateLoadCosmicModelCypher():String =
         generateMergeCypher()
             .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
             .plus(generateGeneRelationshipCypher())

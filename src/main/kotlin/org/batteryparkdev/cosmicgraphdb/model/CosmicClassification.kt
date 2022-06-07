@@ -3,7 +3,6 @@ package org.batteryparkdev.cosmicgraphdb.model
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
-import java.util.*
 
 data class CosmicClassification(
     val cosmicPhenotypeId: String,
@@ -19,12 +18,11 @@ data class CosmicClassification(
             cosmicPhenotypeId
         )
 
-    fun generateCosmicClassificationCypher(): String =
+    override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(siteType.generateCosmicTypeCypher(CosmicClassification.nodename))
             .plus(histologyType.generateCosmicTypeCypher(CosmicClassification.nodename))
             .plus(" RETURN ${CosmicClassification.nodename}\n")
-
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicClassification\"]," +
             "{ phenotype_id: \"${cosmicPhenotypeId}\"}," +

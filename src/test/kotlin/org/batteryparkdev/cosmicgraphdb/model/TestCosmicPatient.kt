@@ -24,7 +24,7 @@ class TestCosmicPatient {
     private fun generatePatientTestCypher(patient:CosmicPatient):String =
        "CALL apoc.merge.node([\"CosmicTumor\"], {tumor_id: ${patient.tumorId}}, " +
                 "{},{} ) YIELD node as ${CosmicTumor.nodename} \n"
-                    .plus(patient.generateCosmicPatientCypher())
+                    .plus(patient.generateLoadCosmicModelCypher())
                     .plus(" RETURN ${CosmicPatient.nodename}\n")
 
 

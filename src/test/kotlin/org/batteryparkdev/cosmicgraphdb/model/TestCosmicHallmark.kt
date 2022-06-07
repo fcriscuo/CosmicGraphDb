@@ -18,7 +18,7 @@ class TestCosmicHallmark {
             .map { record -> record.get("map") }
             .map { CosmicHallmark.parseValueMap(it) }
             .forEach { hall ->
-                Neo4jConnectionService.executeCypherCommand(hall.generateCosmicHallmarkCypher())
+                Neo4jConnectionService.executeCypherCommand(hall.generateLoadCosmicModelCypher())
                 println("Loaded Cosmic Hallmark ${hall.geneSymbol}")
                 // create a Publication node if a PubMed id is present
                 CosmicGeneCensus.registerGenePublication(hall.pubmedId, hall.geneSymbol)

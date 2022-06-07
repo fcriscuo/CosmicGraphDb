@@ -14,7 +14,7 @@ class TestCosmicDiffMethylation {
             .map { record -> record.get("map") }
             .map { CosmicDiffMethylation.parseValueMap(it) }
             .forEach {
-                Neo4jConnectionService.executeCypherCommand(it.generateDiffMethylationCypher())
+                Neo4jConnectionService.executeCypherCommand(it.generateLoadCosmicModelCypher())
                 println("Loading CosmicCompleteDiffMethylation for (non-unique) sample id: ${it.sampleId}")
             }
         return Neo4jConnectionService.executeCypherCommand("MATCH (exp: CompleteGeneExpression) RETURN COUNT(exp)").toInt()

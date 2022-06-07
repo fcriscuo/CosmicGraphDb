@@ -11,7 +11,6 @@ import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.cosmicgraphdb.model.CosmicDiffMethylation
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
 import java.util.concurrent.TimeUnit
 
 object CosmicDiffMethylationLoader {
@@ -49,7 +48,7 @@ object CosmicDiffMethylationLoader {
             }
         }
     private fun loadCosmicDiffMethylation(methyl: CosmicDiffMethylation): String {
-        return Neo4jConnectionService.executeCypherCommand(methyl.generateDiffMethylationCypher())
+        return Neo4jConnectionService.executeCypherCommand(methyl.generateLoadCosmicModelCypher())
     }
 
     /*

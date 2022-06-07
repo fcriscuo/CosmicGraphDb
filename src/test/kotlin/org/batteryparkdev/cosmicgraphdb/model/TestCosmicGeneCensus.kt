@@ -19,7 +19,7 @@ class TestCosmicGeneCensus {
             .map { record -> record.get("map") }
             .map { CosmicGeneCensus.parseValueMap(it) }
             .forEach { gene ->
-                Neo4jConnectionService.executeCypherCommand(gene.generateCosmicGeneCypher())
+                Neo4jConnectionService.executeCypherCommand(gene.generateLoadCosmicModelCypher())
                 println("Loading cosmic census gene: ${gene.geneSymbol}")
 
             }
