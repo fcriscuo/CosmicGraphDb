@@ -26,6 +26,9 @@ data class CosmicPatient(
             .plus(generateTumorRelationshipCypher())
             //.plus(" RETURN $nodename\n")
 
+    override fun isValid(): Boolean = patientId > 0 && tumorId > 0
+    override fun getPubMedId(): Int  = 0
+
     private fun generateMergeCypher(): String =
         "CALL apoc.merge.node([\"CosmicPatient\"], " +
                 " {patient_id: $patientId}, " +

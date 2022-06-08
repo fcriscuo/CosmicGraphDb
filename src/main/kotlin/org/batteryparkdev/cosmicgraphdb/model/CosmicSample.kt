@@ -35,6 +35,9 @@ data class CosmicSample(
      override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicSample", "sample_id", sampleId.toString())
 
+    override fun isValid(): Boolean = sampleId > 0 && tumorId > 0
+    override fun getPubMedId(): Int = 0
+
     override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(

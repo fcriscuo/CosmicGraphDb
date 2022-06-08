@@ -10,6 +10,9 @@ interface CosmicModel {
 
     abstract fun generateLoadCosmicModelCypher(): String
 
+    abstract fun isValid(): Boolean
+
+    abstract fun getPubMedId(): Int
 
 
     /*

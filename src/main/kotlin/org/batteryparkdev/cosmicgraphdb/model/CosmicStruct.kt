@@ -26,6 +26,9 @@ data class CosmicStruct(
             resolveStructType()
         )
 
+    override fun isValid(): Boolean = sampleId > 0
+    override fun getPubMedId(): Int = pubmedId
+
     override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
         .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))

@@ -50,7 +50,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     /*
     Function to delete all Cosmic-related nodes and relationships
     prior to reloading the database
-   
+
      */
     fun deleteCosmicNodes(): String {
         CosmicFilenameService.nodeNameList.forEach { nodeName -> Neo4jUtils.detachAndDeleteNodesByName(nodeName) }

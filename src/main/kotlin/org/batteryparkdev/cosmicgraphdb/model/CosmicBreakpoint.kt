@@ -24,6 +24,10 @@ data class CosmicBreakpoint(
     override fun getNodeIdentifier(): NodeIdentifier =
        NodeIdentifier("CosmicBreakpoint", "breakpoint_id", mutationId.toString())
 
+    override fun isValid(): Boolean = (sampleId > 0).and(mutationId > 0)
+
+    override fun getPubMedId(): Int = pubmedId
+
     override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
         .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))

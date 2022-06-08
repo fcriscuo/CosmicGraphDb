@@ -30,8 +30,13 @@ data class CosmicFusion(
             fusionId.toString()
         )
 
-     fun isValid(): Boolean =
-        fusionId > 0 && sampleId > 0 && translocationName.isNotEmpty()
+    //FusionExport file contains a number of incomplete entries
+    override fun isValid(): Boolean =
+        fusionType.isNotEmpty().and(fusionId > 0).
+        and( sampleId > 0).and( translocationName.isNotEmpty())
+            .and(five_geneSymbol.isNotEmpty()).and(three_geneSymbol.isNotEmpty())
+
+    override fun getPubMedId(): Int  = 0
 
     override fun generateLoadCosmicModelCypher(): String {
         val cypher = when (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {

@@ -19,6 +19,8 @@ data class CosmicCompleteGeneExpression(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CompleteGeneExpression", "key",
             key.toString())
+    override fun isValid(): Boolean = geneSymbol.isNotEmpty().and(sampleId > 0)
+    override fun getPubMedId(): Int = 0
 
     override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()

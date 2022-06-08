@@ -23,6 +23,9 @@ data class CosmicResistanceMutation(
         .plus(generateDrugRelationshipCypher())
         .plus("  RETURN  $nodename \n")
 
+    override fun isValid(): Boolean = geneSymbol.isNotEmpty().and(sampleId > 0)
+    override fun getPubMedId(): Int = pubmedId
+
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node([\"CosmicResistanceMutation\"], " +
                 "  { mutation_id: $mutationId} , " +

@@ -22,6 +22,9 @@ data class CosmicDiffMethylation(
             .plus(generateGeneRelationshipCypher())
             .plus(" RETURN  $nodename")
 
+    override fun isValid(): Boolean = sampleId > 0
+    override fun getPubMedId(): Int  = 0
+
     /*
     The gene symbol parameter is sparsely represented
     Limit relationships to only those methylation entries that specify a gene

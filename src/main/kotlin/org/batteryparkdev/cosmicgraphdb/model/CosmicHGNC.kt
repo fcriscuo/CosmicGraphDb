@@ -22,6 +22,9 @@ data class CosmicHGNC(
             .plus(generateEntrezRelationshipCypher())
             .plus(" RETURN ${CosmicHGNC.nodename}")
 
+    override fun isValid(): Boolean = hgncGeneSymbol.isNotEmpty().and(cosmicId > 0)
+    override fun getPubMedId(): Int = 0
+
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicHGNC\"], " +
                 " {hgnc_id: $hgncId}," +

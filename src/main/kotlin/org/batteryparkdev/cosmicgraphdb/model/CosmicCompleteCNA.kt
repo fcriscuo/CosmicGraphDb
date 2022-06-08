@@ -19,6 +19,9 @@ data class CosmicCompleteCNA(
 override fun getNodeIdentifier(): NodeIdentifier =
     NodeIdentifier("CosmicCompleteCNA", "cna_id",
         cnaId.toString())
+    override fun isValid(): Boolean = (sampleId > 0).and(cnaId > 0)
+    override fun getPubMedId(): Int = 0
+
 
     override fun generateLoadCosmicModelCypher():String =
         generateMergeCypher()

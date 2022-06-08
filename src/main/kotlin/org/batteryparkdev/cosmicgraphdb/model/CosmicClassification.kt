@@ -17,6 +17,8 @@ data class CosmicClassification(
             "CosmicClassification", "phenotype_id",
             cosmicPhenotypeId
         )
+    override fun isValid(): Boolean = cosmicPhenotypeId.isNotEmpty()
+    override fun getPubMedId(): Int = 0
 
     override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()

@@ -32,6 +32,9 @@ data class CosmicCodingMutation(
             mutationId.toString()
         )
 
+    override fun isValid(): Boolean = geneSymbol.isNotEmpty().and(sampleId>0)
+    override fun getPubMedId(): Int  = pubmedId
+
     override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
         .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, nodename))

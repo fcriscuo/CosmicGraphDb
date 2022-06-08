@@ -22,6 +22,9 @@ data class CosmicTumor(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicTumor", "tumor_id", tumorId.toString())
 
+    override fun isValid(): Boolean = patient.isValid().and(tumorId > 0)
+    override fun getPubMedId(): Int = 0
+
     override fun generateLoadCosmicModelCypher():String {
         var cypher = ""
         if (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier()).not()) {

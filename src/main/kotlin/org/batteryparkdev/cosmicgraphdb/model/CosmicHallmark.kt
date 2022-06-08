@@ -22,6 +22,8 @@ data class CosmicHallmark(
             .plus(generateHasHallmarkRelationshipCypher())
             .plus(" RETURN $nodename")
 
+    override fun isValid(): Boolean = geneSymbol.isNotEmpty().and(hallmark.isNotEmpty())
+    override fun getPubMedId(): Int = pubmedId
 
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicHallmark\"]," +

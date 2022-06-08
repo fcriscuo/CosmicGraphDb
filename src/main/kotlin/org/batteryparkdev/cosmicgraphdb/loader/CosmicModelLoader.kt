@@ -27,7 +27,9 @@ class CosmicModelLoader( val filename: String, val runmode:String = "sample") {
                 .map { record -> record.get("map") }
                 .map { parseCosmicModel(it) }
                 .forEach {
-                    send(it)
+                    if (it.isValid()) {
+                        (send(it))
+                    }
                     delay(20L)
                 }
         }
