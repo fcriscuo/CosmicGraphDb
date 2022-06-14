@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -111,6 +112,34 @@ data class CosmicFusion(
                 parseValidIntegerFromString(value["3'_GENOME_STOP_TO"].asString()),
                 value["FUSION_TYPE"].asString().filter { !it.isWhitespace() },
                 value["PUBMED_PMID"].asString().toInt()
+            )
+
+        fun parseCSVRecord(record: CSVRecord): CosmicFusion =
+            CosmicFusion(
+                parseValidIntegerFromString(record.get("FUSION_ID")),
+                parseValidIntegerFromString(record.get("SAMPLE_ID")),
+                record.get("SAMPLE_NAME"),
+                record.get("TRANSLOCATION_NAME"),
+                parseValidIntegerFromString(record.get("5'_CHROMOSOME")),
+                record.get("5'_STRAND"),
+                parseValidIntegerFromString(record.get("5'_GENE_ID")),
+                record.get("5'_GENE_NAME"),
+                parseValidIntegerFromString(record.get("5'_LAST_OBSERVED_EXON")),
+                parseValidIntegerFromString(record.get("5'_GENOME_START_FROM")),
+                parseValidIntegerFromString(record.get("5'_GENOME_START_TO")),
+                parseValidIntegerFromString(record.get("5'_GENOME_STOP_FROM")),
+                parseValidIntegerFromString(record.get("5'_GENOME_STOP_TO")),
+                parseValidIntegerFromString(record.get("3'_CHROMOSOME")),
+                record.get("3'_STRAND"),
+                parseValidIntegerFromString(record.get("3'_GENE_ID")),
+                record.get("3'_GENE_NAME"),
+                parseValidIntegerFromString(record.get("3'_FIRST_OBSERVED_EXON")),
+                parseValidIntegerFromString(record.get("3'_GENOME_START_FROM")),
+                parseValidIntegerFromString(record.get("3'_GENOME_START_TO")),
+                parseValidIntegerFromString(record.get("3'_GENOME_STOP_FROM")),
+                parseValidIntegerFromString(record.get("3'_GENOME_STOP_TO")),
+                record.get("FUSION_TYPE").filter { !it.isWhitespace() },
+                record.get("PUBMED_PMID").toInt()
             )
     }
 

@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -13,7 +14,6 @@ Relationships:
 data class CosmicTumor(
     val tumorId: Int,
     val sampleId: Int,
-    val tumorOrigin: String,
     val tumorSource: String,
     val tumorRemark: String,
     val patient: CosmicPatient
@@ -47,7 +47,7 @@ data class CosmicTumor(
         " CALL apoc.merge.node( [\"CosmicTumor\"], " +
                 "{tumor_id: $tumorId} ," +
                 " {tumor_origin: " +
-                " ${Neo4jUtils.formatPropertyValue(tumorOrigin)} ," +
+
                 " tumor_source: ${Neo4jUtils.formatPropertyValue(tumorSource)} , " +
                 " tumor_remark: ${Neo4jUtils.formatPropertyValue(tumorRemark)} , " +
                 "  created: datetime()},{}) YIELD node as $nodename \n"
@@ -65,16 +65,36 @@ data class CosmicTumor(
                     " YIELD rel AS $relname \n"
     }
 
+    /*
+    [sample_id, sample_name, id_tumour, id_individual,
+    primary_site, site_subtype_1, site_subtype_2, site_subtype_3,
+    primary_histology, histology_subtype_1, histology_subtype_2, histology_subtype_3,
+    therapy_relationship, sample_differentiator, mutation_allele_specification, msi,
+    average_ploidy, whole_genome_screen, whole_exome_screen, sample_remark,
+    drug_response, grade, age_at_tumour_recurrence, stage, cytogenetics,
+     metastatic_site, tumour_source, tumour_remark, age, ethnicity,
+     environmental_variables, germline_mutation, therapy, family, normal_tissue_tested,
+     gender, individual_remark, nci_code, sample_type, cosmic_phenotype_id]
+     */
+
     companion object : AbstractModel {
         const val nodename = "tumor"
         fun parseValueMap(value: Value): CosmicTumor =
             CosmicTumor(
                 value["id_tumour"].asString().toInt(),
                 value["sample_id"].asString().toInt(),
-                value["Tumour origin"].asString(),
                 value["tumour_source"].asString(),
                 removeInternalQuotes(value["tumour_remark"].asString()),
                 CosmicPatient.parseValueMap(value)
+            )
+
+        fun parseCSVRecord(record: CSVRecord): CosmicTumor =
+            CosmicTumor(
+                record.get("id_tumour").toInt(),
+                record.get("sample_id").toInt(),
+                record.get("tumour_source"),
+                removeInternalQuotes(record.get("tumour_remark")),
+                CosmicPatient.parseCSVRecord(record)
             )
 
         fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +

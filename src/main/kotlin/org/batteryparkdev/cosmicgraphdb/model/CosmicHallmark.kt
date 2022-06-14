@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -61,6 +62,7 @@ data class CosmicHallmark(
         const val nodename = "hallmark"
         const val collectionname = "hallmark_collect"
         const val pubCollNodename = "hall_pub_coll"
+
         fun parseValueMap(value: Value): CosmicHallmark =
             CosmicHallmark(
                 UUID.randomUUID().hashCode(),  // unique identifier for key
@@ -71,5 +73,21 @@ data class CosmicHallmark(
                 value["IMPACT"].asString(),
                 removeInternalQuotes(value["DESCRIPTION"].asString())
             )
+
+        fun parseCSVRecord(record: CSVRecord): CosmicHallmark =
+            CosmicHallmark(
+                UUID.randomUUID().hashCode(),  // unique identifier for key
+                record.get("GENE_NAME"),
+                record.get("CELL_TYPE"),
+                parseValidIntegerFromString(record.get("PUBMED_PMID")),
+                removeInternalQuotes(record.get("HALLMARK")),
+                resolveImpactProperty(record),
+                removeInternalQuotes(record.get("DESCRIPTION"))
+            )
+         private fun resolveImpactProperty(record: CSVRecord):String =
+            when (record.isMapped("IMPACT")) {
+                true -> record.get("IMPACT")
+                false -> "NS"
+            }
     }
 }

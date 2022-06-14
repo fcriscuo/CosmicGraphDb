@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
 import org.batteryparkdev.logging.service.LogService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
@@ -30,7 +31,7 @@ data class CosmicGeneCensus(
         generateMergeCypher()
             .plus(generateGeneMutationCollectionNodeCypher())
             .plus(generateGeneAnnotationCollectionCypher())
-            .plus(generateGenePublicationCollectionCypher())
+          //  .plus(generateGenePublicationCollectionCypher())
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     somaticTumorTypeList,
@@ -112,7 +113,7 @@ data class CosmicGeneCensus(
                     " chromosome_band: $chromosomeBand, " +
                     " somatic: $somatic, germline: $germline, " +
                     " cancer_syndrome: ${Neo4jUtils.formatPropertyValue(cancerSyndrome)}," +
-                    " molecular_genetics: $molecularGenetics, " +
+                    " molecular_genetics: ${Neo4jUtils.formatPropertyValue(molecularGenetics)}, " +
                     " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}, " +
                     " cosmic_id: ${Neo4jUtils.formatPropertyValue(cosmicId)}, " +
                     " cosmic_gene_name: ${Neo4jUtils.formatPropertyValue(cosmicGeneName)}, " +
@@ -127,7 +128,7 @@ data class CosmicGeneCensus(
                     " chromosome_band: $chromosomeBand, " +
                     " somatic: $somatic, germline: $germline, " +
                     " cancer_syndrome: ${Neo4jUtils.formatPropertyValue(cancerSyndrome)}," +
-                    " molecular_genetics: $molecularGenetics, " +
+                    " molecular_genetics: ${Neo4jUtils.formatPropertyValue(molecularGenetics)}, " +
                     " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}," +
                     " cosmic_id: ${Neo4jUtils.formatPropertyValue(cosmicId)}, " +
                     "cosmic_gene_name: ${Neo4jUtils.formatPropertyValue(cosmicGeneName)}, " +
@@ -218,6 +219,32 @@ data class CosmicGeneCensus(
                 value["COSMIC ID"].asString(),
                 value["cosmic gene name"].asString(),
                 parseStringOnComma(value["Synonyms"].asString())
+            )
+
+        fun parseCSVRecord(record: CSVRecord): CosmicGeneCensus =
+            CosmicGeneCensus(
+                record.get("Gene Symbol"),
+                record.get("Name"),
+                record.get("Entrez GeneId"),
+                record.get("Genome Location"),
+                parseValidIntegerFromString(record.get("Tier")),
+                record.get("Hallmark").isNotBlank(),
+                record.get("Chr Band"),
+                record.get("Somatic").isNotBlank(),
+                record.get("Germline").isNotBlank(),
+                processTumorTypes(record.get("Tumour Types(Somatic)")),
+                processTumorTypes(record.get("Tumour Types(Germline)")),
+                record.get("Cancer Syndrome"),
+                parseStringOnComma(record.get("Tissue Type")),
+                record.get("Molecular Genetics"),
+                parseStringOnComma(record.get("Role in Cancer")),
+                parseStringOnComma(record.get("Mutation Types")),
+                parseStringOnComma(record.get("Translocation Partner")),
+                record.get("Other Germline Mut"),
+                parseStringOnSemiColon(record.get("Other Syndrome")),
+                record.get("COSMIC ID"),
+                record.get("cosmic gene name"),
+                parseStringOnComma(record.get("Synonyms"))
             )
 
         /*

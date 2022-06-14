@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -69,9 +70,29 @@ data class CosmicDiffMethylation(
                 value["BETA_VALUE"].asString().toFloat(),
                 value["TWO_SIDED_P_VALUE"].asString().toDouble()
             )
+
+        fun parseCSVRecord(record: CSVRecord): CosmicDiffMethylation =
+            CosmicDiffMethylation(
+                UUID.randomUUID().toString(),
+                record.get("STUDY_ID").toInt(),
+                record.get("ID_SAMPLE").toInt(),
+                record.get("ID_TUMOUR").toInt(),
+                record.get("FRAGMENT_ID"),
+                record.get("GENOME_VERSION"),
+                record.get("CHROMOSOME").toInt(),  //Integer is OK here (x=23, y=24)
+                record.get("POSITION").toInt(),
+                when (record.get("STRAND").toInt()) {
+                    1 -> "+"
+                    else ->"-"
+                },
+                record.get("GENE_NAME"),
+                record.get("METHYLATION"),
+                record.get("AVG_BETA_VALUE_NORMAL").toFloat(),
+                record.get("BETA_VALUE").toFloat(),
+                record.get("TWO_SIDED_P_VALUE").toDouble()
+            )
     }
 
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicDiffMethylation", "key", key)
-
 }

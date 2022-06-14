@@ -41,7 +41,7 @@ CosmicFusionLoader {
         produce<Int> {
             for (fusion in fusions) {
                 Neo4jConnectionService.executeCypherCommand(fusion.generateLoadCosmicModelCypher())
-                fusion.createPubMedRelationship(fusion.pubmedId)
+                //fusion.createPubMedRelationship(fusion.pubmedId)
                 send (fusion.fusionId)
                 delay(20L)
             }

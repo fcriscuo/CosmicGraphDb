@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 class TestCosmicSampleLoader {
 
     fun loadCosmicSampleFile(filename: String):Int {
-        deleteSampleRelatedNodes()
+      //  deleteSampleRelatedNodes()
         CosmicSampleLoader.processCosmicSampleData(filename)
         return Neo4jConnectionService.executeCypherCommand("MATCH (cs: CosmicSample) RETURN COUNT(cs)").toInt()
     }

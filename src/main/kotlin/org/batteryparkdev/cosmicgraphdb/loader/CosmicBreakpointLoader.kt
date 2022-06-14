@@ -38,7 +38,7 @@ object CosmicBreakpointLoader {
         produce<CosmicBreakpoint> {
             for (breakpoint in breakpoints){
                 executeLoadCypher(breakpoint)
-                breakpoint.createPubMedRelationship(breakpoint.pubmedId)
+                //breakpoint.createPubMedRelationship(breakpoint.pubmedId)
                 send(breakpoint)
                 delay(20)
             }
@@ -55,7 +55,7 @@ object CosmicBreakpointLoader {
     private fun CoroutineScope.loadPubMedRelationship(breakpoints: ReceiveChannel<CosmicBreakpoint>) =
         produce<String> {
             for (breakpoint in breakpoints){
-                    breakpoint.createPubMedRelationship(breakpoint.pubmedId)
+                   // breakpoint.createPubMedRelationship(breakpoint.pubmedId)
                 send(breakpoint.mutationId.toString())
                 delay(20L)
             }

@@ -42,29 +42,18 @@ object CosmicHallmarkLoader {
             }
         }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.addPubMedRelationship(hallmarks: ReceiveChannel<CosmicHallmark>) =
-        produce<String> {
-            for (hallmark in hallmarks) {
-                if (hallmark.pubmedId>0) {
-                    CosmicGeneCensus.registerGenePublication(hallmark.pubmedId, hallmark.geneSymbol)
-                }
-                send(hallmark.geneSymbol)
-                delay(20)
-            }
-        }
 
     fun processCosmicHallmarkData(filename: String) = runBlocking {
         logger.atInfo().log("Loading CosmicGeneCensus data from file $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val geneSymbols = addPubMedRelationship(
+        val hallmarks =
                     loadCosmicHallmarks(
                         parseCosmicHallmarkFile(filename)
                     )
-                )
 
-        for (symbol in geneSymbols) {
+
+        for (hallmark in hallmarks) {
             // pipeline stream is lazy - need to consume output
             nodeCount += 1
         }

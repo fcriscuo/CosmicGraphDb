@@ -243,7 +243,6 @@ class CosmicDatabaseLoader(val runMode: String = "sample") : CoroutineScope {
         CosmicHGNCLoader.loadCosmicHGNCData(cosmicHGNCFile)
         return "Result of CosmicHGNC loading"
     }
-
 }
 
 fun main(args: Array<String>): Unit = runBlocking {

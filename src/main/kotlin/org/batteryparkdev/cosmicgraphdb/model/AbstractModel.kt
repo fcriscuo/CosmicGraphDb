@@ -1,14 +1,23 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
+import org.neo4j.driver.Value
 
 /**
  * Created by fcriscuo on 2021Jul29
  */
 interface AbstractModel {
 
+    fun resolveMutationType(value: Value): CosmicType =
+        CosmicType(
+            "Mutation", value["MUT_TYPE"].asString()
+        )
 
+    fun resolveMutationType(record: CSVRecord): CosmicType =
+        CosmicType(
+            "Mutation", record.get("MUT_TYPE"))
 
     fun isValidString(s: String?):Boolean =  !s.isNullOrBlank()
 

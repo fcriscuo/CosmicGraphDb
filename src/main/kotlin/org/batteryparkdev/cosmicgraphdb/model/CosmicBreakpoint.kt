@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -12,7 +13,6 @@ Relationships:  Struct -[HAS_BREAKPOINT]->  Breakpoint
 
  */
 data class CosmicBreakpoint(
-    //val breakpointId: Int,
     val sampleName: String, val sampleId: Int, val tumorId: Int,
     val mutationType: CosmicType, val mutationId: Int,
     val chromosomeFrom: String,
@@ -22,7 +22,7 @@ data class CosmicBreakpoint(
  ): CosmicModel
 {
     override fun getNodeIdentifier(): NodeIdentifier =
-       NodeIdentifier("CosmicBreakpoint", "breakpoint_id", mutationId.toString())
+       NodeIdentifier("CosmicBreakpoint", "mutation_id", mutationId.toString())
 
     override fun isValid(): Boolean = (sampleId > 0).and(mutationId > 0)
 
@@ -50,15 +50,38 @@ data class CosmicBreakpoint(
             " created: datetime() }," +
             " { last_mod: datetime()}) YIELD node AS ${CosmicBreakpoint.nodename} \n "
 
-  private fun generateTumorRelationshipCypher(): String =
-      CosmicTumor.generateChildRelationshipCypher(tumorId,CosmicBreakpoint.nodename )
-
 
     private fun generateStructRelationshipCypher(): String =
         CosmicStruct.generateChildRelationshipCypher(mutationId,nodename)
 
+
     companion object : AbstractModel {
          const val  nodename = "breakpoint"
+
+        fun parseCSVRecord(record: CSVRecord): CosmicBreakpoint {
+            val sampleName = record.get("Sample name")
+            val sampleId = record.get("ID_SAMPLE").toInt()
+            val tumorId = record.get("ID_TUMOUR").toInt()
+            val mutationId = record.get("Mutation ID").toInt()
+            val chromFrom = record.get("Chrom From")
+            val locationFromMin = record.get("Location From min").toInt()
+            val locationFromMax = record.get("Location From max").toInt()
+            val strandFrom = record.get("Strand From")
+            val chromTo = record.get("Chrom To")
+            val locationToMin = record.get("Location To min").toInt()
+            val locationToMax = record.get("Location To max").toInt()
+            val strandTo = record.get("Strand To")
+            val pubmedId = parseValidIntegerFromString(record.get("Pubmed_PMID"))
+            val studyId = parseValidIntegerFromString(record.get("ID_STUDY"))
+            return CosmicBreakpoint(
+                sampleName, sampleId, tumorId, CosmicType(
+                    "Mutation", record.get("Mutation Type")),
+                mutationId, chromFrom, locationFromMin, locationFromMax, strandFrom,
+                chromTo, locationToMin, locationToMax, strandTo, pubmedId, studyId
+            )
+        }
+
+
         fun parseValueMap(value: Value): CosmicBreakpoint {
             val sampleName = value["Sample name"].asString()
             val sampleId = value["ID_SAMPLE"].asString().toInt()
@@ -81,11 +104,6 @@ data class CosmicBreakpoint(
                 chromTo, locationToMin, locationToMax, strandTo, pubmedId, studyId
             )
         }
-
-        private fun resolveMutationType(value: Value): CosmicType =
-            CosmicType(
-                "Mutation", value["Mutation Type"].asString()
-            )
 
 
     }

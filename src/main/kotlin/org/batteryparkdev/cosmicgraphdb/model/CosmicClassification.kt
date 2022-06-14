@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -35,6 +36,43 @@ data class CosmicClassification(
 
     companion object : AbstractModel {
         val nodename = "classification"
+
+        fun parseCSVRecord(record:CSVRecord): CosmicClassification {
+            val nciCode = record.get("NCI_CODE") ?: "NS"
+            val efo = record.get("EFO") ?: "NS"
+            val phenoId = record.get("COSMIC_PHENOTYPE_ID") ?: "NS"
+            return CosmicClassification(
+                phenoId,
+                resolveSiteType(record),
+                resolveHistologyType(record),
+                resolveCosmicSiteType(record),
+                nciCode, efo
+            )
+        }
+        private fun resolveSiteType(record:CSVRecord): CosmicType =
+            CosmicType(
+                "Site", record.get("SITE_PRIMARY"),
+                record.get("SITE_SUBTYPE1"),
+                record.get("SITE_SUBTYPE2"),
+                record.get("SITE_SUBTYPE3")
+            )
+
+        private fun resolveHistologyType(record:CSVRecord): CosmicType =
+            CosmicType(
+                "Histology", record.get("HISTOLOGY"),
+                record.get("HIST_SUBTYPE1"),
+                record.get("HIST_SUBTYPE2"),
+                record.get("HIST_SUBTYPE3")
+            )
+
+        private fun resolveCosmicSiteType(record:CSVRecord): CosmicType =
+            CosmicType(
+                "CosmicSite", record.get("SITE_PRIMARY_COSMIC"),
+                record.get("SITE_SUBTYPE1_COSMIC"),
+                record.get("SITE_SUBTYPE2_COSMIC"),
+                record.get("SITE_SUBTYPE3_COSMIC")
+            )
+
         fun parseValueMap(value: Value): CosmicClassification {
             val nciCode = value["NCI_CODE"].asString() ?: "NS"
             val efo = value["EFO"].asString() ?: "NS"

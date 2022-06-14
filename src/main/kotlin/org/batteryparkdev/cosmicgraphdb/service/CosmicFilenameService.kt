@@ -24,10 +24,10 @@ object CosmicFilenameService {
      val nodeNameList = listOf<String>("CosmicHGNC",
         "CosmicHallmark", "CosmicTumor", "CosmicCodingMutation",
         "CosmicSample", "CosmicClassification", "CosmicGene", "CosmicType",
-        "CosmicCompleteDNA", "CosmicGeneExpression", "CosmicDiffMethylation",
+        "CosmicCompleteCNA", "CosmicGeneExpression", "CosmicDiffMethylation",
         "CosmicBreakpoint", "CosmicPatient", "CosmicNCV", "CosmicFusion",
         "CosmicResistanceMutation", "GeneMutationCollection", "SampleMutationCollection",
-        "GenePublicationCollection", "SamplePublicationCollection","Publication")
+        "Publication")
 
     private fun resolveSampleFile(sampleFileName: String): String =
         ConfigurationPropertiesService.resolveCosmicSampleFileLocation(sampleFileName)

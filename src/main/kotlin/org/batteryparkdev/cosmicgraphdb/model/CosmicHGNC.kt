@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -62,6 +63,17 @@ data class CosmicHGNC(
                 convertYNtoBoolean(value["Mutated?"].asString()),
                 convertYNtoBoolean(value["Cancer_census?"].asString()),
                 convertYNtoBoolean(value["Expert Curated?"].asString())
+            )
+
+        fun parseCSVRecord(record: CSVRecord): CosmicHGNC =
+            CosmicHGNC(
+                parseValidIntegerFromString(record.get("COSMIC_ID")),
+                record.get("COSMIC_GENE_NAME"),
+                parseValidIntegerFromString(record.get("Entrez_id")),
+                parseValidIntegerFromString(record.get("HGNC_ID")),
+                convertYNtoBoolean(record.get("Mutated?")),
+                convertYNtoBoolean(record.get("Cancer_census?")),
+                convertYNtoBoolean(record.get("Expert Curated?"))
             )
 
         private fun generateMatchHGNCNodeCypher(hgncId: Int): String = " CALL apoc.merge.node([\"CosmicHGNC\"]," +

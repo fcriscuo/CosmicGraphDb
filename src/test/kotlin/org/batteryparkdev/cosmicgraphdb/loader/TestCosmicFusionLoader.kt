@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 class TestCosmicFusionLoader {
     fun loadCosmicFusionFile(filename: String):Int {
-        deleteCosmicFusionNodes()
+        //deleteCosmicFusionNodes()
         CosmicFusionLoader.loadCosmicFusionData(filename)
         return Neo4jConnectionService.executeCypherCommand("MATCH (cf: CosmicFusion) RETURN COUNT(cf)").toInt()
     }

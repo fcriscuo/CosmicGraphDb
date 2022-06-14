@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -62,6 +63,16 @@ data class CosmicStruct(
                 value["Mutation Type"].asString(),
                 value["description"].asString(),
                 parseValidIntegerFromString(value["PUBMED_PMID"].asString())
+            )
+
+        fun parseCSVRecord(record: CSVRecord): CosmicStruct =
+            CosmicStruct(
+                record.get("MUTATION_ID").toInt(),
+                record.get("ID_SAMPLE").toInt(),
+                record.get("ID_TUMOUR").toInt(),
+                record.get("Mutation Type"),
+                record.get("description"),
+                parseValidIntegerFromString(record.get("PUBMED_PMID"))
             )
 
         private fun generateMatchCosmicStructCypher(mutationId: Int): String  =

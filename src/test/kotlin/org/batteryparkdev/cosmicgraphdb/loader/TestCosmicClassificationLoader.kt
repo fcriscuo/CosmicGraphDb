@@ -7,7 +7,7 @@ import org.batteryparkdev.property.service.ConfigurationPropertiesService
 class TestCosmicClassificationLoader {
 
     fun loadClassificationFile(filename: String): Int {
-        deleteClassificationNode()
+       // deleteClassificationNode()
         CosmicClassificationLoader.loadCosmicClassificationData(filename)
         return Neo4jConnectionService.executeCypherCommand("MATCH (cc: CosmicClassification) RETURN COUNT(cc)").toInt()
     }

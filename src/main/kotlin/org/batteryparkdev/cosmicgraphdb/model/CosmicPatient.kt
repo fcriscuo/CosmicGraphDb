@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -62,6 +63,20 @@ data class CosmicPatient(
                 value["gender"].asString(),
                 value["individual_remark"].asString(),
                 convertYNtoBoolean(value["normal_tissue_tested"].asString())
+            )
+
+        fun parseCSVRecord(record: CSVRecord): CosmicPatient =
+            CosmicPatient(
+                record.get("sample_id").toInt(),
+                record.get("id_individual").toInt(),
+                record.get("id_tumour").toInt(),
+                parseValidIntegerFromString(record.get("age")),
+                record.get("ethnicity"),
+                record.get("environmental_variables"),
+                record.get("therapy"), record.get("family"),
+                record.get("gender"),
+                record.get("individual_remark"),
+                convertYNtoBoolean(record.get("normal_tissue_tested"))
             )
 
     }

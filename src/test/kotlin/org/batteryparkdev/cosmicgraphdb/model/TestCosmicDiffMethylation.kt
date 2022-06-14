@@ -1,31 +1,65 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 class TestCosmicDiffMethylation {
-    fun parseCosmicCompleteDifferentialMethylation(filename: String):Int {
+    fun parseCosmicCompleteDifferentialMethylation(filename: String): Int {
         val LIMIT = Long.MAX_VALUE
-        deleteDiffMethylationNodes()
+        var nodeCount = 0
         ApocFileReader.processDelimitedFile(filename).stream()
             .limit(LIMIT)
             .map { record -> record.get("map") }
             .map { CosmicDiffMethylation.parseValueMap(it) }
             .forEach {
-                Neo4jConnectionService.executeCypherCommand(it.generateLoadCosmicModelCypher())
-                println("Loading CosmicCompleteDiffMethylation for (non-unique) sample id: ${it.sampleId}")
+                nodeCount += 1
+                when (it.isValid()) {
+                    true -> println(
+                        "CosmicDiffMethylation: ${it.sampleId} " +
+                                "  methylation: ${it.methylation}"
+                    )
+                    false -> println("Row $nodeCount is invalid")
+                }
             }
-        return Neo4jConnectionService.executeCypherCommand("MATCH (exp: CompleteGeneExpression) RETURN COUNT(exp)").toInt()
+        return nodeCount
     }
-    private fun deleteDiffMethylationNodes() =
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicDiffMethylation")
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceCSVRecords(filename: String) =
+        produce<CSVRecord> {
+            val path = Paths.get(filename)
+            CSVRecordSupplier(path).get().asSequence()
+                .forEach {
+                    send(it)
+                    delay(20)
+                }
+        }
+
+    fun processCSVRecords(filename: String) = runBlocking {
+        val records = produceCSVRecords(filename)
+        var nodeCount = 0
+        for (record in records) {
+            nodeCount += 1
+            val methylation = CosmicDiffMethylation.parseCSVRecord(record)
+            when (methylation.isValid()) {
+                true -> println("Sample: ${methylation.sampleId}  Methylation: ${methylation.methylation}")
+                false -> println("Row $nodeCount is invalid")
+            }
+        }
     }
+}
 
 fun main (args:Array<String>) {
-    val cosmicMethylationFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicCompleteDifferentialMethylation.tsv")
+    val cosmicMethylationFile =  ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicCompleteDifferentialMethylation.tsv")
     val recordCount =
-       TestCosmicDiffMethylation().parseCosmicCompleteDifferentialMethylation(cosmicMethylationFile)
+       TestCosmicDiffMethylation().processCSVRecords(cosmicMethylationFile)
     println("Processed $cosmicMethylationFile  record count = $recordCount")
 }

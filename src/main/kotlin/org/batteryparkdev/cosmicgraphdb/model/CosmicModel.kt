@@ -1,8 +1,11 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.lang3.RandomStringUtils
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.nodeidentifier.dao.NodeIdentifierDao
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
+import org.batteryparkdev.nodeidentifier.model.RelationshipDefinition
 import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
 
 interface CosmicModel {
@@ -19,15 +22,19 @@ interface CosmicModel {
     Generic function to create a HAS_PUBLICATION relationship between a node and a
     Publication/PubMed node
      */
-    fun createPubMedRelationship( pubId:Int) {
+    fun createPubMedRelationship() {
+        val pubId = getPubMedId()
         if (pubId > 0) {
-            val nodeId = getNodeIdentifier()
-            val pub = PubMedPlaceholderNodeLoader(pubId.toString(), nodeId.idValue,
-                nodeId.primaryLabel, nodeId.idProperty
-            )
-            pub.registerPubMedPublication()
+            val parentNodeId = getNodeIdentifier()
+            val pubNodeId = NodeIdentifier("Publication","pub_id", pubId.toString(),"PubMed")
+            NodeIdentifierDao.createPlaceholderNode(pubNodeId)
+             RelationshipDefinition(parentNodeId,pubNodeId,"HAS_PUBLICATION").also {
+                 NodeIdentifierDao.defineRelationship(it)
+             }
         }
     }
+
+
     /*
 Function to generate Cypher commands to create a
 GeneMutationCollection - [HAS_MUTATION] -> specific Mutation relationship

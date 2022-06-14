@@ -16,7 +16,7 @@ class TestHGNCLoader {
         Neo4jUtils.detachAndDeleteNodesByName("CosmicHGNC")
     }
 }
-fun main () {
+fun main(args: Array<String>): Unit {
     val filename = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicHGNC.tsv")
     println("Loading Cosmic HGNC data from: $filename")
     val rowCount = TestHGNCLoader().loadCosmicHGNCFile(filename)

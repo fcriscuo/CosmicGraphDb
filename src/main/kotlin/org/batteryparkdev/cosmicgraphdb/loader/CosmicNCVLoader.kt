@@ -37,7 +37,7 @@ object CosmicNCVLoader {
         produce<Int> {
             for (ncv in ncvs) {
                 Neo4jConnectionService.executeCypherCommand(ncv.generateLoadCosmicModelCypher())
-                ncv.createPubMedRelationship(ncv.pubmedId)
+               // ncv.createPubMedRelationship(ncv.pubmedId)
                 send(ncv.sampleId)
                 delay(20L)
             }
