@@ -12,24 +12,23 @@ import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
-class TestCosmicHallmark {
+class TestCosmicHallmark: TestCosmicModel() {
 
-    private val LIMIT = Long.MAX_VALUE
+
     var nodeCount = 0
 
     fun parseCosmicHallmarkFile(filename: String): Int {
-        // limit the number of records processed
 
         ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
+            .stream()
             .map { record -> record.get("map") }
             .map { CosmicHallmark.parseValueMap(it) }
             .forEach { hall ->
                 nodeCount += 1
                 when (hall.isValid()) {
-                    true -> println(
+                    true -> println("Hallmark Id: ${hall.hallmarkId} " +
                         "CosmicHallmark: ${hall.geneSymbol} " +
-                                "  Hallmark: ${hall.hallmark}"
+                                "  Hallmark: ${hall.hallmark} "
                     )
 
                     false -> println("Row $nodeCount is invalid")
@@ -38,17 +37,20 @@ class TestCosmicHallmark {
         return nodeCount
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun CoroutineScope.produceCSVRecords(filename: String) =
-        produce<CSVRecord> {
-            val path = Paths.get(filename)
-            CSVRecordSupplier(path).get().asSequence()
-                .filter { it.size() > 1 }
-                .forEach {
-                    send(it)
-                    delay(20)
-                }
-        }
+//    @OptIn(ExperimentalCoroutinesApi::class)
+//    fun CoroutineScope.produceCSVRecords(filename: String) =
+//        produce<CSVRecord> {
+//            val path = Paths.get(filename)
+//            CSVRecordSupplier(path).get().asSequence()
+//                .filter { it.size() > 1 }
+//                .forEach {
+//                    send(it)
+//                    delay(20)
+//                }
+//        }
+    /*
+    1807793882
+     */
 
     fun processCSVRecords(filename: String) = runBlocking {
         val records = produceCSVRecords(filename)
@@ -56,7 +58,7 @@ class TestCosmicHallmark {
             nodeCount += 1
             val hallmark = CosmicHallmark.parseCSVRecord(record)
             when (hallmark.isValid()) {
-                true -> println(
+                true -> println("Hallmark Id: ${hallmark.hallmarkId} " +
                     "Gene symbol: ${hallmark.geneSymbol}  Hallmark: ${hallmark.hallmark} " +
                             " Description: ${hallmark.description}"
                 )
@@ -67,11 +69,13 @@ class TestCosmicHallmark {
     }
 }
 
+
 fun main() {
     val cosmicHallmarkFile =
-        ConfigurationPropertiesService.resolveCosmicSampleFileLocation("Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv")
-    val test = TestCosmicHallmark()
-    //test.processCSVRecords(cosmicHallmarkFile)
-    test.parseCosmicHallmarkFile(cosmicHallmarkFile)
-    println("Loaded COSMIC gene census hallmark file: $cosmicHallmarkFile  record count = ${test.nodeCount}")
+        ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv")
+    TestCosmicHallmark().let {
+        it.processCSVRecords(cosmicHallmarkFile)
+       // it.parseCosmicHallmarkFile(cosmicHallmarkFile)
+        println("Loaded COSMIC gene census hallmark file: $cosmicHallmarkFile  record count = ${it.nodeCount}")
+    }
 }

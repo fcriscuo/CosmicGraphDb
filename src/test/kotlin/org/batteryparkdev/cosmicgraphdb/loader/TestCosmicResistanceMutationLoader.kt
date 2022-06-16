@@ -1,28 +1,12 @@
 package org.batteryparkdev.cosmicgraphdb.loader
 
-import com.google.common.base.Stopwatch
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.property.service.ConfigurationPropertiesService
-import java.util.concurrent.TimeUnit
+import arrow.core.nonEmptyListOf
 
-class TestCosmicResistanceMutationLoader {
-
-    fun loadCosmicDrugResistanceMutationFile(filename: String): Int {
-        deleteCosmicResistanceMutationNodes()
-        CosmicResistanceMutationLoader.loadCosmicResistanceMutationFile(filename)
-        return Neo4jConnectionService.executeCypherCommand("MATCH (crm:CosmicResistanceMutation) RETURN COUNT(crm)").toInt()
+fun main () {
+    val filename = "CosmicResistanceMutations.tsv"
+    println("Loading Cosmic Resistance Mutation data from: $filename")
+    TestCosmicLoader(filename, nonEmptyListOf("CosmicResistanceMutation")).let {
+        it.loadCosmicFile()
+        println("Loaded Cosmic Resistance Mutation data row count = ${it.getNodeCount()}")
     }
-
-    private fun deleteCosmicResistanceMutationNodes () {
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicResistanceMutation")
-    }
-}
-fun main() {
-    val filename = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicResistanceMutations.tsv")
-    println("Loading Cosmic Resistance Mutations data from: $filename")
-    val stopwatch = Stopwatch.createStarted()
-    val rowCount = TestCosmicResistanceMutationLoader().loadCosmicDrugResistanceMutationFile(filename)
-    println("Loaded $rowCount CosmicResistanceMutation nodes in ${stopwatch.elapsed(TimeUnit.SECONDS)} seconds")
-
 }

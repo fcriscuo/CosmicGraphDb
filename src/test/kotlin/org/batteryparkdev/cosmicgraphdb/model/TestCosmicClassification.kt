@@ -1,17 +1,23 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.io.CsvRecordSequenceSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
+import kotlin.streams.asSequence
 
-class TestCosmicClassification {
-    fun parseClassificationFile(filename: String): Int {
-        val LIMIT = Long.MAX_VALUE
+class TestCosmicClassification: TestCosmicModel() {
+    var nodeCount = 0
 
-        var nodeCount = 0
+    fun parseClassificationFile(filename: String): Unit {
         ApocFileReader.processDelimitedFile(filename).stream()
-            .limit(LIMIT)
             .map { record -> record.get("map") }
             .map { CosmicClassification.parseValueMap(it) }
             .forEach {classification ->
@@ -22,9 +28,23 @@ class TestCosmicClassification {
                     false -> println("Row $nodeCount is invalid")
                 }
             }
-        return nodeCount
+
     }
 
+
+
+    fun processCSVRecords(filename: String) = runBlocking {
+        val records = produceCSVRecords(filename)
+        for (record in records) {
+            nodeCount += 1
+            val breakpoint = CosmicBreakpoint.parseCSVRecord(record)
+            when (breakpoint.isValid()) {
+                true -> println("Sample Id: ${breakpoint.sampleId}  Mutation Id" +
+                        " ${breakpoint.mutationId}")
+                false -> println("Row $nodeCount is invalid")
+            }
+        }
+    }
     fun csvParseClassificationFile(filename: String): Int {
         var nodeCount = 0
         println("Processing file: $filename")

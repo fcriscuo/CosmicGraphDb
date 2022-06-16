@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.loader
 
+import arrow.core.nonEmptyListOf
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 
 class TestCosmicModelLoader {

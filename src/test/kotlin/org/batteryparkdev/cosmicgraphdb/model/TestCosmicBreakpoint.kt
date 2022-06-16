@@ -1,24 +1,27 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 class TestCosmicBreakpoint {
-    private val LIMIT = Long.MAX_VALUE
+    var nodeCount = 0
 
     /*
-    Test parsing sample Cosmic breakpoints TSV file and mapping data to
-    CosmicBreakpoint model class
-    n.b. file name specification must be full path since it is resolved by Neo4j server
+    APOC parser
      */
-    fun parseBreakpointFile(filename: String): Int {
-        // limit the number of records processed
-        var nodeCount = 0
+    fun parseBreakpointFile(filename: String): Unit {
         ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
+            .stream()
             .map { record -> record.get("map") }
             .map { CosmicBreakpoint.parseValueMap(it) }
             .forEach { breakpoint ->
@@ -27,35 +30,43 @@ class TestCosmicBreakpoint {
                     true -> println("CosmicBreakpoint: ${breakpoint.mutationId}  sample: ${breakpoint.sampleId}")
                     false -> println("Row $nodeCount is invalid")
                 }
-
             }
-        return nodeCount
     }
 
-    fun csvParseBreakpointFile(filename: String): Int {
-        var nodeCount = 0
-        println("Processing file: $filename")
-        val path = Paths.get(filename)
-        TsvRecordSequenceSupplier(path).get().chunked(100)
-            .forEach { recordList ->
-                recordList.stream()
-                    .map { record -> CosmicBreakpoint.parseCSVRecord(record) }
-                    .forEach { brekpoint ->
-                        nodeCount += 1
-                        when (brekpoint.isValid()) {
-                            true -> println("Sample Id: ${brekpoint.sampleId}  Mutation Id" +
-                                    " ${brekpoint.mutationId}")
-                            false -> println("Row $nodeCount is invalid")
-                        }
-                    }
+    /*
+    Apache Commons CSV parser
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.produceCSVRecords(filename: String) =
+        produce<CSVRecord> {
+            val path = Paths.get(filename)
+            CSVRecordSupplier(path).get().asSequence()
+                .filter { it.size() > 1 }
+                .forEach {
+                    send(it)
+                    delay(20)
+                }
+        }
+
+    fun processCSVRecords(filename: String) = runBlocking {
+        val records = produceCSVRecords(filename)
+        for (record in records) {
+            nodeCount += 1
+            val breakpoint = CosmicBreakpoint.parseCSVRecord(record)
+            when (breakpoint.isValid()) {
+                true -> println("Sample Id: ${breakpoint.sampleId}  Mutation Id" +
+                            " ${breakpoint.mutationId}")
+                false -> println("Row $nodeCount is invalid")
             }
-        return nodeCount
+        }
     }
 }
 
 fun main() {
-    val cosmicBreakpointFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicBreakpointsExport.tsv")
-val recordCount =
-    TestCosmicBreakpoint().csvParseBreakpointFile(cosmicBreakpointFile)
-    println("Breakpoint record count = $recordCount")
+    val cosmicBreakpointFile =
+        ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicBreakpointsExport.tsv")
+    TestCosmicBreakpoint().let {
+        it.processCSVRecords(cosmicBreakpointFile)
+        println("Breakpoint record count = ${it.nodeCount}")
+    }
 }

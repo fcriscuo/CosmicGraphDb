@@ -13,6 +13,8 @@ import java.nio.file.Paths
 import kotlin.streams.asSequence
 
 class TestCosmicCompleteCNA {
+    var nodeCount = 0
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceTSVRecords(filename: String) =
         produce<CSVRecord> {
@@ -26,7 +28,6 @@ class TestCosmicCompleteCNA {
 
     fun processCsvRecords(filename: String) = runBlocking {
         val records = produceTSVRecords(filename)
-        var nodeCount = 0
         for (record in records) {
             nodeCount += 1
             val cna = CosmicCompleteCNA.parseCSVRecord(record)
@@ -37,9 +38,8 @@ class TestCosmicCompleteCNA {
         }
     }
 
-    fun parseCNAFile(filename: String): Int {
+    fun parseCNAFile(filename: String): Unit {
         val LIMIT = Long.MAX_VALUE// limit the number of records processed
-        var nodeCount = 0
         ApocFileReader.processDelimitedFile(filename).stream()
             .limit(LIMIT)
             .map { record -> record.get("map") }
@@ -54,31 +54,15 @@ class TestCosmicCompleteCNA {
                     false -> println("Row $nodeCount is invalid")
                 }
             }
-        return nodeCount
-    }
-
-
-    fun cnaParseCosmicCompleteCNAFile(filename: String): Int {
-        var nodeCount = 0
-        println("Processing file: $filename")
-        val path = Paths.get(filename)
-        CSVRecordSupplier(path).get()
-            .map { record -> CosmicCompleteCNA.parseCSVRecord(record) }
-            .forEach { cna ->
-                nodeCount += 1
-                when (cna.isValid()) {
-                    true -> println("Gene Symbol: ${cna.geneSymbol}  Sample Id: ${cna.sampleId}")
-                    false -> println("Row $nodeCount is invalid")
-                }
-            }
-
-        return nodeCount
     }
 }
 
 fun main() {
     val cosmicCNAFile = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicCompleteCNA.tsv")
     println("Processing COSMIC CNA file $cosmicCNAFile")
-    val recordCount = TestCosmicCompleteCNA().processCsvRecords(cosmicCNAFile)
-    println("Record count = $recordCount")
+    TestCosmicCompleteCNA().let {
+        it.processCsvRecords(cosmicCNAFile)
+        println("COSMIC CNA record count = ${it.nodeCount}")
+    }
+
 }

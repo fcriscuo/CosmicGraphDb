@@ -46,9 +46,7 @@ data class CosmicTumor(
    private fun generateTumorMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicTumor\"], " +
                 "{tumor_id: $tumorId} ," +
-                " {tumor_origin: " +
-
-                " tumor_source: ${Neo4jUtils.formatPropertyValue(tumorSource)} , " +
+                " { tumor_source: ${Neo4jUtils.formatPropertyValue(tumorSource)} , " +
                 " tumor_remark: ${Neo4jUtils.formatPropertyValue(tumorRemark)} , " +
                 "  created: datetime()},{}) YIELD node as $nodename \n"
 
@@ -65,17 +63,6 @@ data class CosmicTumor(
                     " YIELD rel AS $relname \n"
     }
 
-    /*
-    [sample_id, sample_name, id_tumour, id_individual,
-    primary_site, site_subtype_1, site_subtype_2, site_subtype_3,
-    primary_histology, histology_subtype_1, histology_subtype_2, histology_subtype_3,
-    therapy_relationship, sample_differentiator, mutation_allele_specification, msi,
-    average_ploidy, whole_genome_screen, whole_exome_screen, sample_remark,
-    drug_response, grade, age_at_tumour_recurrence, stage, cytogenetics,
-     metastatic_site, tumour_source, tumour_remark, age, ethnicity,
-     environmental_variables, germline_mutation, therapy, family, normal_tissue_tested,
-     gender, individual_remark, nci_code, sample_type, cosmic_phenotype_id]
-     */
 
     companion object : AbstractModel {
         const val nodename = "tumor"
