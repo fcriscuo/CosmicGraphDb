@@ -15,9 +15,9 @@ object CosmicFilenameService {
     val cosmicSampleFile = "CosmicSample.tsv"
     val cosmicMutationExportCensusFile = "CosmicMutantExportCensus.tsv"
     val cosmicHallmarkFile = "Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv"
-    val cosmicBreakpointsFile = "CancerBreakpointsExport.tsv"
+    val cosmicBreakpointsFile = "CosmicBreakpointsExport.tsv"
     val cosmicFusionFile = "CosmicFusionExport.tsv"
-    val cosmicResistanceFile = "CosmicResistanceMutation.tsv"
+    val cosmicResistanceFile = "CosmicResistanceMutations.tsv"
     val cosmicStructFile = "CosmicStructExport.tsv"
     val cosmicNCVFile = "CosmicNCV.tsv"
 

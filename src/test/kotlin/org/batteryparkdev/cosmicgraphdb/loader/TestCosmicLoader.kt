@@ -9,10 +9,9 @@ class TestCosmicLoader(val filename: String,val  nodeLabelList: NonEmptyList<Str
     fun deleteCosmicNode(): Unit =
         nodeLabelList.forEach { label -> Neo4jUtils.detachAndDeleteNodesByName(label) }
 
-
      fun getNodeCount(): Int =
          Neo4jConnectionService.executeCypherCommand(
-             "MATCH (n: ${Neo4jUtils.formatPropertyValue(nodeLabelList.get(0))}) RETURN COUNT(n)").toInt()
+             "MATCH (n:${Neo4jUtils.formatPropertyValue(nodeLabelList[0])}) RETURN COUNT(n)").toInt()
 
     fun loadCosmicFile( ): Unit {
         deleteCosmicNode()

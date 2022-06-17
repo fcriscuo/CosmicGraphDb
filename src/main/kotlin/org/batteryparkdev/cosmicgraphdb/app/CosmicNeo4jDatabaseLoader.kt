@@ -6,8 +6,6 @@ import kotlinx.coroutines.*
 import org.batteryparkdev.cosmicgraphdb.loader.*
 import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.property.service.ConfigurationPropertiesService
-import org.batteryparkdev.property.service.ConfigurationPropertiesService.resolveCosmicSampleFileLocation
 import org.batteryparkdev.publication.pubmed.loader.AsyncPubMedPublicationLoader
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
@@ -77,14 +75,14 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
             // Job 5 waits for Job4
             val task05 = asyncIO { loadSampleJob(job4Result) }  // CosmicSample
             val job5Result = task05.await()
-            // Job6- Job 13 wait for Job5 (Cosmic Sample)
+            // Job 6- Job 14 wait for Job5 (Cosmic Sample)
             val task06 = asyncIO { loadCodingMutations(job5Result) }  // Cosmic Coding Mutations
             val task07 = asyncIO { loadCompleteCNAJob(job5Result) }
             val task08 = asyncIO { loadDiffMethylationJob(job5Result) }
             val task09 = asyncIO { loadGeneExpressionJob(job5Result) }
             val task10 = asyncIO { loadBreakpointsJob(job5Result) }
             val task11 = asyncIO { loadCosmicStructJob(job5Result) }
-            val task12 = asyncIO { loadCosmicResistanceMutationJob(job5Result) }
+            val task12 = asyncIO { loadCosmicResistanceMutationsJob(job5Result) }
             val task13 = asyncIO { loadCosmicNCVJob(job5Result) }
             val task14 = asyncIO { loadCosmicFusionJob(job5Result) }
             // wait for last tier of jobs to complete
@@ -144,17 +142,17 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     }
 
     private fun loadHallmarkJob(job2Result: String): String {  // job 3
-        CosmicModelLoader(CosmicFilenameService.cosmicHallmarkFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicHallmarkFile, runmode).also {
             println("Starting Hallmark loader")
             val stopwatch = Stopwatch.createStarted()
-            it .loadCosmicFile()
+            it.loadCosmicFile()
             println("CosmicHallmark data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "Hallmark data loaded"
     }
 
     private fun loadClassificationJob(): String {   // job 4
-        CosmicModelLoader(CosmicFilenameService.cosmicClassificationFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicClassificationFile, runmode).also {
             println("Starting Classification loader")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -164,7 +162,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     }
 
     private fun loadSampleJob(job4Result: String): String { // job 5
-        CosmicModelLoader(CosmicFilenameService.cosmicSampleFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicSampleFile, runmode).also {
             println("Starting Sample loader")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -174,7 +172,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     }
 
     private fun loadCodingMutations(job5Result: String): String {  //job 6
-        CosmicModelLoader(CosmicFilenameService.cosmicMutationExportCensusFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicMutationExportCensusFile, runmode).also {
             println("Starting CosmicCodingMutation loader")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -184,7 +182,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     }
 
     private fun loadCompleteCNAJob(job3Result: String): String {  // job 7
-        CosmicModelLoader(CosmicFilenameService.cosmicCompleteCNAFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicCompleteCNAFile, runmode).also {
             println("Starting CompleteCNA loader")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -195,7 +193,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
 
     private fun loadDiffMethylationJob(job5Result: String): String {  // job 8
 
-        CosmicModelLoader(CosmicFilenameService.cosmicDiffMethylationFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicDiffMethylationFile, runmode).also {
             println("Starting DiffMethylation loader")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -205,7 +203,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     }
 
     private fun loadGeneExpressionJob(job5Result: String): String { // job 9
-        CosmicModelLoader(CosmicFilenameService.cosmicGeneExpressionFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicGeneExpressionFile, runmode).also {
             println("Starting GeneExpression loader")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -215,7 +213,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     }
 
     private fun loadBreakpointsJob(job5Result: String): String {   // job 10
-        CosmicModelLoader(CosmicFilenameService.cosmicBreakpointsFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicBreakpointsFile, runmode).also {
             println("Starting Breakpoints loader")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -226,7 +224,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
 
     private fun loadCosmicStructJob(job5Result: String): String {  // job 11
 
-        CosmicModelLoader(CosmicFilenameService.cosmicStructFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicStructFile, runmode).also {
             println("Starting Struct variant data loader ")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -235,19 +233,19 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
         return "CosmicStruct data loaded"
     }
 
-    private fun loadCosmicResistanceMutationJob(job5Result: String): String {  // job 12
-        CosmicModelLoader(CosmicFilenameService.cosmicResistanceFile, runmode).also{
+    private fun loadCosmicResistanceMutationsJob(job5Result: String): String {  // job 12
+        CosmicModelLoader(CosmicFilenameService.cosmicResistanceFile, runmode).also {
             println("Starting Drug Resistance data loader ")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
-            println("CosmicSResistanceMutation data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
+            println("CosmicSResistanceMutations data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "Result of CosmicResistanceMutation data loaded"
     }
 
     private fun loadCosmicNCVJob(job5Result: String): String {  // job 13
         println("Starting NCV data loader ")
-        CosmicModelLoader(CosmicFilenameService.cosmicNCVFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicNCVFile, runmode).also {
             println("Starting NCV data loader ")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -257,7 +255,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     }
 
     private fun loadCosmicFusionJob(Job5Result: String): String {
-        CosmicModelLoader(CosmicFilenameService.cosmicFusionFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicFusionFile, runmode).also {
             println("Starting Fusion data loader ")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
@@ -268,7 +266,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
 
     private fun loadHGNCJob(job2Result: String): String {
 
-        CosmicModelLoader(CosmicFilenameService.cosmicHGNCFile, runmode).also{
+        CosmicModelLoader(CosmicFilenameService.cosmicHGNCFile, runmode).also {
             println("3b -Starting HGNC loader ")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()

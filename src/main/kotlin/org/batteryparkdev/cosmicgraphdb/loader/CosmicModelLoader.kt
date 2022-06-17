@@ -23,11 +23,10 @@ class CosmicModelLoader( val filename: String, val runmode:String = "sample") {
     private val filenameRunmodePair = Pair(filename, runmode)
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
-
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.csvProcessCosmicFile() =
         produce<CosmicModel> {
-            val path = Paths.get(filename)
+            val path = Paths.get(CosmicFilenameService.resolveCosmicDataFile(filenameRunmodePair))
             CSVRecordSupplier(path).get().asSequence()
                 .map { parseCosmicModel(it) }
                 .forEach {
@@ -76,7 +75,7 @@ class CosmicModelLoader( val filename: String, val runmode:String = "sample") {
             "CosmicSample.tsv" -> CosmicSample.parseCSVRecord(record)
             "CosmicMutantExportCensus.tsv" -> CosmicCodingMutation.parseCSVRecord(record)
             "Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv" -> CosmicHallmark.parseCSVRecord(record)
-            "CancerBreakpointsExport.tsv" -> CosmicBreakpoint.parseCSVRecord(record)
+            "CosmicBreakpointsExport.tsv" -> CosmicBreakpoint.parseCSVRecord(record)
             "CosmicResistanceMutations.tsv" -> CosmicResistanceMutation.parseCSVRecord(record)
             "CosmicStructExport.tsv" -> CosmicStruct.parseCSVRecord(record)
             "CosmicNCV.tsv" -> CosmicNCV.parseCSVRecord(record)

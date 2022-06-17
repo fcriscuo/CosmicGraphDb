@@ -1,6 +1,6 @@
 ## COSMICGraphDb
 
-COSMICGraphDb is a backend application implemented in Kotlin 1.6 that will
+COSMICGraphDb is a backend application implemented in Kotlin 1.7 that will
 load data from the Catalog of Somatic Mutations in Cancer (COSMIC),
 (https://cancer.sanger.ac.uk/cosmic) data files into a local Neo4j 4.4 database
 (https://neo4j.com/). The major graph database nodes and relationships 

@@ -32,7 +32,7 @@ data class CosmicCompleteGeneExpression(
             .plus(" RETURN $nodename")
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CompleteGeneExpression\"], " +
-            "  {key: ${Neo4jUtils.formatPropertyValue(key)}, " +
+            "  {key: ${Neo4jUtils.formatPropertyValue(key)}}, " +
             "  {regulation: ${Neo4jUtils.formatPropertyValue(regulation)}, " +
             "  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)} ," +
             "  sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)} ," +
