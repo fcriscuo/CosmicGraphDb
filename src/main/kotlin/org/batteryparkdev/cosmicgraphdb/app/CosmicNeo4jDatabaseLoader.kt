@@ -34,6 +34,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     // source: https://stackoverflow.com/questions/53921470/how-to-run-two-jobs-in-parallel-but-wait-for-another-job-to-finish-using-kotlin
     fun <T> CoroutineScope.asyncIO(ioFun: () -> T) = async(Dispatchers.IO) { ioFun() }
     fun <T> CoroutineScope.asyncDefault(defaultFun: () -> T) = async(Dispatchers.Default) { defaultFun() }
+
     fun loadCosmicDatabase() = runBlocking {
         // load order is import for establishing parent to child relationships
         val stopwatch = Stopwatch.createStarted()
@@ -63,7 +64,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
         // launch coroutine
         GlobalScope.launch {
             // run Job1, Job2, and Job4 in parallel, asyncIO - is an extension function on CoroutineScope
-            //  val task01 = asyncDefault { loadPubmedJob() }     // PubMed
+            val task01 = asyncDefault { loadPubmedJob() }     // PubMed
             val task04 = asyncIO { loadClassificationJob() }  // CosmicClassification
             val task02 = asyncIO { loadGeneCensusJob() }      // CosmicGeneCensus
             // waiting for result of Job1 , Job2, & Job4
@@ -88,7 +89,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
             // wait for last tier of jobs to complete
             onDone(
                 task06.await(), task03.await(), task3b.await(),
-                //  task01.await(),
+                 task01.await(),
                 task07.await(), task08.await(), task09.await(), task10.await(),
                 task11.await(), task12.await(), task13.await(), task14.await()
             )
@@ -97,14 +98,14 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
 
     private fun onDone(
         job6Result: String, job3Result: String, job3bResult: String,
-        // job1Result: String,
+         job1Result: String,
         job7Result: String, job8Result: String, job9Result: String,
         job10Result: String, job11Result: String, job12Result: String, job13Result: String, job14Result: String
     ) {
         println("Executing onDone function")
         println(
             "task06 = $job6Result " +
-                    //  "task01 = $job1Result  " +
+                      "task01 = $job1Result  " +
                     " task07 = $job7Result   " +
                     " task08 = $job8Result   task09 = $job9Result   task10 =$job10Result " +
                     "task11 = $job11Result   task12 = $job12Result   task13 =$job13Result " +
@@ -141,13 +142,17 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
         return "GeneCensus data loaded"
     }
 
+    /*
+    Private function to load the COSMIC hallmark data.
+    This file has a UTF-16 encoding and requires a specialized loader
+     */
     private fun loadHallmarkJob(job2Result: String): String {  // job 3
-        CosmicModelLoader(CosmicFilenameService.cosmicHallmarkFile, runmode).also {
-            println("Starting Hallmark loader")
-            val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
-            println("CosmicHallmark data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
-        }
+        val stopwatch = Stopwatch.createStarted()
+        val filenameRunmodePair = Pair("Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv","complete")
+        val hallmarkFile = CosmicFilenameService.resolveCosmicDataFile(filenameRunmodePair)
+        println("Loading COSMIC Hallmark data from file: $hallmarkFile")
+        CosmicHallmarkLoader.processCosmicHallmarkFile(hallmarkFile)
+        println("CosmicHallmark data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         return "Hallmark data loaded"
     }
 
@@ -265,7 +270,6 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
     }
 
     private fun loadHGNCJob(job2Result: String): String {
-
         CosmicModelLoader(CosmicFilenameService.cosmicHGNCFile, runmode).also {
             println("3b -Starting HGNC loader ")
             val stopwatch = Stopwatch.createStarted()
@@ -284,7 +288,7 @@ fun main(args: Array<String>): Unit = runBlocking {
         }
     println("WARNING: Invoking this application will delete all COSMIC data from the database")
     println("There will be a 20 second delay period to cancel this execution (CTRL-C) if this is not your intent")
-    // Thread.sleep(20_000L)
+    Thread.sleep(20_000L)
     println("Cosmic data will now be loaded from the $runMode set of files")
     val loader = CosmicNeo4jDatabaseLoader(runMode)
     loader.deleteCosmicNodes()

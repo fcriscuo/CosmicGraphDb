@@ -9,7 +9,6 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.cosmicgraphdb.model.*
 import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 import org.batteryparkdev.io.CSVRecordSupplier
@@ -36,21 +35,6 @@ class CosmicModelLoader( val filename: String, val runmode:String = "sample") {
                     delay(20L)
                 }
         }
-    /*
-
-     */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.apocProcessCosmicFile() =
-        produce<CosmicModel> {
-            val path = Paths.get(CosmicFilenameService.resolveCosmicDataFile(filenameRunmodePair))
-            ApocFileReader.processDelimitedFile(path.toString())
-                .map { record -> record.get("map") }
-                .map { parseCosmicModel(it) }
-                .forEach {
-                    send(it)
-                    delay(20L)
-                }
-        }
 
     /*
     Private function to parse the Value object based on the Cosmic filename
@@ -74,25 +58,12 @@ class CosmicModelLoader( val filename: String, val runmode:String = "sample") {
             "classification.csv" -> CosmicClassification.parseCSVRecord(record)
             "CosmicSample.tsv" -> CosmicSample.parseCSVRecord(record)
             "CosmicMutantExportCensus.tsv" -> CosmicCodingMutation.parseCSVRecord(record)
-            "Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv" -> CosmicHallmark.parseCSVRecord(record)
             "CosmicBreakpointsExport.tsv" -> CosmicBreakpoint.parseCSVRecord(record)
             "CosmicResistanceMutations.tsv" -> CosmicResistanceMutation.parseCSVRecord(record)
             "CosmicStructExport.tsv" -> CosmicStruct.parseCSVRecord(record)
             "CosmicNCV.tsv" -> CosmicNCV.parseCSVRecord(record)
             //TODO: fix this after testing
             else -> CosmicGeneCensus.parseCSVRecord(record)
-        }
-    }
-
-    /*
-    Private method to determine which type of file parser (APOC or Apache CSV) to use for
-    a COSMIC file
-     */
-    private fun isCSVParserType(): Boolean {
-        println("filename = $filename")
-        return when (filename) {
-            "Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv" -> false
-            else -> true
         }
     }
 
@@ -125,15 +96,12 @@ class CosmicModelLoader( val filename: String, val runmode:String = "sample") {
     /*
     Function to load data from a Cosmic file into the Neo4j database
      */
-
     fun loadCosmicFile() = runBlocking {
         logger.atInfo().log("Loading Cosmic data from file: $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val models = when (isCSVParserType()){
-            true ->  processPubMedData(loadCosmicModel(csvProcessCosmicFile()))
-            false -> processPubMedData(loadCosmicModel(apocProcessCosmicFile()))
-        }
+        val models = processPubMedData(loadCosmicModel(csvProcessCosmicFile()))
+
         for ( model in models){
             nodeCount += 1
             println("Loaded ${model.getNodeIdentifier().primaryLabel}  id: ${model.getNodeIdentifier().idValue}")

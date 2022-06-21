@@ -34,7 +34,6 @@ interface CosmicModel {
         }
     }
 
-
     /*
 Function to generate Cypher commands to create a
 GeneMutationCollection - [HAS_MUTATION] -> specific Mutation relationship

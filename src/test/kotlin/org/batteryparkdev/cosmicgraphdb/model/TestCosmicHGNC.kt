@@ -6,7 +6,6 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
@@ -14,27 +13,6 @@ import kotlin.streams.asSequence
 
 class TestCosmicHGNC {
     var nodeCount = 0
-    fun parseCosmicHGNCFile(filename: String): Int {
-        // limit the number of records processed
-        val LIMIT = Long.MAX_VALUE
-
-        ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicHGNC.parseValueMap(it) }
-            .forEach { hgnc ->
-                nodeCount += 1
-                when (hgnc.isValid()) {
-                    true -> println(
-                        "CosmicHGNC: ${hgnc.hgncId} " +
-                                "  gene symbol: ${hgnc.hgncGeneSymbol}"
-                    )
-
-                    false -> println("Row $nodeCount is invalid")
-                }
-            }
-        return nodeCount
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceCSVRecords(filename: String) =
@@ -48,7 +26,9 @@ class TestCosmicHGNC {
                 }
         }
 
-    fun processCSVRecords(filename: String) = runBlocking {
+    fun testCosmicModel() = runBlocking {
+        val filename = ConfigurationPropertiesService
+            .resolveCosmicCompleteFileLocation("CosmicHGNC.tsv")
         val records = produceCSVRecords(filename)
         for (record in records) {
             nodeCount += 1
@@ -62,12 +42,9 @@ class TestCosmicHGNC {
                 false -> println("Row $nodeCount is invalid")
             }
         }
+        println("HGNC record count = $nodeCount")
     }
 }
 
-fun main() {
-    val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicHGNC.tsv")
-    val test = TestCosmicHGNC()
-    test.processCSVRecords(filename)
-    println("HGNC record count = ${test.nodeCount}")
-}
+fun main() =
+    TestCosmicHGNC().testCosmicModel()

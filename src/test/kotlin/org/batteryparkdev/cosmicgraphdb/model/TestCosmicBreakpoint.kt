@@ -7,7 +7,6 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
@@ -15,23 +14,7 @@ import kotlin.streams.asSequence
 
 class TestCosmicBreakpoint {
     var nodeCount = 0
-
-    /*
-    APOC parser
-     */
-    fun parseBreakpointFile(filename: String): Unit {
-        ApocFileReader.processDelimitedFile(filename)
-            .stream()
-            .map { record -> record.get("map") }
-            .map { CosmicBreakpoint.parseValueMap(it) }
-            .forEach { breakpoint ->
-                nodeCount += 1
-                when (breakpoint.isValid()) {
-                    true -> println("CosmicBreakpoint: ${breakpoint.mutationId}  sample: ${breakpoint.sampleId}")
-                    false -> println("Row $nodeCount is invalid")
-                }
-            }
-    }
+    private val LIMIT = 4000L
 
     /*
     Apache Commons CSV parser
@@ -40,7 +23,7 @@ class TestCosmicBreakpoint {
     private fun CoroutineScope.produceCSVRecords(filename: String) =
         produce<CSVRecord> {
             val path = Paths.get(filename)
-            CSVRecordSupplier(path).get().asSequence()
+            CSVRecordSupplier(path).get().limit(LIMIT).asSequence()
                 .filter { it.size() > 1 }
                 .forEach {
                     send(it)
@@ -48,8 +31,10 @@ class TestCosmicBreakpoint {
                 }
         }
 
-    fun processCSVRecords(filename: String) = runBlocking {
-        val records = produceCSVRecords(filename)
+    fun testCosmicModel() = runBlocking {
+        val cosmicBreakpointFile =
+            ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicBreakpointsExport.tsv")
+        val records = produceCSVRecords(cosmicBreakpointFile)
         for (record in records) {
             nodeCount += 1
             val breakpoint = CosmicBreakpoint.parseCSVRecord(record)
@@ -59,14 +44,12 @@ class TestCosmicBreakpoint {
                 false -> println("Row $nodeCount is invalid")
             }
         }
+        println("Breakpoint record count = $nodeCount")
     }
 }
 
 fun main() {
-    val cosmicBreakpointFile =
-        ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicBreakpointsExport.tsv")
     TestCosmicBreakpoint().let {
-        it.processCSVRecords(cosmicBreakpointFile)
-        println("Breakpoint record count = ${it.nodeCount}")
+        it.testCosmicModel()
     }
 }

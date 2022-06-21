@@ -6,7 +6,6 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
@@ -14,19 +13,22 @@ import kotlin.streams.asSequence
 
 class TestCosmicCompleteCNA {
     var nodeCount = 0
-
+    private val LIMIT = 4000L
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceTSVRecords(filename: String) =
         produce<CSVRecord> {
             val path = Paths.get(filename)
-            CSVRecordSupplier(path).get().asSequence()
+            CSVRecordSupplier(path).get()
+                .limit(LIMIT)
+                .asSequence()
                 .forEach {
                     send(it)
                     delay(20)
                 }
         }
 
-    fun processCsvRecords(filename: String) = runBlocking {
+    fun testCosmicModel() = runBlocking {
+        val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicCompleteCNA.tsv")
         val records = produceTSVRecords(filename)
         for (record in records) {
             nodeCount += 1
@@ -36,33 +38,14 @@ class TestCosmicCompleteCNA {
                 false -> println("Row $nodeCount is invalid")
             }
         }
-    }
-
-    fun parseCNAFile(filename: String): Unit {
-        val LIMIT = Long.MAX_VALUE// limit the number of records processed
-        ApocFileReader.processDelimitedFile(filename).stream()
-            .limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicCompleteCNA.parseValueMap(it) }
-            .forEach { cna ->
-                nodeCount += 1
-                when (cna.isValid()) {
-                    true -> println(
-                        "CosmicCNA: ${cna.geneSymbol} " +
-                                "  sample id: ${cna.sampleId}"
-                    )
-                    false -> println("Row $nodeCount is invalid")
-                }
-            }
+        println("COSMIC CNA record count = $nodeCount")
     }
 }
 
 fun main() {
-    val cosmicCNAFile = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicCompleteCNA.tsv")
-    println("Processing COSMIC CNA file $cosmicCNAFile")
     TestCosmicCompleteCNA().let {
-        it.processCsvRecords(cosmicCNAFile)
-        println("COSMIC CNA record count = ${it.nodeCount}")
+        it.testCosmicModel()
+
     }
 
 }

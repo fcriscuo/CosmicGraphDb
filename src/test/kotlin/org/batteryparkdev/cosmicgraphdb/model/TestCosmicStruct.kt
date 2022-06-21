@@ -6,7 +6,6 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
 import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
@@ -14,28 +13,16 @@ import kotlin.streams.asSequence
 
 class TestCosmicStruct {
 
-    var nodeCount = 0
+    private var nodeCount = 0
+    private val LIMIT = 4000L
 
-    fun parseCosmicStructFile(filename: String): Int {
-        ApocFileReader.processDelimitedFile(filename)
-            .map { record -> record.get("map") }
-            .map { CosmicStruct.parseValueMap(it) }
-            .forEach { struct ->
-                nodeCount += 1
-                when (struct.isValid()) {
-                    true -> println("CosmicStruct: ${struct.mutationId} " +
-                            "  description: ${struct.description}" )
-                    false -> println("Row $nodeCount is invalid")
-                }
-
-            }
-        return nodeCount
-    }
     @OptIn(ExperimentalCoroutinesApi::class)
     fun CoroutineScope.produceCSVRecords(filename: String) =
         produce<CSVRecord> {
             val path = Paths.get(filename)
-            CSVRecordSupplier(path).get().asSequence()
+            CSVRecordSupplier(path).get()
+                .limit(LIMIT)
+                .asSequence()
                 .filter { it.size() > 1 }
                 .forEach {
                     send(it)
@@ -43,7 +30,9 @@ class TestCosmicStruct {
                 }
         }
 
-    fun processCSVRecords(filename: String) = runBlocking {
+    fun testCosmicModel() = runBlocking {
+        val filename = ConfigurationPropertiesService
+            .resolveCosmicCompleteFileLocation("CosmicStructExport.tsv")
         val records = produceCSVRecords(filename)
         for (record in records) {
             nodeCount += 1
@@ -56,14 +45,8 @@ class TestCosmicStruct {
                 false -> println("Row $nodeCount is invalid")
             }
         }
+        println("Struct record count = $nodeCount")
     }
 }
 
-fun main() {
-    println("Using Neo4j server at ${System.getenv("NEO4J_URI")}")
-    val cosmicStructFile = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicStructExport.tsv")
-    println("Loading data from file: $cosmicStructFile")
-    val test =  TestCosmicStruct()
-        test.processCSVRecords(cosmicStructFile)
-    println("Struct record count = ${test.nodeCount}")
-}
+fun main() = TestCosmicStruct().testCosmicModel()
