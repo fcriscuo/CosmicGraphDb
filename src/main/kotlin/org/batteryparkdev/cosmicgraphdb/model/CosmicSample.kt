@@ -129,35 +129,6 @@ data class CosmicSample(
         const val pubCollNodename = "sample_pub_coll"
         private const val classificationPrefix = "COSO"  // the classification file uses a prefix, the sample file does not
 
-        // COSO36736185  vs  36736185
-        fun parseValueMap(value: Value): CosmicSample =
-            CosmicSample(
-                value["sample_id"].asString().toInt(),
-                value["sample_name"].asString(),
-                value["id_tumour"].asString().toInt(),
-                value["primary_site"].asString(),
-                value["primary_histology"].asString(),
-                value["therapy_relationship"].asString(),
-                value["sample_differentiator"].asString(),
-                value["mutation_allele_specification"].asString(),
-                value["msi"].asString(), value["average_ploidy"].asString(),
-                convertYNtoBoolean(value["whole_genome_screen"].asString()),
-                convertYNtoBoolean(value["whole_exome_screen"].asString()),
-                removeInternalQuotes(value["sample_remark"].asString()),
-                value["drug_response"].asString(),
-                value["grade"].asString(),
-                parseValidIntegerFromString(value["age_at_tumour_recurrence"].asString()),
-                value["stage"].asString(),
-                value["cytogenetics"].asString(),
-                value["metastatic_site"].asString(),
-                value["germline_mutation"].asString(),
-                value["nci_code"].asString(),
-                value["sample_type"].asString(),
-                classificationPrefix.plus(value["cosmic_phenotype_id"].asString()),
-                CosmicPatient.parseValueMap(value),
-                CosmicTumor.parseValueMap(value)
-            )
-
         fun parseCSVRecord(record: CSVRecord): CosmicSample =
             CosmicSample(
                 record.get("sample_id").toInt(),

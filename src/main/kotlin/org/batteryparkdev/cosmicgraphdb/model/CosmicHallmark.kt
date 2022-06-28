@@ -63,17 +63,6 @@ data class CosmicHallmark(
         const val collectionname = "hallmark_collect"
         const val pubCollNodename = "hall_pub_coll"
 
-        fun parseValueMap(value: Value): CosmicHallmark =
-            CosmicHallmark(
-                UUID.randomUUID().hashCode(),  // unique identifier for key
-                value["GENE_NAME"].asString(),
-                value["CELL_TYPE"].asString(),
-                parseValidIntegerFromString(value["PUBMED_PMID"].asString()),
-                removeInternalQuotes(value["HALLMARK"].asString()),
-                value["IMPACT"].asString(),
-                removeInternalQuotes(value["DESCRIPTION"].asString())
-            )
-
         fun parseCSVRecord(record: CSVRecord): CosmicHallmark =
             CosmicHallmark(
                 UUID.randomUUID().hashCode(),  // unique identifier for key

@@ -81,33 +81,7 @@ data class CosmicBreakpoint(
             )
         }
 
-
-        fun parseValueMap(value: Value): CosmicBreakpoint {
-            val sampleName = value["Sample name"].asString()
-            val sampleId = value["ID_SAMPLE"].asString().toInt()
-            val tumorId = value["ID_TUMOUR"].asString().toInt()
-            val mutationId = value["Mutation ID"].asString().toInt()
-            val chromFrom = value["Chrom From"].asString()
-            val locationFromMin = value["Location From min"].asString().toInt()
-            val locationFromMax = value["Location From max"].asString().toInt()
-            val strandFrom = value["Strand From"].asString()
-            val chromTo = value["Chrom To"].asString()
-            val locationToMin = value["Location To min"].asString().toInt()
-            val locationToMax = value["Location To max"].asString().toInt()
-            val strandTo = value["Strand To"].asString()
-            val pubmedId = parseValidIntegerFromString(value["Pubmed_PMID"].asString())
-            val studyId = parseValidIntegerFromString(value["ID_STUDY"].asString())
-
-            return CosmicBreakpoint(
-                sampleName, sampleId, tumorId, resolveMutationType(value),
-                mutationId, chromFrom, locationFromMin, locationFromMax, strandFrom,
-                chromTo, locationToMin, locationToMax, strandTo, pubmedId, studyId
-            )
-        }
-
-
     }
-
 
 }
 

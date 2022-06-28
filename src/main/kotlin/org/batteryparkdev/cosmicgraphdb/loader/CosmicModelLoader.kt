@@ -13,7 +13,6 @@ import org.batteryparkdev.cosmicgraphdb.model.*
 import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.neo4j.driver.Value
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
@@ -35,17 +34,6 @@ class CosmicModelLoader( val filename: String, val runmode:String = "sample") {
                     delay(20L)
                 }
         }
-
-    /*
-    Private function to parse the Value object based on the Cosmic filename
-     */
-    private fun parseCosmicModel(value: Value) : CosmicModel {
-        return when (filename) {
-            "Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv" -> CosmicHallmark.parseValueMap(value)
-            //TODO: fix this after testing
-            else -> CosmicGeneCensus.parseValueMap(value)
-        }
-    }
 
     private fun parseCosmicModel(record: CSVRecord): CosmicModel {
         return when (filename) {

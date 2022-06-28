@@ -73,44 +73,6 @@ data class CosmicClassification(
                 record.get("SITE_SUBTYPE3_COSMIC")
             )
 
-        fun parseValueMap(value: Value): CosmicClassification {
-            val nciCode = value["NCI_CODE"].asString() ?: "NS"
-            val efo = value["EFO"].asString() ?: "NS"
-            val phenoId = value["COSMIC_PHENOTYPE_ID"].asString() ?: "NS"
-
-            return CosmicClassification(
-                phenoId,
-                resolveSiteType(value),
-                resolveHistologyType(value),
-                resolveCosmicSiteType(value),
-                nciCode, efo
-            )
-        }
-
-        private fun resolveSiteType(value: Value): CosmicType =
-            CosmicType(
-                "Site", value["SITE_PRIMARY"].asString(),
-                value["SITE_SUBTYPE1"].asString(),
-                value["SITE_SUBTYPE2"].asString(),
-                value["SITE_SUBTYPE3"].asString()
-            )
-
-        private fun resolveHistologyType(value: Value): CosmicType =
-            CosmicType(
-                "Histology", value["HISTOLOGY"].asString(),
-                value["HIST_SUBTYPE1"].asString(),
-                value["HIST_SUBTYPE2"].asString(),
-                value["HIST_SUBTYPE3"].asString()
-            )
-
-        private fun resolveCosmicSiteType(value: Value): CosmicType =
-            CosmicType(
-                "CosmicSite", value["SITE_PRIMARY_COSMIC"].asString(),
-                value["SITE_SUBTYPE1_COSMIC"].asString(),
-                value["SITE_SUBTYPE2_COSMIC"].asString(),
-                value["SITE_SUBTYPE3_COSMIC"].asString()
-            )
-
         fun generateChildRelationshipCypher(phenotypeId: String, parentNodeName: String): String {
             val relationship = "HAS_COSMIC_CLASSIFICATION"
             val relName = "rel_class"

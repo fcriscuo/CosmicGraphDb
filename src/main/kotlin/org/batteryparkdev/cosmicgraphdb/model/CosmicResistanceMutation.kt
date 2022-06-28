@@ -24,6 +24,7 @@ data class CosmicResistanceMutation(
     val drugName: String,
     val pubmedId: Int
 ) : CosmicModel {
+
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier(
             "CosmicResistanceMutation", "resistance_id",
@@ -78,26 +79,6 @@ data class CosmicResistanceMutation(
 
     companion object : AbstractModel {
         const val nodename = "resistance"
-        fun parseValueMap(value: Value): CosmicResistanceMutation =
-            CosmicResistanceMutation(
-                value["MUTATION_ID"].asString().toInt(),
-                value["GENOMIC_MUTATION_ID"].asString(),
-                value["LEGACY_MUTATION_ID"].asString(),
-                value["AA Mutation"].asString(),
-                value["CDS Mutation"].asString(),
-                value["Somatic Status"].asString(),
-                value["Zygosity"].asString(),
-                value["Genome Coordinates (GRCh38)"].asString(),
-                parseValidIntegerFromString(value["Tier"].asString()),
-                value["HGVSP"].asString(),
-                value["HGVSc"].asString(),
-                value["HGVSg"].asString(),
-                value["Sample ID"].asString().toInt(),
-                value["Gene Name"].asString(),
-                value["Transcript"].asString(),
-                value["Drug Name"].asString(),
-                value["Pubmed Id"].asString().toInt()
-            )
 
         fun parseCSVRecord(record: CSVRecord): CosmicResistanceMutation =
             CosmicResistanceMutation(

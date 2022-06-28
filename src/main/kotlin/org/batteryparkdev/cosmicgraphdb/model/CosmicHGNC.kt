@@ -54,17 +54,6 @@ data class CosmicHGNC(
     companion object : AbstractModel {
         const val nodename = "hgnc"
 
-        fun parseValueMap(value: Value): CosmicHGNC =
-            CosmicHGNC(
-                parseValidIntegerFromString(value["COSMIC_ID"].asString()),
-                value["COSMIC_GENE_NAME"].asString(),
-                parseValidIntegerFromString(value["Entrez_id"].asString()),
-                parseValidIntegerFromString(value["HGNC_ID"].asString()),
-                convertYNtoBoolean(value["Mutated?"].asString()),
-                convertYNtoBoolean(value["Cancer_census?"].asString()),
-                convertYNtoBoolean(value["Expert Curated?"].asString())
-            )
-
         fun parseCSVRecord(record: CSVRecord): CosmicHGNC =
             CosmicHGNC(
                 parseValidIntegerFromString(record.get("COSMIC_ID")),

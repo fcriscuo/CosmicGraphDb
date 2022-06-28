@@ -50,26 +50,6 @@ data class CosmicDiffMethylation(
 
     companion object : AbstractModel {
         val nodename = "methylation"
-        fun parseValueMap(value: Value): CosmicDiffMethylation =
-            CosmicDiffMethylation(
-                UUID.randomUUID().toString(),
-                value["STUDY_ID"].asString().toInt(),
-                value["ID_SAMPLE"].asString().toInt(),
-                value["ID_TUMOUR"].asString().toInt(),
-                value["FRAGMENT_ID"].asString(),
-                value["GENOME_VERSION"].asString(),
-                value["CHROMOSOME"].asString().toInt(),  //Integer is OK here (x=23, y=24)
-                value["POSITION"].asString().toInt(),
-                when (value["STRAND"].asString().toInt()) {
-                    1 -> "+"
-                    else ->"-"
-                },
-                value["GENE_NAME"].asString(),
-                value["METHYLATION"].asString(),
-                value["AVG_BETA_VALUE_NORMAL"].asString().toFloat(),
-                value["BETA_VALUE"].asString().toFloat(),
-                value["TWO_SIDED_P_VALUE"].asString().toDouble()
-            )
 
         fun parseCSVRecord(record: CSVRecord): CosmicDiffMethylation =
             CosmicDiffMethylation(

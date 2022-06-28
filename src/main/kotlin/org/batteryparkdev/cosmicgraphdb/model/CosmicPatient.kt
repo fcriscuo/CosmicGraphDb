@@ -51,19 +51,6 @@ data class CosmicPatient(
 
     companion object : AbstractModel {
         val nodename = "patient"
-        fun parseValueMap(value: Value): CosmicPatient =
-            CosmicPatient(
-                value["sample_id"].asString().toInt(),
-                value["id_individual"].asString().toInt(),
-                value["id_tumour"].asString().toInt(),
-                parseValidIntegerFromString(value["age"].asString()),
-                value["ethnicity"].asString(),
-                value["environmental_variables"].asString(),
-                value["therapy"].asString(), value["family"].asString(),
-                value["gender"].asString(),
-                value["individual_remark"].asString(),
-                convertYNtoBoolean(value["normal_tissue_tested"].asString())
-            )
 
         fun parseCSVRecord(record: CSVRecord): CosmicPatient =
             CosmicPatient(

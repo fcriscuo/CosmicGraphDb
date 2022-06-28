@@ -271,7 +271,7 @@ class CosmicNeo4jDatabaseLoader(val runmode: String = "sample") : CoroutineScope
 
     private fun loadHGNCJob(job2Result: String): String {
         CosmicModelLoader(CosmicFilenameService.cosmicHGNCFile, runmode).also {
-            println("3b -Starting HGNC loader ")
+            println("Starting HGNC loader ")
             val stopwatch = Stopwatch.createStarted()
             it.loadCosmicFile()
             println("CosmicHGNC data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")

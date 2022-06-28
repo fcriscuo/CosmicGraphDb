@@ -55,15 +55,6 @@ data class CosmicStruct(
 
     companion object : AbstractModel {
         const val nodename = "struct"
-        fun parseValueMap(value: Value): CosmicStruct =
-            CosmicStruct(
-                value["MUTATION_ID"].asString().toInt(),
-                value["ID_SAMPLE"].asString().toInt(),
-                value["ID_TUMOUR"].asString().toInt(),
-                value["Mutation Type"].asString(),
-                value["description"].asString(),
-                parseValidIntegerFromString(value["PUBMED_PMID"].asString())
-            )
 
         fun parseCSVRecord(record: CSVRecord): CosmicStruct =
             CosmicStruct(

@@ -6,10 +6,12 @@ data class Entrez (val entrezId: Int ){
 
     companion object{
         val nodename = "entrez"
+
         private fun generatePlaceholderCypher(entrezId: Int): String =
             "CALL apoc.merge.node([\"Entrez\"], " +
                     "{entrez_id: $entrezId,  created: datetime()} )" +
                     "YIELD node AS ${Entrez.nodename} \n "
+
         fun generateHasEntrezRelationship(entrezId: Int, parentNodeName: String): String {
             val relationship = "HAS_ENTREZ"
             val relName = "rel_entrez"
@@ -20,10 +22,5 @@ data class Entrez (val entrezId: Int ){
                             " ${Entrez.nodename}, {}) YIELD rel AS $relName \n"
                 )
         }
-
-        fun parseValueMap(value: Value): Entrez =
-            Entrez(
-                value["Entrez_id"].asString().toInt()
-            )
     }
 }

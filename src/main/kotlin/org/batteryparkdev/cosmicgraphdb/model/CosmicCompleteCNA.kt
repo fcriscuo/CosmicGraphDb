@@ -40,27 +40,6 @@ override fun getNodeIdentifier(): NodeIdentifier =
 
     companion object: AbstractModel {
 
-        fun parseValueMap(value: Value): CosmicCompleteCNA =
-            CosmicCompleteCNA(
-                value["CNV_ID"].asString()
-                    .plus(":")
-                    .plus(value["ID_GENE"].asString())
-                    .plus(":")
-                    .plus(value["ID_SAMPLE"].asString()) ,   // unique identifier
-                value["CNV_ID"].asString().toInt(),
-                value["ID_GENE"].asString().toInt(),
-                value["gene_name"].asString(),   // actually HGNC symbol
-                value["ID_SAMPLE"].asString().toInt(),
-                value["ID_TUMOUR"].asString().toInt(),
-                value["SAMPLE_NAME"].asString(),
-                value["TOTAL_CN"].asString().toInt(),
-                value["MINOR_ALLELE"].asString(),
-                resolveMutationType(value),
-                value["ID_STUDY"].asString().toInt(),
-                value["GRCh"].asString(),
-                value["Chromosome:G_Start..G_Stop"].asString()
-            )
-
         fun parseCSVRecord(record: CSVRecord): CosmicCompleteCNA =
             CosmicCompleteCNA(
                 record.get("CNV_ID")

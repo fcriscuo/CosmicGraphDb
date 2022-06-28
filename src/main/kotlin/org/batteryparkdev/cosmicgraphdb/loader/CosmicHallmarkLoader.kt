@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.model.CosmicHallmark
 import org.batteryparkdev.io.UTF16CSVRecordSupplier
 import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import java.io.File
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
@@ -59,6 +60,8 @@ object CosmicHallmarkLoader {
         }
 
     fun processCosmicHallmarkFile(filename: String) = runBlocking {
+        require(filename.isNotEmpty()) {"A CosmicHallmark filename must be specified"}
+        check(File(filename).exists()) {"$filename does not exist"}
         logger.atInfo().log("Loading CosmicGeneCensus data from file $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()

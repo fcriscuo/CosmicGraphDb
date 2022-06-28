@@ -126,9 +126,11 @@ data class CosmicGeneCensus(
         }
 
     companion object : AbstractModel {
+
         const val nodename = "gene"
         const val mutCollNodename = "gene_mut_collection"
         const val annoCollNodename = "gene_anno_collection"
+
         private fun resolveGeneNodeIdentifier(geneSymbol: String): NodeIdentifier =
             NodeIdentifier("CosmicGene", "gene_symbol", geneSymbol)
 
@@ -165,32 +167,6 @@ data class CosmicGeneCensus(
                         " $parentNodeName, {}) YIELD rel AS $relName \n"
             )
         }
-
-        fun parseValueMap(value: Value): CosmicGeneCensus =
-            CosmicGeneCensus(
-                value["Gene Symbol"].asString(),
-                value["Name"].asString(),
-                value["Entrez GeneId"].asString(),
-                value["Genome Location"].asString(),
-                parseValidIntegerFromString(value["Tier"].asString()),
-                value["Hallmark"].toString().isNotBlank(),
-                value["Chr Band"].toString(),
-                value["Somatic"].toString().isNotBlank(),
-                value["Germline"].toString().isNotBlank(),
-                processTumorTypes(value["Tumour Types(Somatic)"].asString()),
-                processTumorTypes(value["Tumour Types(Germline)"].asString()),
-                value["Cancer Syndrome"].asString(),
-                parseStringOnComma(value["Tissue Type"].asString()),
-                value["Molecular Genetics"].toString(),
-                parseStringOnComma(value["Role in Cancer"].asString()),
-                parseStringOnComma(value["Mutation Types"].asString()),
-                parseStringOnComma(value["Translocation Partner"].asString()),
-                value["Other Germline Mut"].asString(),
-                parseStringOnSemiColon(value["Other Syndrome"].asString()),
-                value["COSMIC ID"].asString(),
-                value["cosmic gene name"].asString(),
-                parseStringOnComma(value["Synonyms"].asString())
-            )
 
         fun parseCSVRecord(record: CSVRecord): CosmicGeneCensus =
             CosmicGeneCensus(

@@ -48,21 +48,6 @@ data class CosmicCompleteGeneExpression(
 
     companion object: AbstractModel {
 
-        fun parseValueMap(value: Value): CosmicCompleteGeneExpression =
-            CosmicCompleteGeneExpression(
-                value["SAMPLE_ID"].asString().toInt(),
-                value["SAMPLE_NAME"].asString(),
-                value["GENE_NAME"].asString(),
-                value["REGULATION"].asString(),
-                value["Z_SCORE"].asString().toFloat(),
-                value["ID_STUDY"].asString().toInt(),
-                value["GENE_NAME"].asString()
-                    .plus(":")
-                    .plus(value["SAMPLE_ID"].asString())
-                    .plus(":")
-                    .plus(value["SAMPLE_NAME"].asString())
-            )
-
         fun parseCSVRecord(record: CSVRecord): CosmicCompleteGeneExpression =
             CosmicCompleteGeneExpression(
                 record.get("SAMPLE_ID").toInt(),

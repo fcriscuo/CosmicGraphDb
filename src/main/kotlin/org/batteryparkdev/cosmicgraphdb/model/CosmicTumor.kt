@@ -66,14 +66,6 @@ data class CosmicTumor(
 
     companion object : AbstractModel {
         const val nodename = "tumor"
-        fun parseValueMap(value: Value): CosmicTumor =
-            CosmicTumor(
-                value["id_tumour"].asString().toInt(),
-                value["sample_id"].asString().toInt(),
-                value["tumour_source"].asString(),
-                removeInternalQuotes(value["tumour_remark"].asString()),
-                CosmicPatient.parseValueMap(value)
-            )
 
         fun parseCSVRecord(record: CSVRecord): CosmicTumor =
             CosmicTumor(

@@ -86,33 +86,6 @@ data class CosmicFusion(
 
     companion object : AbstractModel {
         const val nodename = "fusion"
-        fun parseValueMap(value: Value): CosmicFusion =
-            CosmicFusion(
-                parseValidIntegerFromString(value["FUSION_ID"].asString()),
-                parseValidIntegerFromString(value["SAMPLE_ID"].asString()),
-                value["SAMPLE_NAME"].asString(),
-                value["TRANSLOCATION_NAME"].asString(),
-                parseValidIntegerFromString(value["5'_CHROMOSOME"].asString()),
-                value["5'_STRAND"].asString(),
-                parseValidIntegerFromString(value["5'_GENE_ID"].asString()),
-                value["5'_GENE_NAME"].asString(),
-                parseValidIntegerFromString(value["5'_LAST_OBSERVED_EXON"].asString()),
-                parseValidIntegerFromString(value["5'_GENOME_START_FROM"].asString()),
-                parseValidIntegerFromString(value["5'_GENOME_START_TO"].asString()),
-                parseValidIntegerFromString(value["5'_GENOME_STOP_FROM"].asString()),
-                parseValidIntegerFromString(value["5'_GENOME_STOP_TO"].asString()),
-                parseValidIntegerFromString(value["3'_CHROMOSOME"].asString()),
-                value["3'_STRAND"].asString(),
-                parseValidIntegerFromString(value["3'_GENE_ID"].asString()),
-                value["3'_GENE_NAME"].asString(),
-                parseValidIntegerFromString(value["3'_FIRST_OBSERVED_EXON"].asString()),
-                parseValidIntegerFromString(value["3'_GENOME_START_FROM"].asString()),
-                parseValidIntegerFromString(value["3'_GENOME_START_TO"].asString()),
-                parseValidIntegerFromString(value["3'_GENOME_STOP_FROM"].asString()),
-                parseValidIntegerFromString(value["3'_GENOME_STOP_TO"].asString()),
-                value["FUSION_TYPE"].asString().filter { !it.isWhitespace() },
-                value["PUBMED_PMID"].asString().toInt()
-            )
 
         fun parseCSVRecord(record: CSVRecord): CosmicFusion =
             CosmicFusion(
