@@ -1,32 +1,52 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 class TestCosmicResistanceMutation {
-    private val LIMIT = Long.MAX_VALUE
-    fun parseCosmicFusionFile(filename: String): Int {
-        deleteExistingResistanceNodes()
-        ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicResistanceMutation.parseValueMap(it) }
-            .forEach { mutation ->
-                Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicResistanceCypher())
-                println("Loaded CosmicResistanceMutation: ${mutation.mutationId}")
-            }
-        return Neo4jConnectionService.executeCypherCommand("MATCH (dr: DrugResistance) RETURN COUNT(dr)").toInt()
-    }
 
-    private fun deleteExistingResistanceNodes() {
-        Neo4jUtils.detachAndDeleteNodesByName("DrugResistance")
+    private val LIMIT = 4000L
+    var nodeCount = 0
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceCSVRecords(filename: String) =
+        produce<CSVRecord> {
+            val path = Paths.get(filename)
+            CSVRecordSupplier(path).get()
+                .limit(LIMIT)
+                .asSequence()
+                .filter { it.size() > 1 }
+                .forEach {
+                    send(it)
+                    delay(20)
+                }
+        }
+
+    fun testCosmicModel() = runBlocking {
+        val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicResistanceMutations.tsv")
+        val records = produceCSVRecords(filename)
+        for (record in records) {
+            nodeCount += 1
+            val mutation = CosmicResistanceMutation.parseCSVRecord(record)
+            when (mutation.isValid()) {
+                true -> println(
+                    "Mutation Id: ${mutation.mutationId}  Gene Symbol: ${mutation.geneSymbol} " +
+                            " Drug: ${mutation.drugName}"
+                )
+                false -> println("Row $nodeCount is invalid")
+            }
+        }
+        println("CosmicResistanceMutations record count = $nodeCount")
     }
 }
-fun main() {
-    val cosmicResistanceFile = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicResistanceMutations.tsv")
-    val recordCount =
-        TestCosmicResistanceMutation().parseCosmicFusionFile(cosmicResistanceFile)
-    println("Processed $cosmicResistanceFile record count = $recordCount")
-}
+
+fun main() =
+     TestCosmicResistanceMutation().testCosmicModel()

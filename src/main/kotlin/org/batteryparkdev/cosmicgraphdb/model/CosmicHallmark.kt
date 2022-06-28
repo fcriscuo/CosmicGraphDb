@@ -1,8 +1,8 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
 import org.neo4j.driver.Value
 import java.util.*
 
@@ -17,12 +17,14 @@ data class CosmicHallmark(
             hallmarkId.toString()
         )
 
-    fun generateCosmicHallmarkCypher(): String =
+    override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(generateMergeHallmarkCollectionCypher())
             .plus(generateHasHallmarkRelationshipCypher())
             .plus(" RETURN $nodename")
 
+    override fun isValid(): Boolean = geneSymbol.isNotEmpty().and(hallmark.isNotEmpty())
+    override fun getPubMedId(): Int = pubmedId
 
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicHallmark\"]," +
@@ -60,15 +62,21 @@ data class CosmicHallmark(
         const val nodename = "hallmark"
         const val collectionname = "hallmark_collect"
         const val pubCollNodename = "hall_pub_coll"
-        fun parseValueMap(value: Value): CosmicHallmark =
+
+        fun parseCSVRecord(record: CSVRecord): CosmicHallmark =
             CosmicHallmark(
                 UUID.randomUUID().hashCode(),  // unique identifier for key
-                value["GENE_NAME"].asString(),
-                value["CELL_TYPE"].asString(),
-                parseValidIntegerFromString(value["PUBMED_PMID"].asString()),
-                removeInternalQuotes(value["HALLMARK"].asString()),
-                value["IMPACT"].asString(),
-                removeInternalQuotes(value["DESCRIPTION"].asString())
+                record.get("GENE_NAME"),
+                record.get("CELL_TYPE"),
+                parseValidIntegerFromString(record.get("PUBMED_PMID")),
+                removeInternalQuotes(record.get("HALLMARK")),
+                resolveImpactProperty(record),
+                removeInternalQuotes(record.get("DESCRIPTION"))
             )
+         private fun resolveImpactProperty(record: CSVRecord):String =
+            when (record.isMapped("IMPACT")) {
+                true -> record.get("IMPACT")
+                false -> "NS"
+            }
     }
 }

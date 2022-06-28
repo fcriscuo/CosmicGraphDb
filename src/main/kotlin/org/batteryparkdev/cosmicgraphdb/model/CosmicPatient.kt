@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -21,10 +22,13 @@ data class CosmicPatient(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicPatient", "patient_id", patientId.toString())
 
-    fun generateCosmicPatientCypher() =
+    override fun generateLoadCosmicModelCypher() =
         generateMergeCypher()
             .plus(generateTumorRelationshipCypher())
             //.plus(" RETURN $nodename\n")
+
+    override fun isValid(): Boolean = patientId > 0 && tumorId > 0
+    override fun getPubMedId(): Int  = 0
 
     private fun generateMergeCypher(): String =
         "CALL apoc.merge.node([\"CosmicPatient\"], " +
@@ -47,18 +51,19 @@ data class CosmicPatient(
 
     companion object : AbstractModel {
         val nodename = "patient"
-        fun parseValueMap(value: Value): CosmicPatient =
+
+        fun parseCSVRecord(record: CSVRecord): CosmicPatient =
             CosmicPatient(
-                value["sample_id"].asString().toInt(),
-                value["id_individual"].asString().toInt(),
-                value["id_tumour"].asString().toInt(),
-                parseValidIntegerFromString(value["age"].asString()),
-                value["ethnicity"].asString(),
-                value["environmental_variables"].asString(),
-                value["therapy"].asString(), value["family"].asString(),
-                value["gender"].asString(),
-                value["individual_remark"].asString(),
-                convertYNtoBoolean(value["normal_tissue_tested"].asString())
+                record.get("sample_id").toInt(),
+                record.get("id_individual").toInt(),
+                record.get("id_tumour").toInt(),
+                parseValidIntegerFromString(record.get("age")),
+                record.get("ethnicity"),
+                record.get("environmental_variables"),
+                record.get("therapy"), record.get("family"),
+                record.get("gender"),
+                record.get("individual_remark"),
+                convertYNtoBoolean(record.get("normal_tissue_tested"))
             )
 
     }

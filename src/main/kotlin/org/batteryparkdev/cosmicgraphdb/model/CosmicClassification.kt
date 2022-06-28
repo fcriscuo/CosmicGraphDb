@@ -1,9 +1,9 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
-import java.util.*
 
 data class CosmicClassification(
     val cosmicPhenotypeId: String,
@@ -18,13 +18,14 @@ data class CosmicClassification(
             "CosmicClassification", "phenotype_id",
             cosmicPhenotypeId
         )
+    override fun isValid(): Boolean = cosmicPhenotypeId.isNotEmpty()
+    override fun getPubMedId(): Int = 0
 
-    fun generateCosmicClassificationCypher(): String =
+    override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(siteType.generateCosmicTypeCypher(CosmicClassification.nodename))
             .plus(histologyType.generateCosmicTypeCypher(CosmicClassification.nodename))
             .plus(" RETURN ${CosmicClassification.nodename}\n")
-
 
     private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicClassification\"]," +
             "{ phenotype_id: \"${cosmicPhenotypeId}\"}," +
@@ -35,42 +36,41 @@ data class CosmicClassification(
 
     companion object : AbstractModel {
         val nodename = "classification"
-        fun parseValueMap(value: Value): CosmicClassification {
-            val nciCode = value["NCI_CODE"].asString() ?: "NS"
-            val efo = value["EFO"].asString() ?: "NS"
-            val phenoId = value["COSMIC_PHENOTYPE_ID"].asString() ?: "NS"
 
+        fun parseCSVRecord(record:CSVRecord): CosmicClassification {
+            val nciCode = record.get("NCI_CODE") ?: "NS"
+            val efo = record.get("EFO") ?: "NS"
+            val phenoId = record.get("COSMIC_PHENOTYPE_ID") ?: "NS"
             return CosmicClassification(
                 phenoId,
-                resolveSiteType(value),
-                resolveHistologyType(value),
-                resolveCosmicSiteType(value),
+                resolveSiteType(record),
+                resolveHistologyType(record),
+                resolveCosmicSiteType(record),
                 nciCode, efo
             )
         }
-
-        private fun resolveSiteType(value: Value): CosmicType =
+        private fun resolveSiteType(record:CSVRecord): CosmicType =
             CosmicType(
-                "Site", value["SITE_PRIMARY"].asString(),
-                value["SITE_SUBTYPE1"].asString(),
-                value["SITE_SUBTYPE2"].asString(),
-                value["SITE_SUBTYPE3"].asString()
+                "Site", record.get("SITE_PRIMARY"),
+                record.get("SITE_SUBTYPE1"),
+                record.get("SITE_SUBTYPE2"),
+                record.get("SITE_SUBTYPE3")
             )
 
-        private fun resolveHistologyType(value: Value): CosmicType =
+        private fun resolveHistologyType(record:CSVRecord): CosmicType =
             CosmicType(
-                "Histology", value["HISTOLOGY"].asString(),
-                value["HIST_SUBTYPE1"].asString(),
-                value["HIST_SUBTYPE2"].asString(),
-                value["HIST_SUBTYPE3"].asString()
+                "Histology", record.get("HISTOLOGY"),
+                record.get("HIST_SUBTYPE1"),
+                record.get("HIST_SUBTYPE2"),
+                record.get("HIST_SUBTYPE3")
             )
 
-        private fun resolveCosmicSiteType(value: Value): CosmicType =
+        private fun resolveCosmicSiteType(record:CSVRecord): CosmicType =
             CosmicType(
-                "CosmicSite", value["SITE_PRIMARY_COSMIC"].asString(),
-                value["SITE_SUBTYPE1_COSMIC"].asString(),
-                value["SITE_SUBTYPE2_COSMIC"].asString(),
-                value["SITE_SUBTYPE3_COSMIC"].asString()
+                "CosmicSite", record.get("SITE_PRIMARY_COSMIC"),
+                record.get("SITE_SUBTYPE1_COSMIC"),
+                record.get("SITE_SUBTYPE2_COSMIC"),
+                record.get("SITE_SUBTYPE3_COSMIC")
             )
 
         fun generateChildRelationshipCypher(phenotypeId: String, parentNodeName: String): String {

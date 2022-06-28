@@ -1,37 +1,52 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 class TestCosmicNCV {
-    private val LIMIT = Long.MAX_VALUE
 
-    fun parseCosmicNCVFile(filename: String): Int {
-        // limit the number of records processed
-        var recordCount = 0
-       deleteNCVNodes()
-        ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicNCV.parseValueMap(it) }
-            .forEach { ncv ->
-                Neo4jConnectionService.executeCypherCommand(ncv.generateCosmicNCVCypher())
-                println("Loaded CosmicNCV key: ${ncv.getKey()}")
-                // create a Publication node if a PubMed id is present
-                //hall.createPubMedRelationship(hall.pubmedId)
-                recordCount += 1
+    private val LIMIT = 4000L
+    private var nodeCount = 0
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceCSVRecords(filename: String) =
+        produce<CSVRecord> {
+            val path = Paths.get(filename)
+            CSVRecordSupplier(path).get()
+                .limit(LIMIT)
+                .asSequence()
+                .filter { it.size() > 1 }
+                .forEach {
+                    send(it)
+                    delay(20)
+                }
+        }
+
+    fun testCosmicModel() = runBlocking {
+        val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicNCV.tsv")
+        val records = produceCSVRecords(filename)
+        for (record in records) {
+            nodeCount += 1
+            val ncv = CosmicNCV.parseCSVRecord(record)
+            when (ncv.isValid()) {
+                true -> println(
+                    "Sample Id: ${ncv.sampleId}  Genomic Mutation Id: ${ncv.genomicMutationId} " +
+                            " Mut Seq: ${ncv.mutSeq}"
+                )
+
+                false -> println("Row $nodeCount is invalid")
             }
-        return recordCount
-    }
-    private fun deleteNCVNodes() {
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicNCV")
+        }
+        println("COSMIC NCV file record count = $nodeCount")
     }
 }
-fun main() {
-    val cosmicNCVFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicNCV.tsv")
-    val recordCount =
-        TestCosmicNCV().parseCosmicNCVFile(cosmicNCVFile)
-    println("Loaded COSMIC NCV file: $cosmicNCVFile  record count = $recordCount")
-}
+
+fun main() = TestCosmicNCV().testCosmicModel()

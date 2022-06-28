@@ -1,36 +1,51 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 class TestCosmicCompleteCNA {
-    fun parseCNAFile(filename: String): Int {
-        val LIMIT = Long.MAX_VALUE// limit the number of records processed
-        deleteCNANodes()
-        ApocFileReader.processDelimitedFile(filename).stream()
-            .limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicCompleteCNA.parseValueMap(it) }
-            .forEach { cna ->
-                Neo4jConnectionService.executeCypherCommand(cna.generateCompleteCNACypher())
-                println(
-                    "Loaded CosmicCompleteCNA Id= ${cna.cnvId}  " +
-                            " Tumor Id = ${cna.tumorId} " +
-                            " Gene: ${cna.geneId}  ${cna.geneSymbol} " +
-                            " Sample Id: ${cna.sampleId} "
+    var nodeCount = 0
+    private val LIMIT = 4000L
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceTSVRecords(filename: String) =
+        produce<CSVRecord> {
+            val path = Paths.get(filename)
+            CSVRecordSupplier(path).get()
+                .limit(LIMIT)
+                .asSequence()
+                .forEach {
+                    send(it)
+                    delay(20)
+                }
+        }
 
-                )
+    fun testCosmicModel() = runBlocking {
+        val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicCompleteCNA.tsv")
+        val records = produceTSVRecords(filename)
+        for (record in records) {
+            nodeCount += 1
+            val cna = CosmicCompleteCNA.parseCSVRecord(record)
+            when (cna.isValid()) {
+                true -> println("Gene Symbol: ${cna.geneSymbol}  Sample Id: ${cna.sampleId}")
+                false -> println("Row $nodeCount is invalid")
             }
-        return Neo4jConnectionService.executeCypherCommand("MATCH (cna: CosmicCompleteCNA) RETURN COUNT(cna)").toInt()
+        }
+        println("COSMIC CNA record count = $nodeCount")
     }
-    private fun deleteCNANodes() =
-        Neo4jConnectionService.executeCypherCommand("MATCH (cna: CosmicCNA) DETACH DELETE (cna)")
 }
 
 fun main() {
-    val cosmicCNAFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicCompleteCNA.tsv")
-    println("Processing COSMIC CNA file $cosmicCNAFile")
-    val recordCount = TestCosmicCompleteCNA().parseCNAFile(cosmicCNAFile)
-    println("Record count = $recordCount")
+    TestCosmicCompleteCNA().let {
+        it.testCosmicModel()
+
+    }
+
 }

@@ -1,32 +1,50 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 class TestCosmicHGNC {
-    fun parseCosmicHGNCFile(filename: String): Int {
-        // limit the number of records processed
-        val LIMIT = Long.MAX_VALUE
-        deleteCosmicHGNCNodes()
-        ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicHGNC.parseValueMap(it) }
-            .forEach { hgnc->
-                println("Loading HGNC gene symbol ${hgnc.hgncGeneSymbol}")
-                Neo4jConnectionService.executeCypherCommand(hgnc.generateCosmicHGNCCypher())
+    var nodeCount = 0
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceCSVRecords(filename: String) =
+        produce<CSVRecord> {
+            val path = Paths.get(filename)
+            CSVRecordSupplier(path).get().asSequence()
+                .filter { it.size() > 1 }
+                .forEach {
+                    send(it)
+                    delay(20)
+                }
+        }
+
+    fun testCosmicModel() = runBlocking {
+        val filename = ConfigurationPropertiesService
+            .resolveCosmicCompleteFileLocation("CosmicHGNC.tsv")
+        val records = produceCSVRecords(filename)
+        for (record in records) {
+            nodeCount += 1
+            val hgnc = CosmicHGNC.parseCSVRecord(record)
+            when (hgnc.isValid()) {
+                true -> println(
+                    "Gene symbol: ${hgnc.hgncGeneSymbol}  HGNC Id: ${hgnc.hgncId} " +
+                            " COSMIC Id: ${hgnc.cosmicId}"
+                )
+
+                false -> println("Row $nodeCount is invalid")
             }
-        return Neo4jConnectionService.executeCypherCommand("MATCH (ch:CosmicHGNC) RETURN COUNT(ch)").toInt()
-    }
-    private fun deleteCosmicHGNCNodes(){
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicHGNC")
+        }
+        println("HGNC record count = $nodeCount")
     }
 }
-fun main() {
-    val filename  = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicHGNC.tsv")
-    val recordCount =
-        TestCosmicHGNC().parseCosmicHGNCFile(filename)
-    println("HGNC record count = $recordCount")
-}
+
+fun main() =
+    TestCosmicHGNC().testCosmicModel()

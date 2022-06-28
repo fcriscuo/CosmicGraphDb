@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -35,6 +36,23 @@ data class CosmicSample(
      override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicSample", "sample_id", sampleId.toString())
 
+    override fun isValid(): Boolean = sampleId > 0 && tumorId > 0
+    override fun getPubMedId(): Int = 0
+
+    override fun generateLoadCosmicModelCypher(): String =
+        generateMergeCypher()
+            .plus(
+                CosmicClassification.generateChildRelationshipCypher(
+                    cosmicPhenotypeId,
+                    nodename
+                )
+            )
+            .plus(cosmicTumor.generateLoadCosmicModelCypher())
+            .plus(generateSampleMutationCollectionCypher())
+            //.plus(generateSamplePublicationCollectionCypher())
+            .plus(" RETURN $nodename\n")
+
+    //TODO: remove
     fun generateCosmicSampleCypher(): String =
         generateMergeCypher()
             .plus(
@@ -43,9 +61,9 @@ data class CosmicSample(
                     nodename
                 )
             )
-            .plus(cosmicTumor.generateCosmicTumorCypher())
+            .plus(cosmicTumor.generateLoadCosmicModelCypher())
             .plus(generateSampleMutationCollectionCypher())
-            .plus(generateSamplePublicationCollectionCypher())
+           // .plus(generateSamplePublicationCollectionCypher())
             .plus(" RETURN $nodename\n")
 
     private fun generateMergeCypher(): String =
@@ -111,35 +129,33 @@ data class CosmicSample(
         const val pubCollNodename = "sample_pub_coll"
         private const val classificationPrefix = "COSO"  // the classification file uses a prefix, the sample file does not
 
-        // COSO36736185  vs  36736185
-        fun parseValueMap(value: Value): CosmicSample =
+        fun parseCSVRecord(record: CSVRecord): CosmicSample =
             CosmicSample(
-                value["sample_id"].asString().toInt(),
-                value["sample_name"].asString(),
-                value["id_tumour"].asString().toInt(),
-                value["primary_site"].asString(),
-                value["primary_histology"].asString(),
-                value["therapy_relationship"].asString(),
-                value["sample_differentiator"].asString(),
-                value["mutation_allele_specification"].asString(),
-                value["msi"].asString(), value["average_ploidy"].asString(),
-                convertYNtoBoolean(value["whole_genome_screen"].asString()),
-                convertYNtoBoolean(value["whole_exome_screen"].asString()),
-                removeInternalQuotes(value["sample_remark"].asString()),
-                value["drug_response"].asString(),
-                value["grade"].asString(),
-                parseValidIntegerFromString(value["age_at_tumour_recurrence"].asString()),
-                value["stage"].asString(),
-                value["cytogenetics"].asString(),
-                value["metastatic_site"].asString(),
-                value["germline_mutation"].asString(),
-                value["nci_code"].asString(),
-                value["sample_type"].asString(),
-                classificationPrefix.plus(value["cosmic_phenotype_id"].asString()),
-                CosmicPatient.parseValueMap(value),
-                CosmicTumor.parseValueMap(value)
+                record.get("sample_id").toInt(),
+                record.get("sample_name"),
+                record.get("id_tumour").toInt(),
+                record.get("primary_site"),
+                record.get("primary_histology"),
+                record.get("therapy_relationship"),
+                record.get("sample_differentiator"),
+                record.get("mutation_allele_specification"),
+                record.get("msi"), record.get("average_ploidy"),
+                convertYNtoBoolean(record.get("whole_genome_screen")),
+                convertYNtoBoolean(record.get("whole_exome_screen")),
+                removeInternalQuotes(record.get("sample_remark")),
+                record.get("drug_response"),
+                record.get("grade"),
+                parseValidIntegerFromString(record.get("age_at_tumour_recurrence")),
+                record.get("stage"),
+                record.get("cytogenetics"),
+                record.get("metastatic_site"),
+                record.get("germline_mutation"),
+                record.get("nci_code"),
+                record.get("sample_type"),
+                classificationPrefix.plus(record.get("cosmic_phenotype_id")),
+                CosmicPatient.parseCSVRecord(record),
+                CosmicTumor.parseCSVRecord(record)
             )
-
 
         fun generateMatchCosmicSampleCypher(sampleId: Int) =
             "CALL apoc.merge.node ([\"CosmicSample\"],{sample_id: $sampleId},{created: datetime()},{} )" +

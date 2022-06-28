@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -30,10 +31,15 @@ data class CosmicFusion(
             fusionId.toString()
         )
 
-     fun isValid(): Boolean =
-        fusionId > 0 && sampleId > 0 && translocationName.isNotEmpty()
+    //FusionExport file contains a number of incomplete entries
+    override fun isValid(): Boolean =
+        fusionType.isNotEmpty().and(fusionId > 0).
+        and( sampleId > 0).and( translocationName.isNotEmpty())
+            .and(five_geneSymbol.isNotEmpty()).and(three_geneSymbol.isNotEmpty())
 
-    fun generateCosmicFusionCypher(): String {
+    override fun getPubMedId(): Int  = 0
+
+    override fun generateLoadCosmicModelCypher(): String {
         val cypher = when (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {
             false -> generateMergeCypher()
                 .plus(generateGeneMutationCollectionRelationshipCypher(five_geneSymbol, nodename))
@@ -80,32 +86,33 @@ data class CosmicFusion(
 
     companion object : AbstractModel {
         const val nodename = "fusion"
-        fun parseValueMap(value: Value): CosmicFusion =
+
+        fun parseCSVRecord(record: CSVRecord): CosmicFusion =
             CosmicFusion(
-                parseValidIntegerFromString(value["FUSION_ID"].asString()),
-                parseValidIntegerFromString(value["SAMPLE_ID"].asString()),
-                value["SAMPLE_NAME"].asString(),
-                value["TRANSLOCATION_NAME"].asString(),
-                parseValidIntegerFromString(value["5'_CHROMOSOME"].asString()),
-                value["5'_STRAND"].asString(),
-                parseValidIntegerFromString(value["5'_GENE_ID"].asString()),
-                value["5'_GENE_NAME"].asString(),
-                parseValidIntegerFromString(value["5'_LAST_OBSERVED_EXON"].asString()),
-                parseValidIntegerFromString(value["5'_GENOME_START_FROM"].asString()),
-                parseValidIntegerFromString(value["5'_GENOME_START_TO"].asString()),
-                parseValidIntegerFromString(value["5'_GENOME_STOP_FROM"].asString()),
-                parseValidIntegerFromString(value["5'_GENOME_STOP_TO"].asString()),
-                parseValidIntegerFromString(value["3'_CHROMOSOME"].asString()),
-                value["3'_STRAND"].asString(),
-                parseValidIntegerFromString(value["3'_GENE_ID"].asString()),
-                value["3'_GENE_NAME"].asString(),
-                parseValidIntegerFromString(value["3'_FIRST_OBSERVED_EXON"].asString()),
-                parseValidIntegerFromString(value["3'_GENOME_START_FROM"].asString()),
-                parseValidIntegerFromString(value["3'_GENOME_START_TO"].asString()),
-                parseValidIntegerFromString(value["3'_GENOME_STOP_FROM"].asString()),
-                parseValidIntegerFromString(value["3'_GENOME_STOP_TO"].asString()),
-                value["FUSION_TYPE"].asString().filter { !it.isWhitespace() },
-                value["PUBMED_PMID"].asString().toInt()
+                parseValidIntegerFromString(record.get("FUSION_ID")),
+                parseValidIntegerFromString(record.get("SAMPLE_ID")),
+                record.get("SAMPLE_NAME"),
+                record.get("TRANSLOCATION_NAME"),
+                parseValidIntegerFromString(record.get("5'_CHROMOSOME")),
+                record.get("5'_STRAND"),
+                parseValidIntegerFromString(record.get("5'_GENE_ID")),
+                record.get("5'_GENE_NAME"),
+                parseValidIntegerFromString(record.get("5'_LAST_OBSERVED_EXON")),
+                parseValidIntegerFromString(record.get("5'_GENOME_START_FROM")),
+                parseValidIntegerFromString(record.get("5'_GENOME_START_TO")),
+                parseValidIntegerFromString(record.get("5'_GENOME_STOP_FROM")),
+                parseValidIntegerFromString(record.get("5'_GENOME_STOP_TO")),
+                parseValidIntegerFromString(record.get("3'_CHROMOSOME")),
+                record.get("3'_STRAND"),
+                parseValidIntegerFromString(record.get("3'_GENE_ID")),
+                record.get("3'_GENE_NAME"),
+                parseValidIntegerFromString(record.get("3'_FIRST_OBSERVED_EXON")),
+                parseValidIntegerFromString(record.get("3'_GENOME_START_FROM")),
+                parseValidIntegerFromString(record.get("3'_GENOME_START_TO")),
+                parseValidIntegerFromString(record.get("3'_GENOME_STOP_FROM")),
+                parseValidIntegerFromString(record.get("3'_GENOME_STOP_TO")),
+                record.get("FUSION_TYPE").filter { !it.isWhitespace() },
+                record.get("PUBMED_PMID").toInt()
             )
     }
 

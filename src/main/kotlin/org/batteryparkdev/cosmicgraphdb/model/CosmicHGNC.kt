@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -16,11 +17,14 @@ data class CosmicHGNC(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicHGNC", "cosmicId", cosmicId.toString())
 
-    fun generateCosmicHGNCCypher(): String =
+    override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(generateGeneRelationshipCypher())
             .plus(generateEntrezRelationshipCypher())
             .plus(" RETURN ${CosmicHGNC.nodename}")
+
+    override fun isValid(): Boolean = hgncGeneSymbol.isNotEmpty().and(cosmicId > 0)
+    override fun getPubMedId(): Int = 0
 
     private fun generateMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicHGNC\"], " +
@@ -50,15 +54,15 @@ data class CosmicHGNC(
     companion object : AbstractModel {
         const val nodename = "hgnc"
 
-        fun parseValueMap(value: Value): CosmicHGNC =
+        fun parseCSVRecord(record: CSVRecord): CosmicHGNC =
             CosmicHGNC(
-                parseValidIntegerFromString(value["COSMIC_ID"].asString()),
-                value["COSMIC_GENE_NAME"].asString(),
-                parseValidIntegerFromString(value["Entrez_id"].asString()),
-                parseValidIntegerFromString(value["HGNC_ID"].asString()),
-                convertYNtoBoolean(value["Mutated?"].asString()),
-                convertYNtoBoolean(value["Cancer_census?"].asString()),
-                convertYNtoBoolean(value["Expert Curated?"].asString())
+                parseValidIntegerFromString(record.get("COSMIC_ID")),
+                record.get("COSMIC_GENE_NAME"),
+                parseValidIntegerFromString(record.get("Entrez_id")),
+                parseValidIntegerFromString(record.get("HGNC_ID")),
+                convertYNtoBoolean(record.get("Mutated?")),
+                convertYNtoBoolean(record.get("Cancer_census?")),
+                convertYNtoBoolean(record.get("Expert Curated?"))
             )
 
         private fun generateMatchHGNCNodeCypher(hgncId: Int): String = " CALL apoc.merge.node([\"CosmicHGNC\"]," +

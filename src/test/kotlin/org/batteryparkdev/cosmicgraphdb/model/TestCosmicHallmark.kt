@@ -1,38 +1,55 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 class TestCosmicHallmark {
 
-    private val LIMIT = Long.MAX_VALUE
+    private var nodeCount = 0
+    private val LIMIT = 4000L
 
-    fun parseCosmicGeneCensusFile(filename: String): Int {
-        // limit the number of records processed
-        var recordCount = 0
-        deleteCosmicHallmarkNodes()
-        ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicHallmark.parseValueMap(it) }
-            .forEach { hall ->
-                Neo4jConnectionService.executeCypherCommand(hall.generateCosmicHallmarkCypher())
-                println("Loaded Cosmic Hallmark ${hall.geneSymbol}")
-                // create a Publication node if a PubMed id is present
-                CosmicGeneCensus.registerGenePublication(hall.pubmedId, hall.geneSymbol)
-                recordCount += 1
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceCSVRecords(filename: String) =
+        produce<CSVRecord> {
+            val path = Paths.get(filename)
+            CSVRecordSupplier(path).get()
+                .limit(LIMIT)
+                .asSequence()
+                .filter { it.size() > 1 }
+                .forEach {
+                    send(it)
+                    delay(20)
+                }
+        }
+
+    fun testCosmicModel() = runBlocking {
+        val filename = ConfigurationPropertiesService
+            .resolveCosmicCompleteFileLocation("Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv")
+        val records = produceCSVRecords(filename)
+        for (record in records) {
+            nodeCount += 1
+            val hallmark = CosmicHallmark.parseCSVRecord(record)
+            when (hallmark.isValid()) {
+                true -> println(
+                    "Hallmark Id: ${hallmark.hallmarkId} " +
+                            "Gene symbol: ${hallmark.geneSymbol}  Hallmark: ${hallmark.hallmark} " +
+                            " Description: ${hallmark.description}"
+                )
+
+                false -> println("Row $nodeCount is invalid")
             }
-        return recordCount
-    }
-    private fun deleteCosmicHallmarkNodes(){
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicHallmark")
+        }
+        println("COSMIC gene census hallmark record count = $nodeCount")
     }
 }
-fun main() {
-    val cosmicHallmarkFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv")
-    val recordCount =
-        TestCosmicHallmark().parseCosmicGeneCensusFile(cosmicHallmarkFile)
-    println("Loaded COSMIC gene census hallmark file: $cosmicHallmarkFile  record count = $recordCount")
-}
+
+fun main() = TestCosmicHallmark().testCosmicModel()
+

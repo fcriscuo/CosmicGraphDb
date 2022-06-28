@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -13,7 +14,6 @@ Relationships:
 data class CosmicTumor(
     val tumorId: Int,
     val sampleId: Int,
-    val tumorOrigin: String,
     val tumorSource: String,
     val tumorRemark: String,
     val patient: CosmicPatient
@@ -22,11 +22,14 @@ data class CosmicTumor(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicTumor", "tumor_id", tumorId.toString())
 
-    fun generateCosmicTumorCypher():String {
+    override fun isValid(): Boolean = patient.isValid().and(tumorId > 0)
+    override fun getPubMedId(): Int = 0
+
+    override fun generateLoadCosmicModelCypher():String {
         var cypher = ""
         if (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier()).not()) {
             cypher = cypher.plus( generateTumorMergeCypher())
-                .plus(patient.generateCosmicPatientCypher())
+                .plus(patient.generateLoadCosmicModelCypher())
         }else {
             cypher = cypher.plus(generateTumorMatchCypher())
         }
@@ -43,9 +46,7 @@ data class CosmicTumor(
    private fun generateTumorMergeCypher(): String =
         " CALL apoc.merge.node( [\"CosmicTumor\"], " +
                 "{tumor_id: $tumorId} ," +
-                " {tumor_origin: " +
-                " ${Neo4jUtils.formatPropertyValue(tumorOrigin)} ," +
-                " tumor_source: ${Neo4jUtils.formatPropertyValue(tumorSource)} , " +
+                " { tumor_source: ${Neo4jUtils.formatPropertyValue(tumorSource)} , " +
                 " tumor_remark: ${Neo4jUtils.formatPropertyValue(tumorRemark)} , " +
                 "  created: datetime()},{}) YIELD node as $nodename \n"
 
@@ -62,16 +63,17 @@ data class CosmicTumor(
                     " YIELD rel AS $relname \n"
     }
 
+
     companion object : AbstractModel {
         const val nodename = "tumor"
-        fun parseValueMap(value: Value): CosmicTumor =
+
+        fun parseCSVRecord(record: CSVRecord): CosmicTumor =
             CosmicTumor(
-                value["id_tumour"].asString().toInt(),
-                value["sample_id"].asString().toInt(),
-                value["Tumour origin"].asString(),
-                value["tumour_source"].asString(),
-                removeInternalQuotes(value["tumour_remark"].asString()),
-                CosmicPatient.parseValueMap(value)
+                record.get("id_tumour").toInt(),
+                record.get("sample_id").toInt(),
+                record.get("tumour_source"),
+                removeInternalQuotes(record.get("tumour_remark")),
+                CosmicPatient.parseCSVRecord(record)
             )
 
         fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +

@@ -1,10 +1,9 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
-import org.batteryparkdev.logging.service.LogService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
 import org.neo4j.driver.Value
 
 data class CosmicGeneCensus(
@@ -23,11 +22,13 @@ data class CosmicGeneCensus(
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicGene", "gene_symbol", geneSymbol)
 
-    fun generateCosmicGeneCypher(): String =
+    override fun isValid(): Boolean = geneSymbol.isNotEmpty()
+    override fun getPubMedId(): Int = 0
+
+    override fun generateLoadCosmicModelCypher(): String =
         generateMergeCypher()
             .plus(generateGeneMutationCollectionNodeCypher())
             .plus(generateGeneAnnotationCollectionCypher())
-            .plus(generateGenePublicationCollectionCypher())
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     somaticTumorTypeList,
@@ -88,13 +89,6 @@ data class CosmicGeneCensus(
                 " CALL apoc.merge.relationship ($nodename, \"HAS_ANNOTATION_COLLECTION\", " +
                 "  {},{created: datetime()}, $annoCollNodename,{} ) YIELD rel AS anno_rel \n "
 
-    private fun generateGenePublicationCollectionCypher() : String =
-        "CALL apoc.merge.node([\"GenePublicationCollection\"], " +
-                "{gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}}, " +
-                " {created: datetime()},{}) YIELD node as $pubCollNodename \n" +
-                " CALL apoc.merge.relationship($nodename, \"HAS_PUBLICATION_COLLECTION\"," +
-                " {}, {created: datetime()}, $pubCollNodename,{} ) YIELD rel AS gene_pub_rel \n "
-
 
     private fun generateMergeCypher(): String =
         when (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {
@@ -109,7 +103,7 @@ data class CosmicGeneCensus(
                     " chromosome_band: $chromosomeBand, " +
                     " somatic: $somatic, germline: $germline, " +
                     " cancer_syndrome: ${Neo4jUtils.formatPropertyValue(cancerSyndrome)}," +
-                    " molecular_genetics: $molecularGenetics, " +
+                    " molecular_genetics: ${Neo4jUtils.formatPropertyValue(molecularGenetics)}, " +
                     " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}, " +
                     " cosmic_id: ${Neo4jUtils.formatPropertyValue(cosmicId)}, " +
                     " cosmic_gene_name: ${Neo4jUtils.formatPropertyValue(cosmicGeneName)}, " +
@@ -124,37 +118,21 @@ data class CosmicGeneCensus(
                     " chromosome_band: $chromosomeBand, " +
                     " somatic: $somatic, germline: $germline, " +
                     " cancer_syndrome: ${Neo4jUtils.formatPropertyValue(cancerSyndrome)}," +
-                    " molecular_genetics: $molecularGenetics, " +
+                    " molecular_genetics: ${Neo4jUtils.formatPropertyValue(molecularGenetics)}, " +
                     " other_germline_mut: ${Neo4jUtils.formatPropertyValue(otherGermlineMut)}," +
                     " cosmic_id: ${Neo4jUtils.formatPropertyValue(cosmicId)}, " +
                     "cosmic_gene_name: ${Neo4jUtils.formatPropertyValue(cosmicGeneName)}, " +
                     "  created: datetime()},{}) YIELD node as $nodename \n"
         }
 
-
     companion object : AbstractModel {
+
         const val nodename = "gene"
         const val mutCollNodename = "gene_mut_collection"
         const val annoCollNodename = "gene_anno_collection"
-        const val pubCollNodename = "gene_pub_collection"
+
         private fun resolveGeneNodeIdentifier(geneSymbol: String): NodeIdentifier =
             NodeIdentifier("CosmicGene", "gene_symbol", geneSymbol)
-
-
-        // Public function to support adding a GenePublication -> Publication relationship
-        // The PubMed Ids are provided in the Hallmark file but they relate to specific genes
-
-        fun registerGenePublication(pubmedId: Int, geneSymbol: String) {
-            if( Neo4jUtils.nodeExistsPredicate(resolveGeneNodeIdentifier(geneSymbol))) {
-                val pub = PubMedPlaceholderNodeLoader(
-                    pubmedId.toString(), geneSymbol,
-                    "GenePublicationCollection", "gene_symbol"
-                )
-                pub.registerPubMedPublication()
-            } else {
-                LogService.logWarn("Unable to register PubMed Id: $pubmedId for Gene $geneSymbol")
-            }
-        }
 
         /*
         Private function to MATCH an existing CosmicGene node if it exists or
@@ -190,31 +168,30 @@ data class CosmicGeneCensus(
             )
         }
 
-
-        fun parseValueMap(value: Value): CosmicGeneCensus =
+        fun parseCSVRecord(record: CSVRecord): CosmicGeneCensus =
             CosmicGeneCensus(
-                value["Gene Symbol"].asString(),
-                value["Name"].asString(),
-                value["Entrez GeneId"].asString(),
-                value["Genome Location"].asString(),
-                parseValidIntegerFromString(value["Tier"].asString()),
-                value["Hallmark"].toString().isNotBlank(),
-                value["Chr Band"].toString(),
-                value["Somatic"].toString().isNotBlank(),
-                value["Germline"].toString().isNotBlank(),
-                processTumorTypes(value["Tumour Types(Somatic)"].asString()),
-                processTumorTypes(value["Tumour Types(Germline)"].asString()),
-                value["Cancer Syndrome"].asString(),
-                parseStringOnComma(value["Tissue Type"].asString()),
-                value["Molecular Genetics"].toString(),
-                parseStringOnComma(value["Role in Cancer"].asString()),
-                parseStringOnComma(value["Mutation Types"].asString()),
-                parseStringOnComma(value["Translocation Partner"].asString()),
-                value["Other Germline Mut"].asString(),
-                parseStringOnSemiColon(value["Other Syndrome"].asString()),
-                value["COSMIC ID"].asString(),
-                value["cosmic gene name"].asString(),
-                parseStringOnComma(value["Synonyms"].asString())
+                record.get("Gene Symbol"),
+                record.get("Name"),
+                record.get("Entrez GeneId"),
+                record.get("Genome Location"),
+                parseValidIntegerFromString(record.get("Tier")),
+                record.get("Hallmark").isNotBlank(),
+                record.get("Chr Band"),
+                record.get("Somatic").isNotBlank(),
+                record.get("Germline").isNotBlank(),
+                processTumorTypes(record.get("Tumour Types(Somatic)")),
+                processTumorTypes(record.get("Tumour Types(Germline)")),
+                record.get("Cancer Syndrome"),
+                parseStringOnComma(record.get("Tissue Type")),
+                record.get("Molecular Genetics"),
+                parseStringOnComma(record.get("Role in Cancer")),
+                parseStringOnComma(record.get("Mutation Types")),
+                parseStringOnComma(record.get("Translocation Partner")),
+                record.get("Other Germline Mut"),
+                parseStringOnSemiColon(record.get("Other Syndrome")),
+                record.get("COSMIC ID"),
+                record.get("cosmic gene name"),
+                parseStringOnComma(record.get("Synonyms"))
             )
 
         /*

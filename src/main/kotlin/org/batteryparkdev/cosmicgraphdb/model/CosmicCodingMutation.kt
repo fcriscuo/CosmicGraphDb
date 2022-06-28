@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -7,11 +8,6 @@ import org.neo4j.driver.Value
 /*
 Represents the data in the CosmicMutantExport or CosmicMutantExportCensus files
 Key: mutationId
-Relationships:  
-   Sample - [HAS_MUTATION_COLLECTON] -> SampleMutationCollection - [HAS_CODING_MUTATION] -> CodingMutation
-   Gene - [HAS_MUTATION_COLLECTION] -> GeneMutationCollection - [HAS_CODING_MUTATION] -> CodingMutation
-   CodingMutation - [HAS_PUBLICATION] -> Publication
-
  */
 data class CosmicCodingMutation(
     val geneSymbol: String, val sampleId: Int,
@@ -21,18 +17,22 @@ data class CosmicCodingMutation(
     val mutationAA: String, val mutationDescription: String, val mutationZygosity: String,
     val LOH: String, val GRCh: String, val mutationGenomePosition: String,
     val mutationStrand: String, val resistanceMutation: String,
-    val fathmmPrediction: String, val fathmmScore: Double, val mutationSomaticStatus: String,
+    val mutationSomaticStatus: String,
     val pubmedId: Int, val genomeWideScreen: Boolean,
     val hgvsp: String, val hgvsc: String, val hgvsg: String, val tier: String
-    //val tumor: CosmicTumor
 ) : CosmicModel {
+
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier(
             "CosmicCodingMutation", "mutation_id",
             mutationId.toString()
         )
 
-    fun generateCosmicCodingMutationCypher(): String = generateMergeCypher()
+    override fun isValid(): Boolean = geneSymbol.isNotEmpty().and(sampleId>0)
+    override fun getPubMedId(): Int  = pubmedId
+
+    override fun generateLoadCosmicModelCypher(): String =
+        generateMergeCypher()
         .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, nodename))
         .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
         .plus(" RETURN $nodename")
@@ -54,8 +54,6 @@ data class CosmicCodingMutation(
             " genome_position: ${Neo4jUtils.formatPropertyValue(mutationGenomePosition)}, " +
             " strand: ${Neo4jUtils.formatPropertyValue(mutationStrand)}, " +
             " resistance_mutation: ${Neo4jUtils.formatPropertyValue(resistanceMutation)}, " +
-            " fathmm_prediction: ${Neo4jUtils.formatPropertyValue(fathmmPrediction)}, " +
-            " fathmm_score: $fathmmScore, " +
             " somatic_status: ${Neo4jUtils.formatPropertyValue(mutationSomaticStatus)}, " +
             " pubmed_id: $pubmedId, genome_wide_screen: $genomeWideScreen, " +
             " hgvsp: ${Neo4jUtils.formatPropertyValue(hgvsp)}, " +
@@ -80,8 +78,6 @@ data class CosmicCodingMutation(
             " genome_position: ${Neo4jUtils.formatPropertyValue(mutationGenomePosition)}, " +
             " strand: ${Neo4jUtils.formatPropertyValue(mutationStrand)}, " +
             " resistance_mutation: ${Neo4jUtils.formatPropertyValue(resistanceMutation)}, " +
-            " fathmm_prediction: ${Neo4jUtils.formatPropertyValue(fathmmPrediction)}, " +
-            " fathmm_score: $fathmmScore, " +
             " somatic_status: ${Neo4jUtils.formatPropertyValue(mutationSomaticStatus)}, " +
             " pubmed_id: $pubmedId, genome_wide_screen: $genomeWideScreen, " +
             " hgvsp: ${Neo4jUtils.formatPropertyValue(hgvsp)}, " +
@@ -114,35 +110,36 @@ data class CosmicCodingMutation(
             )
         }
 
-        fun parseValueMap(value: Value): CosmicCodingMutation =
-            CosmicCodingMutation(
-                value["Gene name"].asString(), // actually HGNC approved symbol
-                value["ID_sample"].asString().toInt(),
-                value["GENOMIC_MUTATION_ID"].asString(),
-                value["Gene CDS length"].asString().toInt(),
-                value["HGNC ID"].asString().toInt(),
-                value["LEGACY_MUTATION_ID"].asString(),
-                value["MUTATION_ID"].asString().toInt(),
-                value["Mutation CDS"].asString(),
-                value["Mutation AA"].asString(),
-                value["Mutation Description"].asString(),
-                value["Mutation zygosity"].asString() ?: "",
-                value["LOH"].asString() ?: "",
-                value["GRCh"].asString() ?: "38",
-                value["Mutation genome position"].asString(),
-                value["Mutation strand"].asString(),
-                value["Resistance Mutation"].asString(),
-                value["FATHMM prediction"].asString(),
-                parseValidDoubleFromString(value["FATHMM score"].asString()),
-                value["Mutation somatic status"].asString(),
-                parseValidIntegerFromString(value["Pubmed_PMID"].asString()),
-                convertYNtoBoolean(value["Genome-wide screen"].asString()),
-                value["HGVSP"].asString(),
-                value["HGVSC"].asString(),
-                value["HGVSG"].asString(),
-                resolveTier(value)
-                //CosmicTumor.parseValueMap(value)
-            )
+          /*
+          Method to parse a CsvRecord into a CosmicCodingMutation
+          CosmicMutantExportCensus file is too large to use an APOC method
+           */
+          fun parseCSVRecord(record:CSVRecord): CosmicCodingMutation =
+              CosmicCodingMutation(
+                  record.get("Gene name"), // actually HGNC approved symbol
+                  record.get("ID_sample").toInt(),
+                  record.get("GENOMIC_MUTATION_ID"),
+                  parseValidIntegerFromString(record.get("Gene CDS length")),
+                  parseValidIntegerFromString(record.get("HGNC ID")),
+                  record.get("LEGACY_MUTATION_ID"),
+                  record.get("MUTATION_ID").toInt(),
+                  record.get("Mutation CDS"),
+                  record.get("Mutation AA"),
+                  record.get("Mutation Description"),
+                  record.get("Mutation zygosity") ?: "",
+                  record.get("LOH") ?: "",
+                  record.get("GRCh") ?: "38",
+                  record.get("Mutation genome position"),
+                  record.get("Mutation strand"),
+                  record.get("Resistance Mutation"),
+                  record.get("Mutation somatic status"),
+                  parseValidIntegerFromString(record.get("Pubmed_PMID")),
+                  convertYNtoBoolean(record.get("Genome-wide screen")),
+                  record.get("HGVSP"),
+                  record.get("HGVSC"),
+                  record.get("HGVSG"),
+                  record.get("Tier") ?: ""
+              )
 
         /*
                Not all mutation files have a Tier column

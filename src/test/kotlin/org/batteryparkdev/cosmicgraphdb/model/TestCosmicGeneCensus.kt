@@ -1,42 +1,46 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 class TestCosmicGeneCensus {
-    private val LIMIT = Long.MAX_VALUE
 
-    /*
-    n.b. file name specification must be a full path since it is resolved by the Neo4j server
-     */
-    fun parseCosmicGeneCensusFile(filename: String): Int {
-        // delete existing CosmicGene nodes & annotations
-        deleteExistingGeneNodes()
-        ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicGeneCensus.parseValueMap(it) }
-            .forEach { gene ->
-                Neo4jConnectionService.executeCypherCommand(gene.generateCosmicGeneCypher())
-                println("Loading cosmic census gene: ${gene.geneSymbol}")
+    private var nodeCount = 0
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun CoroutineScope.produceCSVRecords(filename: String) =
+        produce<CSVRecord> {
+            val path = Paths.get(filename)
+            CSVRecordSupplier(path).get().asSequence()
+                .forEach {
+                    send(it)
+                    delay(20)
+                }
+        }
+
+    fun testCosmicModel() = runBlocking {
+        val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("cancer_gene_census.csv")
+        val records = produceCSVRecords(filename)
+        for (record in records) {
+            nodeCount += 1
+            val gene = CosmicGeneCensus.parseCSVRecord(record)
+            when (gene.isValid()) {
+                true -> println("Gene symbol: ${gene.geneSymbol}  Gene name: ${gene.geneName} " +
+                        " Genome location: ${gene.genomeLocation}")
+                false -> println("Row $nodeCount is invalid")
             }
-        return Neo4jConnectionService.executeCypherCommand("MATCH (cg: CosmicGene) RETURN COUNT(cg)").toInt()
-    }
-
-    private fun deleteExistingGeneNodes() {
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicAnnotation")
-        Neo4jUtils.detachAndDeleteNodesByName("GeneMutationCollection")
-        Neo4jUtils.detachAndDeleteNodesByName("GenePublicationCollection")
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicGene")
+        }
+        println("Cosmic Gene Census node count = $nodeCount")
     }
 }
 
-fun main() {
-    val cosmicGeneCensusFile = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("cancer_gene_census.csv")
-    val recordCount =
-        TestCosmicGeneCensus().parseCosmicGeneCensusFile(cosmicGeneCensusFile)
-    println("Processed $cosmicGeneCensusFile  record count = $recordCount")
-}
+fun main() =
+    TestCosmicGeneCensus().testCosmicModel()

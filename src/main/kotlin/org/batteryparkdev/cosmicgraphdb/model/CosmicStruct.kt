@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.neo4j.driver.Value
@@ -26,7 +27,11 @@ data class CosmicStruct(
             resolveStructType()
         )
 
-    fun generateStructCypher(): String = generateMergeCypher()
+    override fun isValid(): Boolean = sampleId > 0
+    override fun getPubMedId(): Int = pubmedId
+
+    override fun generateLoadCosmicModelCypher(): String =
+        generateMergeCypher()
         .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
         .plus(" RETURN $nodename\n")
 
@@ -50,14 +55,15 @@ data class CosmicStruct(
 
     companion object : AbstractModel {
         const val nodename = "struct"
-        fun parseValueMap(value: Value): CosmicStruct =
+
+        fun parseCSVRecord(record: CSVRecord): CosmicStruct =
             CosmicStruct(
-                value["MUTATION_ID"].asString().toInt(),
-                value["ID_SAMPLE"].asString().toInt(),
-                value["ID_TUMOUR"].asString().toInt(),
-                value["Mutation Type"].asString(),
-                value["description"].asString(),
-                parseValidIntegerFromString(value["PUBMED_PMID"].asString())
+                record.get("MUTATION_ID").toInt(),
+                record.get("ID_SAMPLE").toInt(),
+                record.get("ID_TUMOUR").toInt(),
+                record.get("Mutation Type"),
+                record.get("description"),
+                parseValidIntegerFromString(record.get("PUBMED_PMID"))
             )
 
         private fun generateMatchCosmicStructCypher(mutationId: Int): String  =

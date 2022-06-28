@@ -1,46 +1,33 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import java.nio.file.Paths
 
 class TestCosmicCodingMutation {
-    fun parseCosmicMutationFile(filename: String): Int {
-        val LIMIT = Long.MAX_VALUE
-        // limit the number of records processed
-       deleteExistingNodes()
-        ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicCodingMutation.parseValueMap(it) }
-            // only process COSMIC census genes
-            .filter { mutation ->
-                Neo4jUtils.nodeExistsPredicate(
-                    NodeIdentifier(
-                        "CosmicGene", "gene_symbol",
-                        mutation.geneSymbol
-                    )
-                )
-            }
-            .forEach { mutation ->
-                println("Loading mutation ${mutation.genomicMutationId} for gene: ${mutation.geneSymbol}")
-                Neo4jConnectionService.executeCypherCommand(mutation.generateCosmicCodingMutationCypher())
-                // create a Publication node if a PubMed id is present
-               // mutation.createPubMedRelationship(mutation.pubmedId)
-            }
-        return Neo4jConnectionService.executeCypherCommand("MATCH (cm:CosmicMutation) RETURN COUNT(cm)").toInt()
-    }
-    private fun deleteExistingNodes(){
-        Neo4jUtils.detachAndDeleteNodesByName("CosmicCodingMutation")
-    }
+    private val LIMIT = 3000L
 
+    fun testCosmicModel(): Unit {
+        var nodeCount = 0
+        val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicMutantExportCensus.tsv")
+        println("Processing file: $filename")
+        val path = Paths.get(filename)
+        CSVRecordSupplier(path).get()
+            .limit(LIMIT)
+            .map { it -> CosmicCodingMutation.parseCSVRecord(it) }
+            .forEach { mutation ->
+                        nodeCount += 1
+                        when (mutation.isValid()) {
+                            true -> println("Mutation row: $nodeCount  Gene Symbol: ${mutation.geneSymbol}  AA mut ${mutation.mutationAA}")
+                            false -> println("Row $nodeCount is invalid")
+                        }
+                    }
+
+        println("Processed Mutation record count = $nodeCount")
+    }
 }
 
 fun main() {
-    val filename = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicMutantExportCensus.tsv")
-    val recordCount =
-        TestCosmicCodingMutation().parseCosmicMutationFile(filename)
-    println("Mutation record count = $recordCount")
+     TestCosmicCodingMutation().testCosmicModel()
+
 }

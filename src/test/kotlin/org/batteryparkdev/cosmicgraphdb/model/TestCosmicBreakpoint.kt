@@ -1,38 +1,55 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 
-import org.batteryparkdev.cosmicgraphdb.io.ApocFileReader
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.io.CSVRecordSupplier
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 class TestCosmicBreakpoint {
-    private val LIMIT = Long.MAX_VALUE
+    var nodeCount = 0
+    private val LIMIT = 4000L
+
     /*
-    Test parsing sample Cosmic breakpoints TSV file and mapping data to
-    CosmicBreakpoint model class
-    n.b. file name specification must be full path since it is resolved by Neo4j server
+    Apache Commons CSV parser
      */
-    fun parseBreakpointFile(filename: String): Int {
-        // limit the number of records processed
-       Neo4jUtils.detachAndDeleteNodesByName("CosmicBreakpoint")
-        ApocFileReader.processDelimitedFile(filename)
-            .stream().limit(LIMIT)
-            .map { record -> record.get("map") }
-            .map { CosmicBreakpoint.parseValueMap(it) }
-            .forEach { breakpoint ->
-                println("Loading breakpoint  ${breakpoint.mutationId}")
-                Neo4jConnectionService.executeCypherCommand(breakpoint.generateBreakpointCypher())
-                // create a Publication node if a PubMed Id is present
-                breakpoint.createPubMedRelationship(breakpoint.pubmedId)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun CoroutineScope.produceCSVRecords(filename: String) =
+        produce<CSVRecord> {
+            val path = Paths.get(filename)
+            CSVRecordSupplier(path).get().limit(LIMIT).asSequence()
+                .filter { it.size() > 1 }
+                .forEach {
+                    send(it)
+                    delay(20)
+                }
+        }
+
+    fun testCosmicModel() = runBlocking {
+        val cosmicBreakpointFile =
+            ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicBreakpointsExport.tsv")
+        val records = produceCSVRecords(cosmicBreakpointFile)
+        for (record in records) {
+            nodeCount += 1
+            val breakpoint = CosmicBreakpoint.parseCSVRecord(record)
+            when (breakpoint.isValid()) {
+                true -> println("Sample Id: ${breakpoint.sampleId}  Mutation Id" +
+                            " ${breakpoint.mutationId}")
+                false -> println("Row $nodeCount is invalid")
             }
-        return Neo4jConnectionService.executeCypherCommand("MATCH (cb: CosmicBreakpoint) RETURN COUNT(cb)").toInt()
+        }
+        println("Breakpoint record count = $nodeCount")
     }
 }
 
 fun main() {
-    val cosmicBreakpointFile =  ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicBreakpointsExport.tsv")
-val recordCount =
-    TestCosmicBreakpoint().parseBreakpointFile(cosmicBreakpointFile)
-    println("Breakpoint record count = $recordCount")
+    TestCosmicBreakpoint().let {
+        it.testCosmicModel()
+    }
 }
