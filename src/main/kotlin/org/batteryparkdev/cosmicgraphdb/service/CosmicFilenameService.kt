@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.service
 
+import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import org.batteryparkdev.property.service.ConfigurationPropertiesService
 
 object CosmicFilenameService {
@@ -35,12 +36,13 @@ object CosmicFilenameService {
     private fun resolveCompleteFile(completeFileName: String): String =
         ConfigurationPropertiesService.resolveCosmicCompleteFileLocation(completeFileName)
 
-    fun resolveCosmicDataFile(filenameRunmodePair: Pair<String, String>): String {
-        val runMode = filenameRunmodePair.second
-        val filename = filenameRunmodePair.first
-        return when (runMode.lowercase().equals("complete")) {
-            true -> resolveCompleteFile(filename)
-            false -> resolveSampleFile(filename)
+    /*
+    Determine whether sample or complete COSMIC files should be loaded
+     */
+    fun resolveCosmicDataFile(filename: String): String {
+        return when (Neo4jConnectionService.isSampleContext()) {
+            false-> resolveCompleteFile(filename)
+            true -> resolveSampleFile(filename)
         }
     }
 }

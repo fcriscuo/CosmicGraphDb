@@ -1,12 +1,10 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.lang3.RandomStringUtils
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.dao.NodeIdentifierDao
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
 import org.batteryparkdev.nodeidentifier.model.RelationshipDefinition
-import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
 
 interface CosmicModel {
     abstract fun getNodeIdentifier(): NodeIdentifier

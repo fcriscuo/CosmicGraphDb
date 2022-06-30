@@ -61,7 +61,7 @@ data class CosmicHallmark(
     companion object : AbstractModel {
         const val nodename = "hallmark"
         const val collectionname = "hallmark_collect"
-        const val pubCollNodename = "hall_pub_coll"
+
 
         fun parseCSVRecord(record: CSVRecord): CosmicHallmark =
             CosmicHallmark(

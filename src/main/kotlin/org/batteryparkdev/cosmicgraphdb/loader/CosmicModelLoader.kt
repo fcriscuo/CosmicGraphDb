@@ -16,15 +16,13 @@ import org.batteryparkdev.neo4j.service.Neo4jConnectionService
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
-class CosmicModelLoader( val filename: String, val runmode:String = "sample") {
-
-    private val filenameRunmodePair = Pair(filename, runmode)
+class CosmicModelLoader( val filename: String) {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.csvProcessCosmicFile() =
         produce<CosmicModel> {
-            val path = Paths.get(CosmicFilenameService.resolveCosmicDataFile(filenameRunmodePair))
+            val path = Paths.get(CosmicFilenameService.resolveCosmicDataFile(filename))
             CSVRecordSupplier(path).get().asSequence()
                 .map { parseCosmicModel(it) }
                 .forEach {

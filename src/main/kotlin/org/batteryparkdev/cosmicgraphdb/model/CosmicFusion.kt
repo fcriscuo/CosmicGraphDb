@@ -37,7 +37,7 @@ data class CosmicFusion(
         and( sampleId > 0).and( translocationName.isNotEmpty())
             .and(five_geneSymbol.isNotEmpty()).and(three_geneSymbol.isNotEmpty())
 
-    override fun getPubMedId(): Int  = 0
+    override fun getPubMedId(): Int  = pubmedId
 
     override fun generateLoadCosmicModelCypher(): String {
         val cypher = when (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier())) {

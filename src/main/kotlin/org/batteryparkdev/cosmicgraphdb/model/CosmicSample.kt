@@ -49,22 +49,8 @@ data class CosmicSample(
             )
             .plus(cosmicTumor.generateLoadCosmicModelCypher())
             .plus(generateSampleMutationCollectionCypher())
-            //.plus(generateSamplePublicationCollectionCypher())
             .plus(" RETURN $nodename\n")
 
-    //TODO: remove
-    fun generateCosmicSampleCypher(): String =
-        generateMergeCypher()
-            .plus(
-                CosmicClassification.generateChildRelationshipCypher(
-                    cosmicPhenotypeId,
-                    nodename
-                )
-            )
-            .plus(cosmicTumor.generateLoadCosmicModelCypher())
-            .plus(generateSampleMutationCollectionCypher())
-           // .plus(generateSamplePublicationCollectionCypher())
-            .plus(" RETURN $nodename\n")
 
     private fun generateMergeCypher(): String =
         "CALL apoc.merge.node( [\"CosmicSample\"], " +
@@ -99,12 +85,6 @@ data class CosmicSample(
                 "CALL apoc.merge.relationship( ${CosmicSample.nodename}, \"HAS_MUTATION_COLLECTION\" ," +
                 " {}, {created: datetime()}, $mutCollNodename, {}) YIELD rel AS mut_coll_rel \n"
 
-    private fun generateSamplePublicationCollectionCypher(): String =
-        "CALL apoc.merge.node([\"SamplePublicationCollection\"], " +
-                "{sample_id: $sampleId}, " +
-                " {created: datetime()},{}) YIELD node as $pubCollNodename \n" +
-                "CALL apoc.merge.relationship( $nodename , \"HAS_PUBLICATION_COLLECTION\"," +
-                " {}, {created: datetime()}, $pubCollNodename, {} ) YIELD rel AS pub_coll_rel \n "
 
     /*
     Private function to create a CosmicTumor - [HAS_SAMPLE] -> CosmicSample relationship
