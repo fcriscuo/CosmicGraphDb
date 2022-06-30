@@ -1,6 +1,11 @@
 #!/bin/bash
 #export COSMIC_DATA_HOME=/Volumes/SSD870/COSMIC_rel96
-cd $COSMIC_DATA_HOME
+# shellcheck disable=SC2164
+if [ $# -eq 0 ]; then
+    echo "The number of file rows to be copied must be provided"
+    exit 1
+fi
+cd "$COSMIC_DATA_HOME"
 if [ ! -d sample ]; then
   mkdir sample
   echo sample subdirectory created
