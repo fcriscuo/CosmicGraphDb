@@ -15,7 +15,7 @@ class TestCosmicLoader(val filename: String,val  nodeLabelList: NonEmptyList<Str
 
     fun loadCosmicFile( ): Unit {
         deleteCosmicNode()
-        CosmicModelLoader(filename,"sample").loadCosmicFile()
+        CosmicModelLoader(filename).loadCosmicFile()
         return
     }
 

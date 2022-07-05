@@ -1,8 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.batteryparkdev.placeholder.loader.PubMedPlaceholderNodeLoader
 import org.neo4j.driver.Value
 
 /**

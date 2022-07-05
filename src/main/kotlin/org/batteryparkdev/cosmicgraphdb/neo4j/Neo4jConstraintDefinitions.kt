@@ -29,7 +29,7 @@ val constraints by lazy {
         "CREATE CONSTRAINT unique_drug_resistance_mut_id IF NOT EXISTS ON (dr:DrugResistance) ASSERT dr.mutation_id IS UNIQUE",
         "CREATE CONSTRAINT unique_cna_id IF NOT EXISTS ON (cna:CosmicCompleteCNA) ASSERT cna.cna_id IS UNIQUE",
         "CREATE CONSTRAINT unique_fusion_mut_id IF NOT EXISTS ON (cf:CosmicFusion) ASSERT cf.fusion_id IS UNIQUE",
-        "CREATE CONSTRAINT unique_diff_methylation_id IF NOT EXISTS ON (cdm:CosmicDiffMethylation) ASSERT cdm_key IS UNIQUE",
+        "CREATE CONSTRAINT unique_diff_methylation_id IF NOT EXISTS ON (cdm:CosmicDiffMethylation) ASSERT cdm.cdm_key IS UNIQUE",
         "CREATE CONSTRAINT unique_complete_cna_id IF NOT EXISTS ON (cna:CosmicCompleteCNA) ASSERT cna.cnv_id IS UNIQUE"
     )
 }
@@ -45,5 +45,6 @@ fun defineConstraints() {
 
 // stand-alone invocation
 fun main(){
+    println("Define constrainsts for ${System.getenv("NEO4J_DATABASE")} database")
     defineConstraints()
 }
