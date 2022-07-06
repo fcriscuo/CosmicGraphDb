@@ -37,7 +37,6 @@
     </properties>
 
     <repositories>
-
         <repository>
             <id>central</id>
             <name>Maven Central</name>
@@ -506,7 +505,7 @@
                                 <transformers>
                                     <transformer implementation=
                                                          "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                        <mainClass>org.batteryparkdev.cosmicgraphdb.app.CosmicDatabaseLoader</mainClass>
+                                        <mainClass>org.batteryparkdev.cosmicgraphdb.app.CosmicNeo4jDatabaseLoader</mainClass>
                                     </transformer>
                                 </transformers>
                             </configuration>

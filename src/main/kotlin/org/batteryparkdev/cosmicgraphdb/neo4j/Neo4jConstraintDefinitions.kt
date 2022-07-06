@@ -18,7 +18,6 @@ val constraints by lazy {
         "CREATE CONSTRAINT unique_cosmic_hallmark_id IF NOT EXISTS ON (hm: CosmicHallmark) ASSERT hm.hallmark_id IS UNIQUE",
         "CREATE CONSTRAINT unique_cosmic_hallmark_collect IF NOT EXISTS ON (hmc: CosmicHallmarkCollection) ASSERT hmc.gene_symbol IS UNIQUE",
         "CREATE CONSTRAINT unique_entrez_id IF NOT EXISTS ON (ent:Entrez) ASSERT ent.entrez_id IS UNIQUE",
-        "CREATE CONSTRAINT unique_annotation_id IF NOT EXISTS ON (ca:CosmicAnnotation) ASSERT ca.annotation_value IS UNIQUE",
         "CREATE CONSTRAINT unique_type_id IF NOT EXISTS ON (ct:CosmicType) ASSERT ct.type_id IS UNIQUE",
         "CREATE CONSTRAINT unique_mutation_id IF NOT EXISTS ON (cm:CosmicCodingMutation) ASSERT cm.mutation_id IS UNIQUE",
         "CREATE CONSTRAINT unique_sample_id IF NOT EXISTS ON (cs:CosmicSample) ASSERT cs.sample_id IS UNIQUE",
