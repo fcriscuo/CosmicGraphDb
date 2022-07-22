@@ -22,6 +22,9 @@ into the Neo4j database
  */
 object CosmicHallmarkLoader {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
+    private val dropCount =
+        Neo4jConnectionService.executeCypherCommand("MATCH (n: CosmicHallmark) " +
+                "RETURN Count(n)").toInt()
 
     /*
     CosmicHallmark file uses a UTF16 encoding
@@ -30,7 +33,9 @@ object CosmicHallmarkLoader {
     fun CoroutineScope.parseCSVRecords(filename: String) =
         produce<CosmicHallmark> {
             val path = Paths.get(filename)
-            UTF16CSVRecordSupplier(path).get().asSequence().forEach{
+            UTF16CSVRecordSupplier(path).get().asSequence()
+                .drop(dropCount)
+                .forEach{
                 send( CosmicHallmark.parseCSVRecord(it))
                     delay(20)
                 }
@@ -62,7 +67,7 @@ object CosmicHallmarkLoader {
     fun processCosmicHallmarkFile(filename: String) = runBlocking {
         require(filename.isNotEmpty()) {"A CosmicHallmark filename must be specified"}
         check(File(filename).exists()) {"$filename does not exist"}
-        logger.atInfo().log("Loading CosmicGeneCensus data from file $filename")
+        logger.atInfo().log("Loading CosmicGeneCensus data from file $filename; droppinf $dropCount records")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
         val geneSymbols = addPubMedRelationship(

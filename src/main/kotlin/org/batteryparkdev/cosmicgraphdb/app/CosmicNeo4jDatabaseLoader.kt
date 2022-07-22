@@ -119,13 +119,18 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadGeneCensusJob(): String {  // job 2
         CosmicModelLoader(CosmicFilenameService.cosmicGeneCensusFile).also {
-            println("Starting GeneCensus loader")
+            val dropCount = resolveNodeCountByLabel("CosmicGene")
+            println("Starting GeneCensus loader; skipping $dropCount records")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicGeneCensus data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "GeneCensus data loaded"
     }
+
+    private fun resolveNodeCountByLabel(label: String): Int =
+        Neo4jConnectionService.executeCypherCommand("MATCH (n: $label) " +
+                "RETURN Count(n)").toInt()
 
     /*
     Private function to load the COSMIC hallmark data.
@@ -143,9 +148,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadClassificationJob(): String {   // job 4
         CosmicModelLoader(CosmicFilenameService.cosmicClassificationFile).also {
-            println("Starting Classification loader")
+            val dropCount = resolveNodeCountByLabel("CosmicClassification")
+            println("Starting Classification loader; skipping $dropCount records")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicClassification data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "Classifications data loaded"
@@ -153,9 +159,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadSampleJob(job4Result: String): String { // job 5
         CosmicModelLoader(CosmicFilenameService.cosmicSampleFile).also {
-            println("Starting Sample loader")
+            val dropCount = resolveNodeCountByLabel("CosmicSample")
+            println("Starting Sample loader; skipping $dropCount records")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicSample data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "Sample data loaded"
@@ -163,9 +170,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadCodingMutations(job5Result: String): String {  //job 6
         CosmicModelLoader(CosmicFilenameService.cosmicMutationExportCensusFile).also {
-            println("Starting CosmicCodingMutation loader")
+            val dropCount = resolveNodeCountByLabel("CosmicCodingMutation")
+            println("Starting CosmicCodingMutation loader; skipping $dropCount records")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicCodingMutation data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "MutantExportCensus data loaded"
@@ -173,9 +181,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadCompleteCNAJob(job3Result: String): String {  // job 7
         CosmicModelLoader(CosmicFilenameService.cosmicCompleteCNAFile).also {
-            println("Starting CompleteCNA loader")
+            val dropCount = resolveNodeCountByLabel("CosmicCompleteCNA")
+            println("Starting CompleteCNA loader; skipping $dropCount records")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicCompleteCNA data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "CompleteCNA data loaded"
@@ -183,9 +192,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadDiffMethylationJob(job5Result: String): String {  // job 8
         CosmicModelLoader(CosmicFilenameService.cosmicDiffMethylationFile).also {
-            println("Starting DiffMethylation loader")
+            val dropCount = resolveNodeCountByLabel("CosmicDiffMethylation")
+            println("Starting DiffMethylation loader; skipping $dropCount records")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicDiffMethylation data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "DiffMethylation data loaded"
@@ -193,9 +203,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadGeneExpressionJob(job5Result: String): String { // job 9
         CosmicModelLoader(CosmicFilenameService.cosmicGeneExpressionFile).also {
-            println("Starting GeneExpression loader")
+            val dropCount = resolveNodeCountByLabel("CosmicGeneExpression")
+            println("Starting GeneExpression loader; skipping $dropCount records")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicGeneExpression data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "GeneExpression data loaded"
@@ -203,9 +214,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadBreakpointsJob(job5Result: String): String {   // job 10
         CosmicModelLoader(CosmicFilenameService.cosmicBreakpointsFile).also {
-            println("Starting Breakpoints loader")
+            val dropCount = resolveNodeCountByLabel("CosmicBreakpoint")
+            println("Starting Breakpoints loader; skipping $dropCount records")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicBreakpoints data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "CosmicBreakpoints data loaded"
@@ -213,9 +225,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadCosmicStructJob(job5Result: String): String {  // job 11
         CosmicModelLoader(CosmicFilenameService.cosmicStructFile).also {
-            println("Starting Struct variant data loader ")
+            val dropCount = resolveNodeCountByLabel("CosmicStruct")
+            println("Starting Struct variant data loader; skipping $dropCount records ")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicStruct data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "CosmicStruct data loaded"
@@ -223,9 +236,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadCosmicResistanceMutationsJob(job5Result: String): String {  // job 12
         CosmicModelLoader(CosmicFilenameService.cosmicResistanceFile).also {
-            println("Starting Drug Resistance data loader ")
+            val dropCount = resolveNodeCountByLabel("DrugResistance")
+            println("Starting Drug Resistance data loader; skipping $dropCount records ")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicSResistanceMutations data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "Result of CosmicResistanceMutation data loaded"
@@ -234,9 +248,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
     private fun loadCosmicNCVJob(job5Result: String): String {  // job 13
         println("Starting NCV data loader ")
         CosmicModelLoader(CosmicFilenameService.cosmicNCVFile).also {
-            println("Starting NCV data loader ")
+            val dropCount = resolveNodeCountByLabel("CosmicNCV")
+            println("Starting NCV data loader; skipping $dropCount records ")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicNCV data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "CosmicNCV data loaded"
@@ -244,9 +259,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadCosmicFusionJob(Job5Result: String): String {
         CosmicModelLoader(CosmicFilenameService.cosmicFusionFile).also {
-            println("Starting Fusion data loader ")
+            val dropCount = resolveNodeCountByLabel("CosmicFusion")
+            println("Starting Fusion data loader; skipping $dropCount records ")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicFusion data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "CosmicFusion data loaded"
@@ -254,9 +270,10 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
 
     private fun loadHGNCJob(job2Result: String): String {
         CosmicModelLoader(CosmicFilenameService.cosmicHGNCFile).also {
-            println("Starting HGNC loader ")
+            val dropCount = resolveNodeCountByLabel("CosmicHGNC")
+            println("Starting HGNC loader; skipping $dropCount records ")
             val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile()
+            it.loadCosmicFile(dropCount)
             println("CosmicHGNC data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
         }
         return "CosmicHGNC data loaded"
