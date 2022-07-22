@@ -20,10 +20,11 @@ class CosmicModelLoader( val filename: String) {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.csvProcessCosmicFile() =
+    private fun CoroutineScope.csvProcessCosmicFile(dropCount: Int) =
         produce<CosmicModel> {
             val path = Paths.get(CosmicFilenameService.resolveCosmicDataFile(filename))
             CSVRecordSupplier(path).get().asSequence()
+                .drop(dropCount)
                 .map { parseCosmicModel(it) }
                 .forEach {
                     if (it.isValid()) {
@@ -82,11 +83,11 @@ class CosmicModelLoader( val filename: String) {
     /*
     Function to load data from a Cosmic file into the Neo4j database
      */
-    fun loadCosmicFile() = runBlocking {
+    fun loadCosmicFile( dropCount:Int = 0) = runBlocking {
         logger.atInfo().log("Loading Cosmic data from file: $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val models = processPubMedData(loadCosmicModel(csvProcessCosmicFile()))
+        val models = processPubMedData(loadCosmicModel(csvProcessCosmicFile(dropCount)))
 
         for ( model in models){
             nodeCount += 1
