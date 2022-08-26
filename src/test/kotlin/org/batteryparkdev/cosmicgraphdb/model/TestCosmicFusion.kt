@@ -6,8 +6,8 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 import org.batteryparkdev.io.CSVRecordSupplier
-import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
@@ -29,7 +29,7 @@ class TestCosmicFusion {
         }
 
     fun testCosmicModel() = runBlocking {
-        val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicFusionExport.tsv")
+        val filename = CosmicFilenameService.resolveCosmicCompleteFileLocation("CosmicFusionExport.tsv")
         val records = produceCSVRecords(filename)
         for (record in records) {
             nodeCount += 1
