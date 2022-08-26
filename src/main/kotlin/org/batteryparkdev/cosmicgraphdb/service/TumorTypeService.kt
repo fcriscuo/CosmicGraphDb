@@ -1,7 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.service
 
 import org.batteryparkdev.io.TsvRecordSequenceSupplier
-import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
 
 /*
@@ -13,7 +12,7 @@ in the Abbreviations section
  */
 object TumorTypeService {
     private val abbreviationsFilePath = Paths.get(
-    ConfigurationPropertiesService.resolveCosmicSampleFileLocation("CosmicTumorTypeAbbreviations.tsv"))
+    CosmicFilenameService.resolveCosmicSampleFileLocation("CosmicTumorTypeAbbreviations.tsv"))
     private val abbreviationsMap = mutableMapOf<String, String>()
     init{
         TsvRecordSequenceSupplier(abbreviationsFilePath).get().forEach {

@@ -7,8 +7,8 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 import org.batteryparkdev.io.CSVRecordSupplier
-import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
@@ -33,7 +33,7 @@ class TestCosmicBreakpoint {
 
     fun testCosmicModel() = runBlocking {
         val cosmicBreakpointFile =
-            ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicBreakpointsExport.tsv")
+            CosmicFilenameService.resolveCosmicCompleteFileLocation("CosmicBreakpointsExport.tsv")
         val records = produceCSVRecords(cosmicBreakpointFile)
         for (record in records) {
             nodeCount += 1

@@ -1,7 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 import org.batteryparkdev.io.CSVRecordSupplier
-import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
 
 class TestCosmicCodingMutation {
@@ -9,7 +9,7 @@ class TestCosmicCodingMutation {
 
     fun testCosmicModel(): Unit {
         var nodeCount = 0
-        val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("CosmicMutantExportCensus.tsv")
+        val filename = CosmicFilenameService.resolveCosmicCompleteFileLocation("CosmicMutantExportCensus.tsv")
         println("Processing file: $filename")
         val path = Paths.get(filename)
         CSVRecordSupplier(path).get()

@@ -1,7 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 import org.batteryparkdev.io.CsvRecordSequenceSupplier
-import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
 
 class TestCosmicClassification {
@@ -10,7 +10,7 @@ class TestCosmicClassification {
 
     fun testCosmicModel(): Unit{
         var nodeCount = 0
-        val filename =  ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("classification.csv")
+        val filename =  CosmicFilenameService.resolveCosmicCompleteFileLocation("classification.csv")
         println("Processing file: $filename")
         val path = Paths.get(filename)
         CsvRecordSequenceSupplier(path).get()

@@ -1,10 +1,10 @@
 package org.batteryparkdev.cosmicgraphdb.loader
 
 import arrow.core.nonEmptyListOf
-import org.batteryparkdev.property.service.ConfigurationPropertiesService
+import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 
 fun main () {
-    val filename = ConfigurationPropertiesService.resolveCosmicSampleFileLocation("cancer_gene_census.csv")
+    val filename = CosmicFilenameService.resolveCosmicSampleFileLocation("cancer_gene_census.csv")
     println("Loading Cosmic Gene Census data from: $filename")
     TestCosmicLoader(filename, nonEmptyListOf("CCosmicGeneCensus","GenePublicationCollection",
         "GeneMutationCollection","CosmicAnnotation")).let {

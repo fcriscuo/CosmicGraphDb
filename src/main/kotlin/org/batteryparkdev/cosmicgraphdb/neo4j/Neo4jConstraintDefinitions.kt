@@ -29,7 +29,6 @@ val constraints by lazy {
         "CREATE CONSTRAINT unique_cna_id IF NOT EXISTS ON (cna:CosmicCompleteCNA) ASSERT cna.cna_id IS UNIQUE",
         "CREATE CONSTRAINT unique_fusion_mut_id IF NOT EXISTS ON (cf:CosmicFusion) ASSERT cf.fusion_id IS UNIQUE",
         "CREATE CONSTRAINT unique_diff_methylation_id IF NOT EXISTS ON (cdm:CosmicDiffMethylation) ASSERT cdm.cdm_key IS UNIQUE",
-        "CREATE CONSTRAINT unique_complete_cna_id IF NOT EXISTS ON (cna:CosmicCompleteCNA) ASSERT cna.cnv_id IS UNIQUE"
     )
 }
 

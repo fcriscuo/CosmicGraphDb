@@ -6,8 +6,8 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 import org.batteryparkdev.io.CSVRecordSupplier
-import org.batteryparkdev.property.service.ConfigurationPropertiesService
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
@@ -27,7 +27,7 @@ class TestCosmicGeneCensus {
         }
 
     fun testCosmicModel() = runBlocking {
-        val filename = ConfigurationPropertiesService.resolveCosmicCompleteFileLocation("cancer_gene_census.csv")
+        val filename = CosmicFilenameService.resolveCosmicCompleteFileLocation("cancer_gene_census.csv")
         val records = produceCSVRecords(filename)
         for (record in records) {
             nodeCount += 1
