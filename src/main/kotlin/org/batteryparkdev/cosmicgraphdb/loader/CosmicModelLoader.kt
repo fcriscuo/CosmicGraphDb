@@ -11,8 +11,8 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.model.*
 import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
-import org.batteryparkdev.io.CSVRecordSupplier
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.genomicgraphcore.common.io.CSVRecordSupplier
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 

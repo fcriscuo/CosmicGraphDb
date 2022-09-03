@@ -6,8 +6,8 @@ import kotlinx.coroutines.*
 import org.batteryparkdev.cosmicgraphdb.loader.CosmicHallmarkLoader
 import org.batteryparkdev.cosmicgraphdb.loader.CosmicModelLoader
 import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
@@ -152,24 +152,24 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
     }
 
     private fun loadClassificationJob(): String {   // job 4
-//        CosmicModelLoader(CosmicFilenameService.cosmicClassificationFile).also {
-//            val dropCount = resolveNodeCountByLabel("CosmicClassification")
-//            println("Starting Classification loader; skipping $dropCount records")
-//            val stopwatch = Stopwatch.createStarted()
-//            it.loadCosmicFile(dropCount)
-//            println("CosmicClassification data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
-//        }
+        CosmicModelLoader(CosmicFilenameService.cosmicClassificationFile).also {
+            val dropCount = resolveNodeCountByLabel("CosmicClassification")
+            println("Starting Classification loader; skipping $dropCount records")
+            val stopwatch = Stopwatch.createStarted()
+            it.loadCosmicFile(dropCount)
+            println("CosmicClassification data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
+        }
         return "Classifications data loaded"
     }
 
     private fun loadSampleJob(job4Result: String): String { // job 5
-//        CosmicModelLoader(CosmicFilenameService.cosmicSampleFile).also {
-//            val dropCount = resolveNodeCountByLabel("CosmicSample")
-//            println("Starting Sample loader; skipping $dropCount records")
-//            val stopwatch = Stopwatch.createStarted()
-//            it.loadCosmicFile(dropCount)
-//            println("CosmicSample data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
-//        }
+        CosmicModelLoader(CosmicFilenameService.cosmicSampleFile).also {
+            val dropCount = resolveNodeCountByLabel("CosmicSample")
+            println("Starting Sample loader; skipping $dropCount records")
+            val stopwatch = Stopwatch.createStarted()
+            it.loadCosmicFile(dropCount)
+            println("CosmicSample data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
+        }
         return "Sample data loaded"
     }
 
@@ -272,7 +272,6 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
         }
         return "CosmicFusion data loaded"
     }
-
 }
 
 fun main(args: Array<String>): Unit = runBlocking {

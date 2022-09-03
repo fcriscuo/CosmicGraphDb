@@ -1,9 +1,8 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 
 data class CosmicClassification(
     val cosmicPhenotypeId: String,
@@ -77,7 +76,7 @@ data class CosmicClassification(
             val relationship = "HAS_COSMIC_CLASSIFICATION"
             val relName = "rel_class"
             return "CALL apoc.merge.node(['CosmicClassification'], {phenotype_id: " +
-                    " ${Neo4jUtils.formatPropertyValue(phenotypeId)}}, {},{}) " +
+                    " ${phenotypeId.formatNeo4jPropertyValue()}}, {},{}) " +
                     " YIELD node AS $nodename\n " +
                     " CALL apoc.merge.relationship( $parentNodeName, '$relationship', {}, " +
                     " {created: datetime()}, $nodename, {} ) " +

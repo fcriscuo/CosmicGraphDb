@@ -1,8 +1,8 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 
 object CosmicAnnotationFunctions {
 
@@ -42,7 +42,6 @@ object CosmicAnnotationFunctions {
                     " -[:HAS_TRANSLOCATION_PARTNER]-> " +
                     " (:CosmicGene{gene_symbol:${Neo4jUtils.formatPropertyValue(gene2)}}) )"
         ).toBoolean()
-
 
     fun generateTranslocationCypher(geneSymbol: String, transPartnerList: List<String>): String {
         var index = 0

@@ -1,9 +1,14 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicBreakpointDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.common.parseValidInteger
+import org.batteryparkdev.genomicgraphcore.hgnc.HgncModel
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
+
 
 /*
 Represents the data in the CosmicBreakpointsExport files
@@ -19,46 +24,25 @@ data class CosmicBreakpoint(
     val locationFromMin: Int, val locationFromMax: Int,
     val strandFrom: String, val chromosomeTo: String, val locationToMin: Int, val locationToMax: Int,
     val strandTo: String, val pubmedId: Int = 0, val studyId: Int
- ): CosmicModel
-{
+) : CoreModel {
+
     override fun getNodeIdentifier(): NodeIdentifier =
-       NodeIdentifier("CosmicBreakpoint", "mutation_id", mutationId.toString())
+        NodeIdentifier("CosmicBreakpoint", "mutation_id", mutationId.toString())
 
     override fun isValid(): Boolean = (sampleId > 0).and(mutationId > 0)
 
-    override fun getPubMedId(): Int = pubmedId
+    override fun getPubMedIds(): List<Int> = listOf(pubmedId)
 
-    override fun generateLoadCosmicModelCypher(): String =
-        generateMergeCypher()
-        .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
-        .plus(generateStructRelationshipCypher())
-        .plus(" RETURN ${CosmicBreakpoint.nodename}\n")
+    override fun generateLoadModelCypher(): String = CosmicBreakpointDao(this).generateCosmicBreakpointCypher()
 
-    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
-            " {mutation_id: $mutationId}, " +
-            " {sample_id: $sampleId," +
-            " sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}, " +
-            "chromosome_from: \"$chromosomeFrom\" , " +
-            " location_from_min: $locationFromMin," +
-            " location_from_max: $locationFromMax, " +
-            " strand_from: ${Neo4jUtils.formatPropertyValue(strandFrom)}, " +
-            "chromosome_to: \"$chromosomeTo\", " +  // can't use utility here
-            " location_to_min: $locationToMin," +
-            " location_to_max: $locationToMax, " +
-            " strand_to: ${Neo4jUtils.formatPropertyValue(strandTo)}," +
-            "  pubmed_id: $pubmedId, study_id: ${studyId.toString()}," +
-            " created: datetime() }," +
-            " { last_mod: datetime()}) YIELD node AS ${CosmicBreakpoint.nodename} \n "
+    override fun getModelGeneSymbol(): String = ""
 
+    override fun getModelSampleId(): String = sampleId.toString()
 
-    private fun generateStructRelationshipCypher(): String =
-        CosmicStruct.generateChildRelationshipCypher(mutationId,nodename)
+    companion object : CoreModelCreator {
+        const val nodename = "breakpoint"
 
-
-    companion object : AbstractModel {
-         const val  nodename = "breakpoint"
-
-        fun parseCSVRecord(record: CSVRecord): CosmicBreakpoint {
+        private fun parseCsvRecord(record: CSVRecord): CosmicBreakpoint {
             val sampleName = record.get("Sample name")
             val sampleId = record.get("ID_SAMPLE").toInt()
             val tumorId = record.get("ID_TUMOUR").toInt()
@@ -71,17 +55,17 @@ data class CosmicBreakpoint(
             val locationToMin = record.get("Location To min").toInt()
             val locationToMax = record.get("Location To max").toInt()
             val strandTo = record.get("Strand To")
-            val pubmedId = parseValidIntegerFromString(record.get("Pubmed_PMID"))
-            val studyId = parseValidIntegerFromString(record.get("ID_STUDY"))
+            val pubmedId = record.get("Pubmed_PMID").parseValidInteger()
+            val studyId = record.get("ID_STUDY").parseValidInteger()
             return CosmicBreakpoint(
-                sampleName, sampleId, tumorId, CosmicType(
-                    "Mutation", record.get("Mutation Type")),
+                sampleName, sampleId, tumorId,
+                CosmicType("Mutation", record.get("Mutation Type")),
                 mutationId, chromFrom, locationFromMin, locationFromMax, strandFrom,
                 chromTo, locationToMin, locationToMax, strandTo, pubmedId, studyId
             )
         }
 
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel = ::parseCsvRecord
     }
-
 }
 

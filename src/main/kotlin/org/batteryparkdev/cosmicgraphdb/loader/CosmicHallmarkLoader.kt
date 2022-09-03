@@ -9,8 +9,8 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.batteryparkdev.cosmicgraphdb.model.CosmicHallmark
-import org.batteryparkdev.io.UTF16CSVRecordSupplier
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.genomicgraphcore.common.io.UTF16CSVRecordSupplier
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 import java.io.File
 import java.nio.file.Paths
 import kotlin.streams.asSequence

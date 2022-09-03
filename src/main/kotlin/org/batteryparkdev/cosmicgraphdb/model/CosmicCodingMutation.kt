@@ -1,8 +1,11 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.YNtoBoolean
+import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
+import org.batteryparkdev.genomicgraphcore.common.parseValidInteger
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 import org.neo4j.driver.Value
 
 /*
@@ -41,53 +44,54 @@ data class CosmicCodingMutation(
 
     private val mergeNewNodeCypher = " CALL apoc.merge.node( [\"CosmicCodingMutation\"], " +
             " {mutation_id: $mutationId}, " + // key
-            " { legacy_mutation_id: ${Neo4jUtils.formatPropertyValue(legacyMutationId)} ," +
-            " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
+            " { legacy_mutation_id: ${legacyMutationId.formatNeo4jPropertyValue()} ," +
+            " gene_symbol: ${geneSymbol.formatNeo4jPropertyValue()}, " +
             "  gene_cds_length: $geneCDSLength, " +
-            " genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)} ,"+
-            " mutation_cds: ${Neo4jUtils.formatPropertyValue(mutationCds)}," +
-            " mutation_aa: ${Neo4jUtils.formatPropertyValue(mutationAA)}, " +
-            " description: ${Neo4jUtils.formatPropertyValue(mutationDescription)}," +
-            " zygosity: ${Neo4jUtils.formatPropertyValue(mutationZygosity)}, " +
-            " loh: ${Neo4jUtils.formatPropertyValue(LOH)}, " +
-            " grch: ${Neo4jUtils.formatPropertyValue(GRCh)}, " +
-            " genome_position: ${Neo4jUtils.formatPropertyValue(mutationGenomePosition)}, " +
-            " strand: ${Neo4jUtils.formatPropertyValue(mutationStrand)}, " +
-            " resistance_mutation: ${Neo4jUtils.formatPropertyValue(resistanceMutation)}, " +
-            " somatic_status: ${Neo4jUtils.formatPropertyValue(mutationSomaticStatus)}, " +
-            " pubmed_id: $pubmedId, genome_wide_screen: $genomeWideScreen, " +
-            " hgvsp: ${Neo4jUtils.formatPropertyValue(hgvsp)}, " +
-            " hgvsc: ${Neo4jUtils.formatPropertyValue(hgvsc)}, " +
-            " hgvsq: ${Neo4jUtils.formatPropertyValue(hgvsg)}, " +
-            " tier: ${Neo4jUtils.formatPropertyValue(tier)}, " +
+            " genomic_mutation_id: ${genomicMutationId.formatNeo4jPropertyValue()} ,"+
+            " mutation_cds: ${mutationCds.formatNeo4jPropertyValue()}," +
+            " mutation_aa: ${mutationAA.formatNeo4jPropertyValue()}, " +
+            " description: ${mutationDescription.formatNeo4jPropertyValue()}," +
+            " zygosity: ${mutationZygosity.formatNeo4jPropertyValue()}, " +
+            " loh: ${LOH.formatNeo4jPropertyValue()}, " +
+            " grch: ${GRCh.formatNeo4jPropertyValue()}, " +
+            " genome_position: ${mutationGenomePosition.formatNeo4jPropertyValue()}, " +
+            " strand: ${mutationStrand.formatNeo4jPropertyValue()}, " +
+            " resistance_mutation: ${resistanceMutation.formatNeo4jPropertyValue()}, " +
+            " somatic_status: ${mutationSomaticStatus.formatNeo4jPropertyValue()}, " +
+            " pubmed_id: $pubmedId, " +
+            " genome_wide_screen: $genomeWideScreen, " +
+            " hgvsp: ${hgvsp.formatNeo4jPropertyValue()}, " +
+            " hgvsc: ${hgvsc.formatNeo4jPropertyValue()}, " +
+            " hgvsq: ${hgvsg.formatNeo4jPropertyValue()}, " +
+            " tier: ${tier.formatNeo4jPropertyValue()}, " +
             "  created: datetime()},{}) YIELD node as $nodename \n"
 
     // Cypher to complete an existing placeholder node
     private val mergeExistingNodeCypher = " CALL apoc.merge.node( [\"CosmicCodingMutation\"], " +
             " {mutation_id: $mutationId}, {}," +
-            " { legacy_mutation_id: ${Neo4jUtils.formatPropertyValue(legacyMutationId)}, " +
-            " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
-            " genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)}, " +
+            " { legacy_mutation_id: ${legacyMutationId.formatNeo4jPropertyValue()}, " +
+            " gene_symbol: ${geneSymbol.formatNeo4jPropertyValue()}, " +
+            " genomic_mutation_id: ${genomicMutationId.formatNeo4jPropertyValue()}, " +
             "  gene_cds_length: $geneCDSLength, " +
-            " mutation_cds: ${Neo4jUtils.formatPropertyValue(mutationCds)}," +
-            " mutation_aa: ${Neo4jUtils.formatPropertyValue(mutationAA)}, " +
-            " description: ${Neo4jUtils.formatPropertyValue(mutationDescription)}," +
-            " zygosity: ${Neo4jUtils.formatPropertyValue(mutationZygosity)}, " +
-            " loh: ${Neo4jUtils.formatPropertyValue(LOH)}, " +
-            " grch: ${Neo4jUtils.formatPropertyValue(GRCh)}, " +
-            " genome_position: ${Neo4jUtils.formatPropertyValue(mutationGenomePosition)}, " +
-            " strand: ${Neo4jUtils.formatPropertyValue(mutationStrand)}, " +
-            " resistance_mutation: ${Neo4jUtils.formatPropertyValue(resistanceMutation)}, " +
-            " somatic_status: ${Neo4jUtils.formatPropertyValue(mutationSomaticStatus)}, " +
-            " pubmed_id: $pubmedId, genome_wide_screen: $genomeWideScreen, " +
-            " hgvsp: ${Neo4jUtils.formatPropertyValue(hgvsp)}, " +
-            " hgvsc: ${Neo4jUtils.formatPropertyValue(hgvsc)}, " +
-            " hgvsq: ${Neo4jUtils.formatPropertyValue(hgvsg)}, " +
-            " tier: ${Neo4jUtils.formatPropertyValue(tier)}, " +
+            " mutation_cds: ${mutationCds.formatNeo4jPropertyValue()}," +
+            " mutation_aa: ${mutationAA.formatNeo4jPropertyValue()}, " +
+            " description: ${mutationDescription.formatNeo4jPropertyValue()}," +
+            " zygosity: ${mutationZygosity.formatNeo4jPropertyValue()}, " +
+            " loh: ${LOH.formatNeo4jPropertyValue()}, " +
+            " grch: ${GRCh.formatNeo4jPropertyValue()}, " +
+            " genome_position: ${mutationGenomePosition.formatNeo4jPropertyValue()}, " +
+            " strand: ${mutationStrand.formatNeo4jPropertyValue()}, " +
+            " resistance_mutation: ${resistanceMutation.formatNeo4jPropertyValue()}, " +
+            " somatic_status: ${mutationSomaticStatus.formatNeo4jPropertyValue()}, " +
+            " pubmed_id: $pubmedId, " +
+            " genome_wide_screen: $genomeWideScreen, " +
+            " hgvsp: ${hgvsp.formatNeo4jPropertyValue()}, " +
+            " hgvsc: ${hgvsc.formatNeo4jPropertyValue()}, " +
+            " hgvsq: ${hgvsg.formatNeo4jPropertyValue()}, " +
+            " tier: ${tier.formatNeo4jPropertyValue()}, " +
             "  created: datetime()}) YIELD node as $nodename \n"
 
-
-    companion object : AbstractModel {
+    companion object : CoreModel {
         const val nodename = "coding_mutation"
 
         /*
@@ -119,8 +123,8 @@ data class CosmicCodingMutation(
                   record.get("Gene name"), // actually HGNC approved symbol
                   record.get("ID_sample").toInt(),
                   record.get("GENOMIC_MUTATION_ID"),
-                  parseValidIntegerFromString(record.get("Gene CDS length")),
-                  parseValidIntegerFromString(record.get("HGNC ID")),
+                  record.get("Gene CDS length").parseValidInteger(),
+                  record.get("HGNC ID").parseValidInteger(),
                   record.get("LEGACY_MUTATION_ID"),
                   record.get("MUTATION_ID").toInt(),
                   record.get("Mutation CDS"),
@@ -133,8 +137,8 @@ data class CosmicCodingMutation(
                   record.get("Mutation strand"),
                   record.get("Resistance Mutation"),
                   record.get("Mutation somatic status"),
-                  parseValidIntegerFromString(record.get("Pubmed_PMID")),
-                  convertYNtoBoolean(record.get("Genome-wide screen")),
+                  record.get("Pubmed_PMID").parseValidInteger(),
+                  record.get("Genome-wide screen").YNtoBoolean(),
                   record.get("HGVSP"),
                   record.get("HGVSC"),
                   record.get("HGVSG"),
@@ -149,6 +153,30 @@ data class CosmicCodingMutation(
                 true -> value["Tier"].asString()
                 false -> ""
             }
+
+        override fun generateLoadModelCypher(): String {
+            TODO("Not yet implemented")
+        }
+
+        override fun getModelGeneSymbol(): String {
+            TODO("Not yet implemented")
+        }
+
+        override fun getModelSampleId(): String {
+            TODO("Not yet implemented")
+        }
+
+        override fun getNodeIdentifier(): NodeIdentifier {
+            TODO("Not yet implemented")
+        }
+
+        override fun getPubMedIds(): List<Int> {
+            TODO("Not yet implemented")
+        }
+
+        override fun isValid(): Boolean {
+            TODO("Not yet implemented")
+        }
 
     }
 }
