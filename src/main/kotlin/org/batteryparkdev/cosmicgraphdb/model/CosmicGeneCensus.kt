@@ -4,7 +4,6 @@ import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.service.TumorTypeService
 import org.batteryparkdev.neo4j.service.Neo4jUtils
 import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
 
 data class CosmicGeneCensus(
 
@@ -29,6 +28,8 @@ data class CosmicGeneCensus(
         generateMergeCypher()
             .plus(generateGeneMutationCollectionNodeCypher())
             .plus(generateGeneAnnotationCollectionCypher())
+            .plus(generateHgncRelationshipCypher())
+            .plus(generateEntrezRelationshipCypher())
             .plus(
                 CosmicAnnotationFunctions.generateAnnotationCypher(
                     somaticTumorTypeList,
@@ -74,6 +75,26 @@ data class CosmicGeneCensus(
             .plus(CosmicAnnotationFunctions.generateTranslocationCypher(geneSymbol,translocationPartnerList))
 
             .plus(" RETURN $nodename")
+   /*
+   Create a relationship to an Hgnc node loaded into the database as part of the GenomicGraphCore
+    */
+    private fun generateHgncRelationshipCypher(): String =
+        " MATCH (cg:CosmicGene), (h:Hgnc)  WHERE " +
+                " cg.gene_symbol = \"${geneSymbol}\" AND " +
+                " h.ggene_symbol = \"${geneSymbol}\" " +
+                " CREATE (cg) -[r: HAS_HGNC] -> (h) YIELD r AS hgnc_rel \n"
+
+    /*
+ Create a relationship to an Entrez node loaded into the database as part of the GenomicGraphCore
+  */
+    private fun generateEntrezRelationshipCypher(): String =
+        when (entrezGeneId.toInt() > 0) {
+            true -> "MERGE (e:Entrez{ entrez_id: ${entrezGeneId}} )  " +
+                    " WITH e " +
+                    " MATCH (cg:CosmicGene{gene_symbol: \"${geneSymbol}\"} ) " +
+                    " CREATE (cg) -[r: HAS_ENTREZ] -> (e) YIELD r AS entrez_rel \n"
+            false -> " "
+        }
 
     private fun generateGeneMutationCollectionNodeCypher(): String =
         "CALL apoc.merge.node([\"GeneMutationCollection\"], " +

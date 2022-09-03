@@ -75,9 +75,8 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
             // waiting for result of Job2, & Job4
             val job4Result = task04.await()
             val job2Result = task02.await()
-            // Job3  & Job 3b wait for Job2 to complete  (CosmicGene)
+            // Job3  wait for Job2 to complete  (CosmicGene)
             val task03 = asyncIO { loadHallmarkJob(job2Result) }  // CosmicHallmark
-            val task3b = asyncIO { loadHGNCJob(job2Result) }  // Cosmic HGNC
             // Job 5 waits for Job4
             val task05 = asyncIO { loadSampleJob(job4Result) }  // CosmicSample
             val job5Result = task05.await()
@@ -98,7 +97,7 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
             val task14 = asyncIO { loadCosmicFusionJob(job5Result) }
             // wait for last tier of jobs to complete
             onDone(
-                task06.await(), task03.await(), task3b.await(),
+                task06.await(), task03.await(),
                 task07.await(), task08.await(), task10.await(),
                 task11.await(), task12.await(), task13.await(), task14.await()
             )
@@ -106,7 +105,7 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
     }
 
     private fun onDone(
-        job6Result: String, job3Result: String, job3bResult: String,
+        job6Result: String, job3Result: String,
         job7Result: String, job8Result: String,
         job10Result: String, job11Result: String, job12Result: String, job13Result: String, job14Result: String
     ) {
@@ -274,16 +273,6 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
         return "CosmicFusion data loaded"
     }
 
-    private fun loadHGNCJob(job2Result: String): String {
-        CosmicModelLoader(CosmicFilenameService.cosmicHGNCFile).also {
-            val dropCount = resolveNodeCountByLabel("CosmicHGNC")
-            println("Starting HGNC loader; skipping $dropCount records ")
-            val stopwatch = Stopwatch.createStarted()
-            it.loadCosmicFile(dropCount)
-            println("CosmicHGNC data loading required ${stopwatch.elapsed(TimeUnit.MINUTES)} minutes")
-        }
-        return "CosmicHGNC data loaded"
-    }
 }
 
 fun main(args: Array<String>): Unit = runBlocking {
