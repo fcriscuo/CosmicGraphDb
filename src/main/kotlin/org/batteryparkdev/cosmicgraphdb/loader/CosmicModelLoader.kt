@@ -36,7 +36,6 @@ class CosmicModelLoader( val filename: String) {
 
     private fun parseCosmicModel(record: CSVRecord): CosmicModel {
         return when (filename) {
-            "CosmicHGNC.tsv" -> CosmicHGNC.parseCSVRecord(record)
             "CosmicCompleteCNA.tsv" -> CosmicCompleteCNA.parseCSVRecord(record)
             "CosmicCompleteDifferentialMethylation.tsv" -> CosmicDiffMethylation.parseCSVRecord(record)
             "CosmicCompleteGeneExpression.tsv" -> CosmicCompleteGeneExpression.parseCSVRecord(record)

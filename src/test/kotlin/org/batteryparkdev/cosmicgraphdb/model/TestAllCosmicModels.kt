@@ -20,7 +20,6 @@ fun main() {
     TestCosmicFusion().testCosmicModel()
     TestCosmicGeneCensus().testCosmicModel()
     TestCosmicHallmark().testCosmicModel()
-    TestCosmicHGNC().testCosmicModel()
     TestCosmicNCV().testCosmicModel()
     TestCosmicPatient().processCSVRecords()
     TestCosmicResistanceMutation().testCosmicModel()
