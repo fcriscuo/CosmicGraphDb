@@ -1,6 +1,5 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.produce
@@ -8,7 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
-import org.batteryparkdev.io.CSVRecordSupplier
+import org.batteryparkdev.genomicgraphcore.common.io.CSVRecordSupplier
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
@@ -16,9 +15,6 @@ class TestCosmicBreakpoint {
     var nodeCount = 0
     private val LIMIT = 4000L
 
-    /*
-    Apache Commons CSV parser
-     */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.produceCSVRecords(filename: String) =
         produce<CSVRecord> {
@@ -37,10 +33,10 @@ class TestCosmicBreakpoint {
         val records = produceCSVRecords(cosmicBreakpointFile)
         for (record in records) {
             nodeCount += 1
-            val breakpoint = CosmicBreakpoint.parseCSVRecord(record)
+            val breakpoint = CosmicBreakpoint.createCoreModelFunction.invoke(record)
             when (breakpoint.isValid()) {
-                true -> println("Sample Id: ${breakpoint.sampleId}  Mutation Id" +
-                            " ${breakpoint.mutationId}")
+                true -> println("Sample Id: ${breakpoint.getModelSampleId()}  Mutation Id" +
+                            " ${breakpoint.getNodeIdentifier().idValue}")
                 false -> println("Row $nodeCount is invalid")
             }
         }

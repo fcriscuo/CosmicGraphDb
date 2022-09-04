@@ -14,7 +14,7 @@ class CosmicBreakpointDao(private val cosmicBreakpoint: CosmicBreakpoint) {
     fun generateCosmicBreakpointCypher(): String = generateMergeCypher()
         .plus(" RETURN ${CosmicBreakpoint.nodename}\n")
 
-    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\"], " +
+    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicBreakpoint\",\"Mutation\"], " +
             " {mutation_id: ${cosmicBreakpoint.mutationId}, " +
             " {sample_id: ${cosmicBreakpoint.sampleId} ," +
             " sample_name: ${cosmicBreakpoint.sampleName.formatNeo4jPropertyValue()}, " +
@@ -36,18 +36,14 @@ class CosmicBreakpointDao(private val cosmicBreakpoint: CosmicBreakpoint) {
 
         override val modelRelationshipFunctions: (CoreModel) -> Unit
              = ::completeBreakpointRelationships
+        
+        fun completeBreakpointRelationships(model: CoreModel) {
+            completeRelationshipToSampleMutationCollection(model)
+            completeRelationshipToCosmicStruct(model)
+        }
 
-       /* complete relationship to SampleMutationCollection
-        */
-        private fun completeRelationshipToSampleMutationCollection(model: CoreModel) {
-               val sample = NodeIdentifier("SamplwMutationCollection", "sample_id",
-                   model.getModelSampleId())
-              NodeIdentifierDao.defineRelationship(RelationshipDefinition( sample, model.getNodeIdentifier(),
-              "HAS_MUTATION", RelationshipProperty("type","Breakpoint"))
-             )
-       }
         /*
-        Complete relationship to CosmicStructNode
+        Complete relationship to CosmicStruct node
          */
         private fun completeRelationshipToCosmicStruct(model:CoreModel) {
             val struct = NodeIdentifier("CosmicStruct", "mutation_id",
@@ -56,10 +52,6 @@ class CosmicBreakpointDao(private val cosmicBreakpoint: CosmicBreakpoint) {
                 RelationshipDefinition(struct, model.getNodeIdentifier(), "HAS_BREAKPOINT"))
         }
 
-        fun completeBreakpointRelationships(model: CoreModel) {
-            completeRelationshipToSampleMutationCollection(model)
-            completeRelationshipToCosmicStruct(model)
-        }
 
     }
 }
