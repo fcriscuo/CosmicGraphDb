@@ -2,6 +2,7 @@ package org.batteryparkdev.cosmicgraphdb.model
 
 class TestAllCosmicModels {
 }
+
 /*
 Class that will invoke an integration test for every Cosmic model class
 These tests verify that the CSV/TSV column mappings are correct.
@@ -11,7 +12,7 @@ They are not destructive to an existing Neo4j database.
 Each model integration test can also be run on an individual basis.
  */
 fun main() {
-    TestCosmicBreakpoint().testCosmicModel()
+    TestCoreModel(CosmicBreakpoint.Companion).loadModels("/Volumes/SSD870/COSMIC_rel96/sample/CosmicBreakpointsExport.tsv")
     TestCosmicClassification().testCosmicModel()
     TestCosmicCodingMutation().testCosmicModel()
     TestCosmicCompleteCNA().testCosmicModel()

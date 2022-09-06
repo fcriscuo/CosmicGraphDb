@@ -1,8 +1,9 @@
 package org.batteryparkdev.cosmicgraphdb.loader
 
 import arrow.core.NonEmptyList
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.neo4j.service.Neo4jUtils
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
+
 
 class TestCosmicLoader(val filename: String,val  nodeLabelList: NonEmptyList<String>) {
 

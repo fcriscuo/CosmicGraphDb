@@ -1,9 +1,10 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicDiffMethylationDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 import java.util.*
 
 data class CosmicDiffMethylation(
@@ -15,43 +16,30 @@ data class CosmicDiffMethylation(
     val geneName: String, val methylation: String,
     val avgBetaValueNormal: Float, val betaValue: Float,
     val twoSidedPValue: Double
-): CosmicModel
+): CoreModel
 {
-    override fun generateLoadCosmicModelCypher():String =
-        generateMergeCypher()
-            .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
-            .plus(generateGeneRelationshipCypher())
-            .plus(" RETURN  $nodename")
+    override fun generateLoadModelCypher(): String  =
+        CosmicDiffMethylationDao(this).generateLoadCosmicModelCypher()
+
+    // The methylation file uses non-standard gene names that are not
+    // consistent with HGNC gene symbols
+    override fun getModelGeneSymbol(): String = ""
+
+    override fun getModelSampleId(): String = sampleId.toString()
+
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicDiffMethylation", "key", key)
+
+    override fun getPubMedIds(): List<Int>  = emptyList()
+    
 
     override fun isValid(): Boolean = sampleId > 0
-    override fun getPubMedId(): Int  = 0
 
-    /*
-    The gene symbol parameter is sparsely represented
-    Limit relationships to only those methylation entries that specify a gene
-     */
-    private fun generateGeneRelationshipCypher(): String =
-        when(geneName.isNotEmpty()) {
-            true -> generateGeneMutationCollectionRelationshipCypher(geneName, nodename)
-            false -> " "
-        }
 
-    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicDiffMethylation\"], " +
-            " { key: apoc.create.uuid()}," +
-            "{ study_id: $studyId, tumor_id: $tumorId, sample_id: $sampleId, " +
-            " fragment_id: ${Neo4jUtils.formatPropertyValue(fragmentId)}, genome_version: " +
-            " ${Neo4jUtils.formatPropertyValue(genomeVersion)}, chromosome: $chromosome," +
-            " position: $position, strand: ${Neo4jUtils.formatPropertyValue(strand)}," +
-            " gene_name: ${Neo4jUtils.formatPropertyValue(geneName)}, " +
-            " methylation: ${Neo4jUtils.formatPropertyValue(methylation)}," +
-            " avg_beta_value_normal: $avgBetaValueNormal, beta_value: $betaValue," +
-            " two_sided_p_value: $twoSidedPValue, created: datetime()}, " +
-            " { last_mod: datetime()}) YIELD node AS $nodename \n"
+    companion object : CoreModelCreator {
+        val nodename = "diff_methylation"
 
-    companion object : AbstractModel {
-        val nodename = "methylation"
-
-        fun parseCSVRecord(record: CSVRecord): CosmicDiffMethylation =
+        fun parseCsvRecord(record: CSVRecord): CosmicDiffMethylation =
             CosmicDiffMethylation(
                 UUID.randomUUID().toString(),
                 record.get("STUDY_ID").toInt(),
@@ -71,8 +59,9 @@ data class CosmicDiffMethylation(
                 record.get("BETA_VALUE").toFloat(),
                 record.get("TWO_SIDED_P_VALUE").toDouble()
             )
+
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+            = ::parseCsvRecord
     }
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("CosmicDiffMethylation", "key", key)
 }

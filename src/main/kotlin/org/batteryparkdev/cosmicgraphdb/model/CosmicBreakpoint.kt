@@ -11,11 +11,8 @@ import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 
 
 /*
-Represents the data in the CosmicBreakpointsExport files
+Represents the data in the CosmicBreakpointsExport file
 Key: mutationId
-Relationships:  Struct -[HAS_BREAKPOINT]->  Breakpoint
-                Breakpoint - [HAS_PUBLICATION] -> Publication
-
  */
 data class CosmicBreakpoint(
     val sampleName: String, val sampleId: Int, val tumorId: Int,

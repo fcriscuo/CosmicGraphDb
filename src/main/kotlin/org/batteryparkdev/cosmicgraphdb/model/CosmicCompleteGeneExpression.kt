@@ -1,9 +1,10 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicCompleteGeneExpressionDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 
 // n.b The GENE_NAME column really contains the gene symbol
 data class CosmicCompleteGeneExpression(
@@ -14,41 +15,29 @@ data class CosmicCompleteGeneExpression(
     val zScore: Float,
     val studyId: Int,
     val key:String
-    ): CosmicModel
+    ): CoreModel
 {
-    val nodename = "expression"
+
+    override fun generateLoadModelCypher(): String =
+        CosmicCompleteGeneExpressionDao(this).generateLoadCosmicModelCypher()
+
+    override fun getModelGeneSymbol(): String = geneSymbol
+
+    override fun getModelSampleId(): String = sampleId.toString()
 
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CompleteGeneExpression", "key",
             key.toString())
+
+    override fun getPubMedIds(): List<Int> = emptyList()
+
     override fun isValid(): Boolean = geneSymbol.isNotEmpty()
         .and(sampleId > 0).and(sampleName.isNotEmpty())
-    override fun getPubMedId(): Int = 0
 
-    override fun generateLoadCosmicModelCypher(): String =
-        generateMergeCypher()
-            .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol,nodename))
-            .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
-            .plus(" RETURN $nodename")
+    companion object: CoreModelCreator {
+        val nodename = "expression"
 
-    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CompleteGeneExpression\"], " +
-            "  {key: ${Neo4jUtils.formatPropertyValue(key)}}, " +
-            "  {regulation: ${Neo4jUtils.formatPropertyValue(regulation)}, " +
-            "  gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)} ," +
-            "  sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)} ," +
-            "  sample_id: $sampleId, " +
-            " z_score: $zScore, study_id: $studyId, created: datetime()}, " +
-            " { last_mod: datetime()}) YIELD node AS $nodename \n"
-
-    private fun generateGeneRelationshipCypher() =
-        CosmicGeneCensus.generateGeneParentRelationshipCypher(geneSymbol,nodename)
-
-    private fun generateSampleRelationshipCypher() =
-        CosmicSample.generateChildRelationshipCypher(sampleId, nodename)
-
-    companion object: AbstractModel {
-
-        fun parseCSVRecord(record: CSVRecord): CosmicCompleteGeneExpression =
+        fun parseCsvRecord(record: CSVRecord): CosmicCompleteGeneExpression =
             CosmicCompleteGeneExpression(
                 record.get("SAMPLE_ID").toInt(),
                 record.get("SAMPLE_NAME"),
@@ -62,5 +51,8 @@ data class CosmicCompleteGeneExpression(
                     .plus(":")
                     .plus(record.get("SAMPLE_NAME"))
             )
+
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+            = ::parseCsvRecord
     }
 }

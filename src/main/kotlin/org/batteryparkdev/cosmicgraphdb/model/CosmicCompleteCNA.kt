@@ -1,9 +1,11 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicCompleteCNADao
+import org.batteryparkdev.cosmicgraphdb.dao.resolveMutationType
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 
 data class CosmicCompleteCNA(
     val cnaId: String,  // generated value for uniqueness
@@ -12,35 +14,27 @@ data class CosmicCompleteCNA(
     val sampleName:String, val totalCn:Int, val minorAllele: String,
     val mutationType: CosmicType, val studyId: Int, val grch:String= "38",
     val chromosomeStartStop:String
-) :CosmicModel
+) : CoreModel
 {
-     val nodename = "complete_cna"
 
-override fun getNodeIdentifier(): NodeIdentifier =
+    override fun generateLoadModelCypher(): String = CosmicCompleteCNADao(this).generateLoadCosmicCompleteCNACypher()
+
+    override fun getModelGeneSymbol(): String  = geneSymbol
+
+    override fun getModelSampleId(): String = sampleId.toString()
+
+    override fun getNodeIdentifier(): NodeIdentifier =
     NodeIdentifier("CosmicCompleteCNA", "cna_id",
-        cnaId.toString())
+        cnaId)
+
+    override fun getPubMedIds(): List<Int> = emptyList()
+
     override fun isValid(): Boolean = (sampleId > 0).and(cnvId > 0).and(geneId>0)
-    override fun getPubMedId(): Int = 0
 
-    override fun generateLoadCosmicModelCypher():String =
-        generateMergeCypher()
-            .plus(mutationType.generateCosmicTypeCypher(nodename))
-            .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
-            .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, nodename))
-            .plus(" RETURN  $nodename\n")
+    companion object: CoreModelCreator{
+        val nodename = "complete_cna"
 
-    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicCompleteCNA\"], " +
-            " {cna_id: ${Neo4jUtils.formatPropertyValue(cnaId)} }, "+
-            " { cnv_id: ${cnvId.toString()}, " +
-            "  tumor_id: $tumorId, " +
-            " total_cn: ${totalCn.toString()}, minor_allele: ${Neo4jUtils.formatPropertyValue(minorAllele)}," +
-            " study_id: ${studyId.toString()}, grch: \"$grch\"," +
-            " chromosome_start_stop: \"$chromosomeStartStop\",created: datetime()  " +
-            " }, { last_mod: datetime()}) YIELD node AS $nodename \n"
-
-    companion object: AbstractModel {
-
-        fun parseCSVRecord(record: CSVRecord): CosmicCompleteCNA =
+        fun parseCsvRecord(record: CSVRecord): CosmicCompleteCNA =
             CosmicCompleteCNA(
                 record.get("CNV_ID")
                     .plus(":")
@@ -61,5 +55,7 @@ override fun getNodeIdentifier(): NodeIdentifier =
                 record.get("Chromosome:G_Start..G_Stop")
             )
 
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+             = ::parseCsvRecord
     }
 }

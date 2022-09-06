@@ -7,7 +7,6 @@ import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifierDao
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.RelationshipDefinition
-import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.RelationshipProperty
 
 class CosmicBreakpointDao(private val cosmicBreakpoint: CosmicBreakpoint) {
 
@@ -36,7 +35,7 @@ class CosmicBreakpointDao(private val cosmicBreakpoint: CosmicBreakpoint) {
 
         override val modelRelationshipFunctions: (CoreModel) -> Unit
              = ::completeBreakpointRelationships
-        
+
         fun completeBreakpointRelationships(model: CoreModel) {
             completeRelationshipToSampleMutationCollection(model)
             completeRelationshipToCosmicStruct(model)
@@ -51,7 +50,6 @@ class CosmicBreakpointDao(private val cosmicBreakpoint: CosmicBreakpoint) {
             NodeIdentifierDao.defineRelationship(
                 RelationshipDefinition(struct, model.getNodeIdentifier(), "HAS_BREAKPOINT"))
         }
-
 
     }
 }

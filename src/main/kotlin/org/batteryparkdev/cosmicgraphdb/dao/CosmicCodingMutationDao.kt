@@ -7,11 +7,8 @@ import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
 
 class CosmicCodingMutationDao ( private val codingMutation: CosmicCodingMutation) {
 
-
     fun generateLoadCosmicModelCypher(): String =
         mergeCodingMutationCypher
-            //.plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, CosmicCodingMutation.nodename))
-           // .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, CosmicCodingMutation.nodename))
             .plus(" RETURN ${CosmicCodingMutation.nodename}")
 
     private val mergeCodingMutationCypher = " CALL apoc.merge.node( [\"CosmicCodingMutation\",\"Mutation\"], " +
@@ -46,6 +43,5 @@ class CosmicCodingMutationDao ( private val codingMutation: CosmicCodingMutation
 
         override val modelRelationshipFunctions: (CoreModel) -> Unit =
             ::completeCodingMutationRelationships
-
     }
 }
