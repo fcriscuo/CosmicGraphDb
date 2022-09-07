@@ -31,7 +31,7 @@ data class CosmicDiffMethylation(
         NodeIdentifier("CosmicDiffMethylation", "key", key)
 
     override fun getPubMedIds(): List<Int>  = emptyList()
-    
+
 
     override fun isValid(): Boolean = sampleId > 0
 

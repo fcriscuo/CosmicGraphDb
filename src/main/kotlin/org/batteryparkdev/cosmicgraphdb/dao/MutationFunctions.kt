@@ -42,4 +42,5 @@ fun completeRelationshipToGeneMutationCollection(model: CoreModel) {
                 model.getNodeIdentifier().primaryLabel)
         )
     )
+
 }
