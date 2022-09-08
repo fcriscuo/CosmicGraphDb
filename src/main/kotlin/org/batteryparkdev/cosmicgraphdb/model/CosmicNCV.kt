@@ -1,9 +1,12 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicNCVDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.common.YNtoBoolean
+import org.batteryparkdev.genomicgraphcore.common.parseValidInteger
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 
 data class CosmicNCV(
   val sampleName: String, val sampleId: Int,val tumorId: Int,
@@ -13,57 +16,47 @@ data class CosmicNCV(
   val wtSeq: String, val mutSeq: String,
   val wholeGenomeReseq: Boolean, val wholeExome:Boolean, val studyId: Int,
   val pubmedId: Int, val hgvsg: String
-): CosmicModel  {
+): CoreModel  {
+
+    override fun generateLoadModelCypher(): String  = CosmicNCVDao(this).generateLoadCosmicModelCypher()
+
+    override fun getModelGeneSymbol(): String = ""
+
+    override fun getModelSampleId(): String = sampleId.toString()
 
     override fun getNodeIdentifier(): NodeIdentifier = NodeIdentifier("CosmicNCV",
     "genomic_mutation_id", genomicMutationId)
 
+    override fun getPubMedIds(): List<Int> = listOf(pubmedId)
+
     fun getKey():String = sampleName.plus(":").plus(genomicMutationId)
 
     override fun isValid(): Boolean = sampleId > 0
-    override fun getPubMedId(): Int = pubmedId
 
-    override fun generateLoadCosmicModelCypher(): String = generatemergeCypher()
-        .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
-        .plus(" RETURN  $nodename")
-
-    private fun generatemergeCypher(): String =
-        "CALL apoc.merge.node( [\"CosmicNCV\"], " +
-                "{genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)}}," +  // unique value for node
-                " { sample_name: ${Neo4jUtils.formatPropertyValue(sampleName)}, " +
-                " sample_id: $sampleId, tumor_id: $tumorId, " +
-                " legacy_mutation_id: ${Neo4jUtils.formatPropertyValue(legacyMutationId)}, " +
-                " zygosity: ${Neo4jUtils.formatPropertyValue(zygosity)}, " +
-                " grch: $grch, genome_position: ${Neo4jUtils.formatPropertyValue(genomePosition)}, " +
-                " mutation_somatic_status: ${Neo4jUtils.formatPropertyValue(mutationSomaticStatus)}, " +
-                " wt_seq: ${Neo4jUtils.formatPropertyValue(wtSeq)}," +
-                " mut_seq: ${Neo4jUtils.formatPropertyValue(mutSeq)}, " +
-                " whole_genome_reseq: $wholeGenomeReseq, whole_exome: $wholeExome, study_id: $studyId, " +
-                " pubmed_id: $pubmedId, hgvsg: ${Neo4jUtils.formatPropertyValue(hgvsg)}," +
-                " created: datetime() }, { last_mod: datetime()}) YIELD node AS $nodename \n "
-
-
-    companion object: AbstractModel{
+    companion object: CoreModelCreator{
         const val nodename = "ncv"
 
-        fun parseCSVRecord(record: CSVRecord): CosmicNCV =
+        fun parseCsvRecord(record: CSVRecord): CosmicNCV =
             CosmicNCV(
                 record.get("Sample name"),
-                record.get("ID_SAMPLE").toInt(),
-                record.get("ID_tumour").toInt(),
+                record.get("ID_SAMPLE").parseValidInteger(),
+                record.get("ID_tumour").parseValidInteger(),
                 record.get("GENOMIC_MUTATION_ID"),
                 record.get("LEGACY_MUTATION_ID"),
                 record.get("zygosity"),
-                record.get("GRCh").toInt(),
+                record.get("GRCh").parseValidInteger(),
                 record.get("genome position"),
                 record.get("Mutation somatic status"),
                 record.get("WT_SEQ"),
                 record.get("MUT_SEQ"),
-                convertYNtoBoolean(record.get("Whole_Genome_Reseq")),
-                convertYNtoBoolean(record.get("Whole_Exome")),
-                parseValidIntegerFromString(record.get("ID_STUDY")),
-                parseValidIntegerFromString(record.get("PUBMED_PMID")),
+                record.get("Whole_Genome_Reseq").YNtoBoolean(),
+                record.get("Whole_Exome").YNtoBoolean(),
+                record.get("ID_STUDY").parseValidInteger(),
+                record.get("PUBMED_PMID").parseValidInteger(),
                 record.get("HGVSG")
             )
+
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+            = ::parseCsvRecord
     }
 }

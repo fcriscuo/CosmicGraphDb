@@ -5,6 +5,8 @@ import org.batteryparkdev.cosmicgraphdb.model.CosmicGeneCensus
 import org.batteryparkdev.genomicgraphcore.common.CoreModel
 import org.batteryparkdev.genomicgraphcore.common.CoreModelDao
 import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
+import org.batteryparkdev.genomicgraphcore.hgnc.HgncDao
+import org.batteryparkdev.genomicgraphcore.hgnc.HgncModel
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifierDao
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.RelationshipDefinition
@@ -83,7 +85,7 @@ class CosmicGeneCensusDao(private val cosmicGene: CosmicGeneCensus) {
     private fun generateMergeCypher(): String =
         when (Neo4jUtils.nodeExistsPredicate(cosmicGene.getNodeIdentifier())) {
             //update an existing CosmicGene node (i.e. placeholder)
-            true -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\"]," +
+            true -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\",\"\"Gene\"," +
                     "{  gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}, " +
                     "{}," +
                     " {gene_name: ${cosmicGene.geneName.formatNeo4jPropertyValue()}," +
@@ -100,7 +102,7 @@ class CosmicGeneCensusDao(private val cosmicGene: CosmicGeneCensus) {
                     " cosmic_gene_name: ${cosmicGene.cosmicGeneName.formatNeo4jPropertyValue()} , " +
                     "  created: datetime(.formatNeo4jPropertyValue()) YIELD node as ${CosmicGeneCensus.nodename} \n"
             // create a new CosmicGene new node
-            false -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\"]," +
+            false -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\",\"\"Gene\"]," +
                     "{  gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}," +
                     " {gene_name: ${cosmicGene.geneName.formatNeo4jPropertyValue()}," +
                     " entrez_gene_id: ${cosmicGene.entrezGeneId.formatNeo4jPropertyValue()}," +
@@ -131,10 +133,9 @@ class CosmicGeneCensusDao(private val cosmicGene: CosmicGeneCensus) {
       Create a relationship to a Hgnc node loaded into the database as part of the GenomicGraphCore
        */
         private fun completeRelationshipToHgnc(model: CoreModel) {
-            val hgnc = NodeIdentifier("Hgnc", "gene_symbol", model.getModelGeneSymbol())
-            NodeIdentifierDao.defineRelationship(
-                RelationshipDefinition(model.getNodeIdentifier(), hgnc, "HAS_HGNC")
-            )
+            if (model is HgncModel){
+                HgncDao.registerChildRelationshipToHgnc(model.hgncId, model)
+            }
         }
 
         /*
