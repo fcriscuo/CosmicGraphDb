@@ -1,9 +1,13 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicTumorDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.common.parseValidInteger
+import org.batteryparkdev.genomicgraphcore.common.removeInternalQuotes
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
+
 /*
 Represents the tumor data in the CosmicMutantExport or CosmicMutantExportCensus files
 Key: tumorId
@@ -16,64 +20,31 @@ data class CosmicTumor(
     val sampleId: Int,
     val tumorSource: String,
     val tumorRemark: String,
-    val patient: CosmicPatient
-): CosmicModel {
+    val patient: CoreModel
+): CoreModel {
+    override fun generateLoadModelCypher(): String  = CosmicTumorDao(this).generateLoadCosmicModelCypher()
+
+    override fun getModelGeneSymbol(): String  = ""
+
+    override fun getModelSampleId(): String = sampleId.toString()
 
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicTumor", "tumor_id", tumorId.toString())
 
+    override fun getPubMedIds(): List<Int> = emptyList()
+
     override fun isValid(): Boolean = patient.isValid().and(tumorId > 0)
-    override fun getPubMedId(): Int = 0
 
-    override fun generateLoadCosmicModelCypher():String {
-        var cypher = ""
-        if (Neo4jUtils.nodeExistsPredicate(getNodeIdentifier()).not()) {
-            cypher = cypher.plus( generateTumorMergeCypher())
-                .plus(patient.generateLoadCosmicModelCypher())
-        }else {
-            cypher = cypher.plus(generateTumorMatchCypher())
-        }
-            cypher = cypher.plus(generateTumorSampleRelationshipCypher())
-        return cypher
-    }
-
-    /*
-    Function to generate Cypher statements to create tumor
-    nodes and relationships in the Neo4j database if the tumor id is novel
-    n.b. the generated Cypher is intended to be used within a larger
-    transaction and as a result it does not have a RETURN component
-     */
-   private fun generateTumorMergeCypher(): String =
-        " CALL apoc.merge.node( [\"CosmicTumor\"], " +
-                "{tumor_id: $tumorId} ," +
-                " { tumor_source: ${Neo4jUtils.formatPropertyValue(tumorSource)} , " +
-                " tumor_remark: ${Neo4jUtils.formatPropertyValue(tumorRemark)} , " +
-                "  created: datetime()},{}) YIELD node as $nodename \n"
-
-
-   private  fun generateTumorMatchCypher(): String =
-       "CALL apoc.merge.node ([\"CosmicTumor\"],{tumor_id: $tumorId},{} ) " +
-               " YIELD node AS $nodename\n"
-
-    private fun generateTumorSampleRelationshipCypher(): String {
-        val relationship = "HAS_SAMPLE"
-        val relname = "rel_mut_sample"
-        return "CALL apoc.merge.relationship($nodename, '$relationship', " +
-                    " {}, {created: datetime()}, ${CosmicSample.nodename},{} )" +
-                    " YIELD rel AS $relname \n"
-    }
-
-
-    companion object : AbstractModel {
+    companion object : CoreModelCreator {
         const val nodename = "tumor"
 
-        fun parseCSVRecord(record: CSVRecord): CosmicTumor =
+        fun parseCsvRecord(record: CSVRecord): CosmicTumor =
             CosmicTumor(
-                record.get("id_tumour").toInt(),
-                record.get("sample_id").toInt(),
+                record.get("id_tumour").parseValidInteger(),
+                record.get("sample_id").parseValidInteger(),
                 record.get("tumour_source"),
-                removeInternalQuotes(record.get("tumour_remark")),
-                CosmicPatient.parseCSVRecord(record)
+                record.get("tumour_remark").removeInternalQuotes(),
+                CosmicPatient.createCoreModelFunction.invoke(record)
             )
 
         fun generatePlaceholderCypher(tumorId: Int)  = " CALL apoc.merge.node([\"CosmicTumor\"], " +
@@ -88,6 +59,9 @@ data class CosmicTumor(
                     " {}, {created: datetime()}, " +
                     " $childLabel, {} ) YIELD rel AS $relname \n")
         }
+
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+           = ::parseCsvRecord
 
     }
 }

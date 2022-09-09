@@ -1,9 +1,12 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicResistanceMutationCollectionDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.common.parseValidInteger
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 
 data class CosmicResistanceMutation(
     val mutationId: Int,
@@ -23,66 +26,33 @@ data class CosmicResistanceMutation(
     val transcript: String,
     val drugName: String,
     val pubmedId: Int
-) : CosmicModel {
+) : CoreModel {
+
+    override fun generateLoadModelCypher(): String = CosmicResistanceMutationCollectionDao(this)
+        .generateLoadCosmicModelCypher()
+
+    override fun getModelGeneSymbol(): String = geneSymbol
+
+    override fun getModelSampleId(): String = sampleId.toString()
 
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier(
-            "CosmicResistanceMutation", "resistance_id",
+            "CosmicResistanceMutation", "mutation_id",
             mutationId.toString()
         )
 
-    override fun generateLoadCosmicModelCypher(): String = generateMergeCypher()
-        .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, nodename))
-        .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
-        .plus(generateDrugRelationshipCypher())
-        .plus("  RETURN  $nodename \n")
+    override fun getPubMedIds(): List<Int> = listOf(pubmedId)
 
     override fun isValid(): Boolean = geneSymbol.isNotEmpty()
         .and(sampleId > 0).and(mutationId > 0)
 
-    override fun getPubMedId(): Int = pubmedId
 
-    private fun generateMergeCypher(): String =
-        " CALL apoc.merge.node([\"CosmicResistanceMutation\"], " +
-                "  { mutation_id: $mutationId} , " +
-                " { gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
-                " genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)}, " +
-                " legacy_mutation_id: ${Neo4jUtils.formatPropertyValue(legacyMutationId)}, " +
-                " aa_mutation: ${Neo4jUtils.formatPropertyValue(aaMutation)}, " +
-                " cds_mutation: ${Neo4jUtils.formatPropertyValue(cdsMutation)}," +
-                " transcript: ${Neo4jUtils.formatPropertyValue(transcript)}, " +
-                " somatic_status: ${Neo4jUtils.formatPropertyValue(somaticStatus)}, " +
-                " zygosity: ${Neo4jUtils.formatPropertyValue(zygosity)}, " +
-                " genome_coordinates: ${Neo4jUtils.formatPropertyValue(genomeCoordinates)}, " +
-                " tier: $tier, " +
-                " hgvsp: ${Neo4jUtils.formatPropertyValue(hgvsp)}, " +
-                " hgvsc: ${Neo4jUtils.formatPropertyValue(hgvsc)}, " +
-                " hgvsg: ${Neo4jUtils.formatPropertyValue(hgvsg)}, " +
-                " transcript: ${Neo4jUtils.formatPropertyValue(transcript)}, " +
-                " pubmed_id: $pubmedId, " +
-                "  created: datetime()}) YIELD node as $nodename \n"
-
-    private fun generateMatchDrugCypher(): String =
-        "CALL apoc.merge.node( [\"CosmicDrug\"], " +
-                " {drug_name: ${Neo4jUtils.formatPropertyValue(drugName.lowercase())}},  {created: datetime()},{} )" +
-                " YIELD node AS drug_node \n"
-
-    private fun generateDrugRelationshipCypher(): String {
-        val relationship = "RESISTANT_TO"
-        val relname = "rel_drug"
-        return generateMatchDrugCypher().plus(
-            "CALL apoc.merge.relationship($nodename, '$relationship', " +
-                    " {}, {created: datetime()}, drug_node,{} )" +
-                    " YIELD rel as $relname \n"
-        )
-    }
-
-    companion object : AbstractModel {
+    companion object : CoreModelCreator {
         const val nodename = "resistance"
 
-        fun parseCSVRecord(record: CSVRecord): CosmicResistanceMutation =
+        fun parseCsvRecord(record: CSVRecord): CosmicResistanceMutation =
             CosmicResistanceMutation(
-                record.get("MUTATION_ID").toInt(),
+                record.get("MUTATION_ID").parseValidInteger(),
                 record.get("GENOMIC_MUTATION_ID"),
                 record.get("LEGACY_MUTATION_ID"),
                 record.get("AA Mutation"),
@@ -90,15 +60,18 @@ data class CosmicResistanceMutation(
                 record.get("Somatic Status"),
                 record.get("Zygosity"),
                 record.get("Genome Coordinates (GRCh38)"),
-                parseValidIntegerFromString(record.get("Tier")),
+                record.get("Tier").parseValidInteger(),
                 record.get("HGVSP"),
                 record.get("HGVSC"),
                 record.get("HGVSG"),
-                record.get("Sample ID").toInt(),
+                record.get("Sample ID").parseValidInteger(),
                 record.get("Gene Name"),
                 record.get("Transcript"),
                 record.get("Drug Name"),
-                record.get("Pubmed Id").toInt()
+                record.get("Pubmed Id").parseValidInteger()
             )
+
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+            = ::parseCsvRecord
     }
 }

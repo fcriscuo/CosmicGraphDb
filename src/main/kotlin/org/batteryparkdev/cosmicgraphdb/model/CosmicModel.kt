@@ -1,10 +1,10 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.lang3.RandomStringUtils
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.dao.NodeIdentifierDao
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.batteryparkdev.nodeidentifier.model.RelationshipDefinition
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifierDao
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.RelationshipDefinition
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 
 interface CosmicModel {
     abstract fun getNodeIdentifier(): NodeIdentifier
@@ -14,8 +14,7 @@ interface CosmicModel {
     abstract fun isValid(): Boolean
 
     abstract fun getPubMedId(): Int
-
-
+    
     /*
     Generic function to create a HAS_PUBLICATION relationship between a node and a
     Publication/PubMed node

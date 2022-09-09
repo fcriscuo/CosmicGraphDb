@@ -1,9 +1,13 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicPatientDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.common.YNtoBoolean
+import org.batteryparkdev.genomicgraphcore.common.parseValidInteger
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 
 data class CosmicPatient(
     val sampleId: Int,
@@ -17,55 +21,40 @@ data class CosmicPatient(
     val gender: String,
     val individual_remark: String,
     val normal_tissue_tested: Boolean
-): CosmicModel {
+): CoreModel {
+
+    override fun generateLoadModelCypher(): String  = CosmicPatientDao(this).generateLoadCosmicModelCypher()
+
+    override fun getModelGeneSymbol(): String= ""
+
+    override fun getModelSampleId(): String  = sampleId.toString()
 
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier("CosmicPatient", "patient_id", patientId.toString())
 
-    override fun generateLoadCosmicModelCypher() =
-        generateMergeCypher()
-            .plus(generateTumorRelationshipCypher())
-            //.plus(" RETURN $nodename\n")
+    override fun getPubMedIds(): List<Int> = emptyList()
 
     override fun isValid(): Boolean = patientId > 0 && tumorId > 0
-    override fun getPubMedId(): Int  = 0
 
-    private fun generateMergeCypher(): String =
-        "CALL apoc.merge.node([\"CosmicPatient\"], " +
-                " {patient_id: $patientId}, " +
-                "{ age: $age, ethnicity: ${Neo4jUtils.formatPropertyValue(ethnicity)}, " +
-                " environmental_variables: ${Neo4jUtils.formatPropertyValue(environmental_variables)}, " +
-                " family: ${Neo4jUtils.formatPropertyValue(family)}, " +
-                " gender: ${Neo4jUtils.formatPropertyValue(gender)}, " +
-                " therapy: ${Neo4jUtils.formatPropertyValue(therapy)}, " +
-                " individual_remark: ${Neo4jUtils.formatPropertyValue(individual_remark)}, " +
-                " normal_tissue_tested: $normal_tissue_tested, " +
-                " created: datetime() }," +
-                "{ last_mod: datetime()}) YIELD node AS $nodename \n "
+    companion object : CoreModelCreator {
+        const val nodename = "patient"
 
-    private fun generateTumorRelationshipCypher():String
-       =  "CALL apoc.merge.relationship( $nodename, " +
-                    " 'HAS_TUMOR', {}, {created: datetime()}," +
-                    " ${CosmicTumor.nodename},{} ) " +
-                    " YIELD rel as pat_rel \n"
-
-    companion object : AbstractModel {
-        val nodename = "patient"
-
-        fun parseCSVRecord(record: CSVRecord): CosmicPatient =
+        fun parseCsvRecord(record: CSVRecord): CosmicPatient =
             CosmicPatient(
-                record.get("sample_id").toInt(),
-                record.get("id_individual").toInt(),
-                record.get("id_tumour").toInt(),
-                parseValidIntegerFromString(record.get("age")),
+                record.get("sample_id").parseValidInteger(),
+                record.get("id_individual").parseValidInteger(),
+                record.get("id_tumour").parseValidInteger(),
+                record.get("age").parseValidInteger(),
                 record.get("ethnicity"),
                 record.get("environmental_variables"),
                 record.get("therapy"), record.get("family"),
                 record.get("gender"),
                 record.get("individual_remark"),
-                convertYNtoBoolean(record.get("normal_tissue_tested"))
+                record.get("normal_tissue_tested").YNtoBoolean()
             )
 
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+                = ::parseCsvRecord
     }
 
 }
