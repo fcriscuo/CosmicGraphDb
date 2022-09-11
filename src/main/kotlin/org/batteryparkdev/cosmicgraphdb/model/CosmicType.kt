@@ -1,9 +1,12 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.dao.CosmicTypeDao
 import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
 import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 import java.util.*
 
 data class CosmicType(
@@ -29,4 +32,10 @@ data class CosmicType(
     override fun getPubMedIds(): List<Int>  = emptyList()
 
     override fun isValid(): Boolean = label.isNotEmpty().and(primary.isNotEmpty())
+
+    companion object {
+        val nodename = "cosmic_type_".plus(Neo4jUtils.getUniqueSuffix())
+    }
+
+
 }

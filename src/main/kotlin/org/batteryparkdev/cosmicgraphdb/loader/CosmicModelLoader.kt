@@ -17,7 +17,7 @@ import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
-class CoreModelLoader( val filename: String) {
+class CosmicModelLoader(val filename: String) {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
     @OptIn(ExperimentalCoroutinesApi::class)

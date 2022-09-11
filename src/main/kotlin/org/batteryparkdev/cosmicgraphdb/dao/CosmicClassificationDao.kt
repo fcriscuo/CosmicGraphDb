@@ -15,11 +15,11 @@ class CosmicClassificationDao(private val cosmicClassification: CosmicClassifica
             " efo_url: ${cosmicClassification.efoUrl.formatNeo4jPropertyValue()}," +
             " created: datetime() }," +
             "{ last_mod: datetime()}) YIELD node AS ${CosmicClassification.nodename} \n "
-                .plus(cosmicClassification.siteType.generateCosmicTypeCypher(CosmicClassification.nodename))
-                .plus(cosmicClassification.histologyType.generateCosmicTypeCypher(CosmicClassification.nodename))
+                .plus(cosmicClassification.siteType.generateLoadModelCypher())
+                .plus(cosmicClassification.histologyType.generateLoadModelCypher())
                 .plus(" RETURN ${CosmicClassification.nodename}\n")
 
-    companion object : CoreModelDao {
+    companion object: CoreModelDao {
         final val nodename = "classification"
 
         override val modelRelationshipFunctions: (CoreModel) -> Unit =

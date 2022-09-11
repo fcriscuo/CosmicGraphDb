@@ -3,8 +3,8 @@ package org.batteryparkdev.cosmicgraphdb.app
 import com.google.common.base.Stopwatch
 import com.google.common.flogger.FluentLogger
 import kotlinx.coroutines.*
+
 import org.batteryparkdev.cosmicgraphdb.loader.CosmicHallmarkLoader
-import org.batteryparkdev.cosmicgraphdb.loader.CosmicModelLoader
 import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
@@ -174,7 +174,7 @@ class CosmicNeo4jDatabaseLoader() : CoroutineScope {
     }
 
     private fun loadCodingMutations(job5Result: String): String {  //job 6
-        CosmicModelLoader(CosmicFilenameService.cosmicMutationExportCensusFile).also {
+        CoreModelLoader(CosmicFilenameService.cosmicMutationExportCensusFile).also {
             val dropCount = resolveNodeCountByLabel("CosmicCodingMutation")
             println("Starting CosmicCodingMutation loader; skipping $dropCount records")
             val stopwatch = Stopwatch.createStarted()
