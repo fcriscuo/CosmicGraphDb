@@ -22,6 +22,8 @@ data class CosmicGeneCensus(
     val cosmicId: String, val cosmicGeneName: String,
     val synonymList: List<String>
 ) : CoreModel {
+    override fun createModelRelationships() = CosmicGeneCensusDao.modelRelationshipFunctions.invoke(this)
+
     override fun generateLoadModelCypher(): String = CosmicGeneCensusDao(this).generateLoadCosmicModelCypher()
 
     override fun getModelGeneSymbol(): String = geneSymbol

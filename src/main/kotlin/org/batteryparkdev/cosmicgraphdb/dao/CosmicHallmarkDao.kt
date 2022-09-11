@@ -37,6 +37,7 @@ class CosmicHallmarkDao (private val hallmark: CosmicHallmark) {
         private fun completeHallmarkRelationships( model: CoreModel) {
             generateHallmarkToHallmarkCollectionRelationship(model)
             generateCosmicGeneToHallmarkCollectionRelationship(model)
+            createPubMedRelationships(model)
         }
 
      private  fun generateHallmarkToHallmarkCollectionRelationship(model: CoreModel) {

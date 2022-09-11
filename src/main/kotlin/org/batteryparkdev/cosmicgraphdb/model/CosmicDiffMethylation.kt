@@ -18,6 +18,8 @@ data class CosmicDiffMethylation(
     val twoSidedPValue: Double
 ): CoreModel
 {
+    override fun createModelRelationships() = CosmicDiffMethylationDao.modelRelationshipFunctions.invoke(this)
+
     override fun generateLoadModelCypher(): String  =
         CosmicDiffMethylationDao(this).generateLoadCosmicModelCypher()
 

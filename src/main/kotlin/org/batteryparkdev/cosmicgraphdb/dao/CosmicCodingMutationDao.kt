@@ -39,6 +39,7 @@ class CosmicCodingMutationDao ( private val codingMutation: CosmicCodingMutation
       private fun completeCodingMutationRelationships(model: CoreModel) {
           completeRelationshipToGeneMutationCollection(model)
           completeRelationshipToSampleMutationCollection(model)
+          createPubMedRelationships(model)
       }
 
         override val modelRelationshipFunctions: (CoreModel) -> Unit =

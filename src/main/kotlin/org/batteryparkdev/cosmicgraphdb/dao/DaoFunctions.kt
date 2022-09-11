@@ -7,12 +7,7 @@ import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifierDao
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.RelationshipDefinition
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.RelationshipProperty
-import org.neo4j.driver.Value
 
-fun resolveMutationType(value: Value): CosmicType =
-    CosmicType(
-        "Mutation", value["MUT_TYPE"].asString()
-    )
 
 fun resolveMutationType(record: CSVRecord): CosmicType =
     CosmicType(
@@ -42,5 +37,4 @@ fun completeRelationshipToGeneMutationCollection(model: CoreModel) {
                 model.getNodeIdentifier().primaryLabel)
         )
     )
-
 }

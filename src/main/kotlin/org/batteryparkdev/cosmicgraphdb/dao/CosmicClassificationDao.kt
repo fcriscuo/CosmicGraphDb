@@ -25,10 +25,11 @@ class CosmicClassificationDao(private val cosmicClassification: CosmicClassifica
         override val modelRelationshipFunctions: (CoreModel) -> Unit =
             ::completeClassificationRelationships
 
-        fun completeClassificationRelationships(model: CoreModel) {
+        private fun completeClassificationRelationships(model: CoreModel) {
             if (model is CosmicClassification) {
                 completeSiteTypeRelationship(model)
                 completeHistologyTypeRelationship(model)
+                createPubMedRelationships(model)
             }
         }
 

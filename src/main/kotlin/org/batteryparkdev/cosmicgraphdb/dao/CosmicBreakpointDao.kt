@@ -39,6 +39,7 @@ class CosmicBreakpointDao(private val cosmicBreakpoint: CosmicBreakpoint) {
         fun completeBreakpointRelationships(model: CoreModel) {
             completeRelationshipToSampleMutationCollection(model)
             completeRelationshipToCosmicStruct(model)
+            createPubMedRelationships(model)
         }
 
         /*

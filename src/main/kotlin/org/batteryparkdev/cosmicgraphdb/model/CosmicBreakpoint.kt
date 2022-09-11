@@ -30,6 +30,8 @@ data class CosmicBreakpoint(
 
     override fun getPubMedIds(): List<Int> = listOf(pubmedId)
 
+    override fun createModelRelationships()  = CosmicBreakpointDao.modelRelationshipFunctions.invoke(this)
+
     override fun generateLoadModelCypher(): String = CosmicBreakpointDao(this).generateCosmicBreakpointCypher()
 
     override fun getModelGeneSymbol(): String = ""

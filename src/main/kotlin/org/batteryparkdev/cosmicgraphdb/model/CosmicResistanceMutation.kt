@@ -27,6 +27,7 @@ data class CosmicResistanceMutation(
     val drugName: String,
     val pubmedId: Int
 ) : CoreModel {
+    override fun createModelRelationships() = CosmicResistanceMutationCollectionDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicResistanceMutationCollectionDao(this)
         .generateLoadCosmicModelCypher()

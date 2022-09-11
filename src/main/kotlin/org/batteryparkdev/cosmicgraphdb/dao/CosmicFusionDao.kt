@@ -73,10 +73,12 @@ class CosmicFusionDao  (private val cosmicFusion: CosmicFusion){
             }
             // SampleMutationCollection
             completeRelationshipToSampleMutationCollection(model)
+            //Publication
+            createPubMedRelationships(model)
         }
 
         override val modelRelationshipFunctions: (CoreModel) -> Unit =
-            CosmicFusionDao.Companion::completeMutationRelationships
+            Companion::completeMutationRelationships
     }
    
 }

@@ -8,6 +8,8 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicHallmarkDao
+import org.batteryparkdev.cosmicgraphdb.loader.CosmicHallmarkLoader.completeHallmarkRelationships
 import org.batteryparkdev.cosmicgraphdb.model.CosmicHallmark
 import org.batteryparkdev.genomicgraphcore.common.io.UTF16CSVRecordSupplier
 import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
@@ -36,7 +38,7 @@ object CosmicHallmarkLoader {
             UTF16CSVRecordSupplier(path).get().asSequence()
                 .drop(dropCount)
                 .forEach{
-                send( CosmicHallmark.parseCSVRecord(it))
+                send( CosmicHallmark.parseCsvRecord(it))
                     delay(20)
                 }
         }
@@ -45,20 +47,18 @@ object CosmicHallmarkLoader {
     private fun CoroutineScope.loadCosmicHallmarks(hallmarks: ReceiveChannel<CosmicHallmark>) =
         produce<CosmicHallmark> {
             for (hallmark in hallmarks) {
-                Neo4jConnectionService.executeCypherCommand(hallmark.generateLoadCosmicModelCypher())
+                Neo4jConnectionService.executeCypherCommand(
+                    CosmicHallmarkDao(hallmark).generateLoadCosmicModelCypher())
                 send(hallmark)
                 delay(20)
             }
         }
 
-
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.addPubMedRelationship(hallmarks: ReceiveChannel<CosmicHallmark>) =
+    private fun CoroutineScope.completeHallmarkRelationships(hallmarks: ReceiveChannel<CosmicHallmark>) =
         produce<String> {
             for (hallmark in hallmarks) {
-                if (hallmark.pubmedId>0) {
-                    hallmark.createPubMedRelationship()
-                }
+                CosmicHallmarkDao.modelRelationshipFunctions.invoke(hallmark)
                 send(hallmark.geneSymbol)
                 delay(20)
             }
@@ -70,7 +70,7 @@ object CosmicHallmarkLoader {
         logger.atInfo().log("Loading CosmicGeneCensus data from file $filename; droppinf $dropCount records")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val geneSymbols = addPubMedRelationship(
+        val geneSymbols = completeHallmarkRelationships(
             loadCosmicHallmarks(parseCSVRecords(filename)
         ))
         for (symbol in geneSymbols) {

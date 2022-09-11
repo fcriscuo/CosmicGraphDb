@@ -15,6 +15,7 @@ data class CosmicHallmark(
     val geneSymbol: String, val cellType: String, val pubmedId: Int,
     val hallmark: String, val impact: String, val description: String
 ) : CoreModel {
+    override fun createModelRelationships() = CosmicHallmarkDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicHallmarkDao(this).generateLoadCosmicModelCypher()
 

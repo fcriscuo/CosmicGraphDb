@@ -7,10 +7,10 @@ import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
 
 class CosmicNCVDao(private val ncv: CosmicNCV) {
 
-    fun generateLoadCosmicModelCypher(): String = generatemergeCypher()
+    fun generateLoadCosmicModelCypher(): String = generateMergeCypher()
         .plus(" RETURN  ${CosmicNCV.nodename}")
 
-    private fun generatemergeCypher(): String =
+    private fun generateMergeCypher(): String =
         "CALL apoc.merge.node( [\"CosmicNCV\"], " +
                 "{genomic_mutation_id: ${ncv.genomicMutationId.formatNeo4jPropertyValue()}}," +  // unique value for node
                 " { sample_name: ${ncv.sampleName.formatNeo4jPropertyValue()}, " +
@@ -34,6 +34,7 @@ class CosmicNCVDao(private val ncv: CosmicNCV) {
 
         private fun completeNCVRelationships(model: CoreModel) {
             completeRelationshipToSampleMutationCollection(model)
+            createPubMedRelationships(model)
         }
 
         override val modelRelationshipFunctions: (CoreModel) -> Unit

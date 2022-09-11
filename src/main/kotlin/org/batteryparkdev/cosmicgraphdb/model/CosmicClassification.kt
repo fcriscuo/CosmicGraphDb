@@ -14,6 +14,9 @@ data class CosmicClassification(
     val nciCode: String,
     val efoUrl: String
 ): CoreModel {
+
+    override fun createModelRelationships() = CosmicClassificationDao.modelRelationshipFunctions.invoke(this)
+
     override fun generateLoadModelCypher(): String = CosmicClassificationDao(this)
         .generateCosmicClassificationCypher()
 

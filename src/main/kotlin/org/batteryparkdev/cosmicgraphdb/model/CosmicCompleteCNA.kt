@@ -16,6 +16,7 @@ data class CosmicCompleteCNA(
     val chromosomeStartStop:String
 ) : CoreModel
 {
+    override fun createModelRelationships() = CosmicCompleteCNADao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicCompleteCNADao(this).generateLoadCosmicCompleteCNACypher()
 

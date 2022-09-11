@@ -45,6 +45,7 @@ class CosmicResistanceMutationCollectionDao ( private val resistMut: CosmicResis
        private fun completeResistanceMutationRelationships(model: CoreModel) {
            completeRelationshipToSampleMutationCollection(model)
            completeRelationshipToDrug(model)
+           createPubMedRelationships(model)
        }
         private fun completeRelationshipToDrug(model: CoreModel) {
             if (model is CosmicResistanceMutation){

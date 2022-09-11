@@ -22,6 +22,7 @@ data class CosmicPatient(
     val individual_remark: String,
     val normal_tissue_tested: Boolean
 ): CoreModel {
+    override fun createModelRelationships() = CosmicPatientDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String  = CosmicPatientDao(this).generateLoadCosmicModelCypher()
 

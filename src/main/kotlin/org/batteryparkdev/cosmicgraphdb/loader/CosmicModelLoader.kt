@@ -11,21 +11,22 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.csv.CSVRecord
 import org.batteryparkdev.cosmicgraphdb.model.*
 import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
 import org.batteryparkdev.genomicgraphcore.common.io.CSVRecordSupplier
 import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 import java.nio.file.Paths
 import kotlin.streams.asSequence
 
-class CosmicModelLoader( val filename: String) {
+class CoreModelLoader( val filename: String) {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.csvProcessCosmicFile(dropCount: Int) =
-        produce<CosmicModel> {
+        produce<CoreModel> {
             val path = Paths.get(CosmicFilenameService.resolveCosmicDataFile(filename))
             CSVRecordSupplier(path).get().asSequence()
                 .drop(dropCount)
-                .map { parseCosmicModel(it) }
+                .map { it -> parseCoreModel(it)  }
                 .forEach {
                     if (it.isValid()) {
                         (send(it))
@@ -34,46 +35,47 @@ class CosmicModelLoader( val filename: String) {
                 }
         }
 
-    private fun parseCosmicModel(record: CSVRecord): CosmicModel {
+    // invoke the appropriate parsing function based on the COSMIC file type
+    private fun parseCoreModel(record: CSVRecord): CoreModel {
         return when (filename) {
-            "CosmicCompleteCNA.tsv" -> CosmicCompleteCNA.parseCSVRecord(record)
-            "CosmicCompleteDifferentialMethylation.tsv" -> CosmicDiffMethylation.parseCSVRecord(record)
-            "CosmicCompleteGeneExpression.tsv" -> CosmicCompleteGeneExpression.parseCSVRecord(record)
-            "cancer_gene_census.csv" -> CosmicGeneCensus.parseCSVRecord(record)
-            "CosmicFusionExport.tsv" -> CosmicFusion.parseCSVRecord(record)
-            "classification.csv" -> CosmicClassification.parseCSVRecord(record)
-            "CosmicSample.tsv" -> CosmicSample.parseCSVRecord(record)
-            "CosmicMutantExportCensus.tsv" -> CosmicCodingMutation.parseCSVRecord(record)
-            "CosmicBreakpointsExport.tsv" -> CosmicBreakpoint.parseCSVRecord(record)
-            "CosmicResistanceMutations.tsv" -> CosmicResistanceMutation.parseCSVRecord(record)
-            "CosmicStructExport.tsv" -> CosmicStruct.parseCSVRecord(record)
-            "CosmicNCV.tsv" -> CosmicNCV.parseCSVRecord(record)
+            "CosmicCompleteCNA.tsv" -> CosmicCompleteCNA.createCoreModelFunction.invoke(record)
+            "CosmicCompleteDifferentialMethylation.tsv" -> CosmicDiffMethylation.createCoreModelFunction.invoke(record)
+            "CosmicCompleteGeneExpression.tsv" -> CosmicCompleteGeneExpression.createCoreModelFunction.invoke(record)
+            "cancer_gene_census.csv" -> CosmicGeneCensus.createCoreModelFunction.invoke(record)
+            "CosmicFusionExport.tsv" -> CosmicFusion.createCoreModelFunction.invoke(record)
+            "classification.csv" -> CosmicClassification.createCoreModelFunction.invoke(record)
+            "CosmicSample.tsv" -> CosmicSample.createCoreModelFunction.invoke(record)
+            "CosmicMutantExportCensus.tsv" -> CosmicCodingMutation.createCoreModelFunction.invoke(record)
+            "CosmicBreakpointsExport.tsv" -> CosmicBreakpoint.createCoreModelFunction.invoke(record)
+            "CosmicResistanceMutations.tsv" -> CosmicResistanceMutation.createCoreModelFunction.invoke(record)
+            "CosmicStructExport.tsv" -> CosmicStruct.createCoreModelFunction.invoke(record)
+            "CosmicNCV.tsv" -> CosmicNCV.createCoreModelFunction.invoke(record)
             //TODO: fix this after testing
-            else -> CosmicGeneCensus.parseCSVRecord(record)
+            else -> CosmicGeneCensus.createCoreModelFunction.invoke(record)
         }
     }
 
     /*
-    Private function to load the CosmicModel into the Neo4j database
+    Private function to load the CoreModel into the Neo4j database
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.loadCosmicModel(models: ReceiveChannel<CosmicModel>) =
-        produce<CosmicModel> {
+    private fun CoroutineScope.loadCoreModel(models: ReceiveChannel<CoreModel>) =
+        produce<CoreModel> {
             for (model in models){
-                Neo4jConnectionService.executeCypherCommand(model.generateLoadCosmicModelCypher())
+                Neo4jConnectionService.executeCypherCommand(model.generateLoadModelCypher())
                 send(model)
                 delay(20L)
             }
         }
 
     /*
-    Private function to add Publication relationships to model objects
+    Private function to complete Neo4j relationships for these new nodes
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.processPubMedData(models: ReceiveChannel<CosmicModel>) =
-        produce<CosmicModel>{
+    private fun CoroutineScope.processPubMedData(models: ReceiveChannel<CoreModel>) =
+        produce<CoreModel>{
             for (model in models) {
-                model.createPubMedRelationship()
+                model.createModelRelationships()
                 send(model)
                 delay(20L)
             }
@@ -86,7 +88,7 @@ class CosmicModelLoader( val filename: String) {
         logger.atInfo().log("Loading Cosmic data from file: $filename")
         var nodeCount = 0
         val stopwatch = Stopwatch.createStarted()
-        val models = processPubMedData(loadCosmicModel(csvProcessCosmicFile(dropCount)))
+        val models = processPubMedData(loadCoreModel(csvProcessCosmicFile(dropCount)))
 
         for ( model in models){
             nodeCount += 1

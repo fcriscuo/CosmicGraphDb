@@ -17,6 +17,7 @@ data class CosmicNCV(
   val wholeGenomeReseq: Boolean, val wholeExome:Boolean, val studyId: Int,
   val pubmedId: Int, val hgvsg: String
 ): CoreModel  {
+    override fun createModelRelationships() = CosmicNCVDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String  = CosmicNCVDao(this).generateLoadCosmicModelCypher()
 

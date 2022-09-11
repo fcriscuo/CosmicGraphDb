@@ -1,13 +1,16 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicStructDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.common.parseValidInteger
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
-import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 
 /*
 Represents the data in the CosmicStructExport file
 Key: mutationId
-Node Relationships: Mutation -[HAS_STRUCT] -> Struct
+Node Relationships: SampleMutationCollection -[HAS_STRUCT] -> Struct
                     Struct - [HAS_PUBLICATION] -> Publication
  */
 
@@ -17,66 +20,52 @@ data class CosmicStruct(
     val tumorId: Int,
     val mutationType: String,
     val description: String,
-    val pubmedId: Int
-) : CosmicModel {
+    val pubmedId: Int,
+    val structType: String
+) : CoreModel {
+    override fun createModelRelationships() = CosmicStructDao.modelRelationshipFunctions.invoke(this)
+
+    override fun generateLoadModelCypher(): String = CosmicStructDao(this).generateLoadCosmicModelCypher()
+
+    override fun getModelGeneSymbol(): String = ""
+
+    override fun getModelSampleId(): String = sampleId.toString()
 
     override fun getNodeIdentifier(): NodeIdentifier =
         NodeIdentifier(
             "CosmicStruct", "mutation_id", mutationId.toString(),
-            resolveStructType()
+            resolveStructType(description)
         )
 
+    override fun getPubMedIds(): List<Int> = listOf(pubmedId)
+
     override fun isValid(): Boolean = sampleId > 0
-    override fun getPubMedId(): Int = pubmedId
 
-    override fun generateLoadCosmicModelCypher(): String =
-        generateMergeCypher()
-        .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
-        .plus(" RETURN $nodename\n")
 
-    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicStruct\"," +
-            "${Neo4jUtils.formatPropertyValue(resolveStructType())} ], " +
-            " {mutation_id: $mutationId}, {sample_id: $sampleId, " +
-            " tumor_id: $tumorId, mutation_type: ${Neo4jUtils.formatPropertyValue(mutationType)}, " +
-            " description: ${Neo4jUtils.formatPropertyValue(description)}, " +
-            "  pubmed_id: $pubmedId, created: datetime() }, " +
-            " { last_mod: datetime()}) YIELD node AS $nodename \n"
-
-    private fun resolveStructType(): String =
-        with(description) {
-            when {
-                endsWith("bkpt") -> "Breakpoint"
-                endsWith("del") -> "Deletion"
-                endsWith("ins") -> "Insertion"
-                else -> "Unspecified"
-            }
-        }
-
-    companion object : AbstractModel {
+    companion object : CoreModelCreator {
         const val nodename = "struct"
 
-        fun parseCSVRecord(record: CSVRecord): CosmicStruct =
+        fun parseCsvRecord(record: CSVRecord): CosmicStruct =
             CosmicStruct(
-                record.get("MUTATION_ID").toInt(),
-                record.get("ID_SAMPLE").toInt(),
-                record.get("ID_TUMOUR").toInt(),
+                record.get("MUTATION_ID").parseValidInteger(),
+                record.get("ID_SAMPLE").parseValidInteger(),
+                record.get("ID_TUMOUR").parseValidInteger(),
                 record.get("Mutation Type"),
                 record.get("description"),
-                parseValidIntegerFromString(record.get("PUBMED_PMID"))
+                record.get("PUBMED_PMID").parseValidInteger(),
+                resolveStructType(record.get("description"))
             )
+        private fun resolveStructType(description: String): String =
+            with(description) {
+                when {
+                    endsWith("bkpt") -> "Breakpoint"
+                    endsWith("del") -> "Deletion"
+                    endsWith("ins") -> "Insertion"
+                    else -> "Unspecified"
+                }
+            }
 
-        private fun generateMatchCosmicStructCypher(mutationId: Int): String  =
-            "CALL apoc.merge.node( [\"CosmicStruct\"], " +
-                    " {mutation_id: $mutationId},  {created: datetime()},{}) " +
-                    " YIELD node AS $nodename\n "
-
-        fun generateChildRelationshipCypher(mutationId: Int, childLabel: String) : String {
-            val relationship = "HAS_".plus(childLabel.uppercase())
-            val relname = "rel_struct"
-            return generateMatchCosmicStructCypher(mutationId).plus(
-                "CALL apoc.merge.relationship($nodename, '$relationship', " +
-                        " {}, {created: datetime()}, ${childLabel.lowercase()},{} )" +
-                        " YIELD rel as $relname \n")
-        }
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+           = ::parseCsvRecord
     }
 }

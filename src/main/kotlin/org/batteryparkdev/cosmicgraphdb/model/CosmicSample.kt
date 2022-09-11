@@ -31,6 +31,7 @@ data class CosmicSample(
     val cosmicPhenotypeId: String,
     val cosmicTumor: CoreModel
 ): CoreModel {
+    override fun createModelRelationships() = CosmicSampleDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicSampleDao(this).generateLoadCosmicModelCypher()
 

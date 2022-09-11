@@ -1,8 +1,8 @@
 package org.batteryparkdev.cosmicgraphdb.service
 
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
-import org.batteryparkdev.property.service.ApplicationProperties
-import org.batteryparkdev.property.service.Neo4jPropertiesService
+import org.batteryparkdev.genomicgraphcore.common.service.ApplicationProperties
+import org.batteryparkdev.genomicgraphcore.common.service.Neo4jPropertiesService
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 
 object CosmicFilenameService {
 

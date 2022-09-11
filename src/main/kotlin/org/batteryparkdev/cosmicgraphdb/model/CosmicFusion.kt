@@ -26,6 +26,7 @@ data class CosmicFusion(
     val three_genomeStopFrom: Int, val three_genomeStopTo: Int,
     val fusionType: String, val pubmedId: Int
 ) : CoreModel {
+    override fun createModelRelationships() = CosmicFusionDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicFusionDao(this).generateLoadCosmicModelCypher()
 

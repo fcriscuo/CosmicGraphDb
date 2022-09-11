@@ -3,7 +3,6 @@ package org.batteryparkdev.cosmicgraphdb.neo4j
 import org.batteryparkdev.genomicgraphcore.common.service.LogService
 import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 
-
 /*
 A collection of Neo4j database constraint definitions in Cypher
 These constraints should be defined prior to loading the database with

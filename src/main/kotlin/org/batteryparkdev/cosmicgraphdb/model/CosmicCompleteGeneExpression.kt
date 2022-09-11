@@ -17,6 +17,7 @@ data class CosmicCompleteGeneExpression(
     val key:String
     ): CoreModel
 {
+    override fun createModelRelationships() = CosmicCompleteGeneExpressionDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String =
         CosmicCompleteGeneExpressionDao(this).generateLoadCosmicModelCypher()

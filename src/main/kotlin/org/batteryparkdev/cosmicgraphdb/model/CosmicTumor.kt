@@ -22,6 +22,8 @@ data class CosmicTumor(
     val tumorRemark: String,
     val patient: CoreModel
 ): CoreModel {
+    override fun createModelRelationships() = CosmicTumorDao.modelRelationshipFunctions.invoke(this)
+
     override fun generateLoadModelCypher(): String  = CosmicTumorDao(this).generateLoadCosmicModelCypher()
 
     override fun getModelGeneSymbol(): String  = ""

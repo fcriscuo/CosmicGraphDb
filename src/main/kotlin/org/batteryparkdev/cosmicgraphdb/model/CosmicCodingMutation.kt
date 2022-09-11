@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicClassificationDao
 import org.batteryparkdev.cosmicgraphdb.dao.CosmicCodingMutationDao
 import org.batteryparkdev.genomicgraphcore.common.*
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
@@ -22,6 +23,8 @@ data class CosmicCodingMutation(
     val pubmedId: Int, val genomeWideScreen: Boolean,
     val hgvsp: String, val hgvsc: String, val hgvsg: String, val tier: String
 ) : CoreModel {
+
+    override fun createModelRelationships() = CosmicClassificationDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String  = CosmicCodingMutationDao(this).generateLoadCosmicModelCypher()
 
