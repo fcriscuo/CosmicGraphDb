@@ -11,11 +11,11 @@ import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 
 data class CosmicGeneCensus(
 
-    val geneSymbol: String, val geneName: String, val entrezGeneId: String,
+    val geneSymbol: String, val geneName: String, val entrezGeneId: Int,
     val genomeLocation: String, val tier: Int = 0, val hallmark: Boolean = false,
     val chromosomeBand: String, val somatic: Boolean = false, val germline: Boolean,
     val somaticTumorTypeList: List<String>, val germlineTumorTypeList: List<String>,
-    val cancerSyndrome: String, val tissueTypeList: List<String>, val molecularGenetics: String,
+    val cancerSyndrome: String, val tissueTypeList: List<String>, val molecularGenetics: List<String>,
     val roleInCancerList: List<String>, val mutationTypeList: List<String>,
     val translocationPartnerList: List<String>,
     val otherGermlineMut: String, val otherSyndromeList: List<String>,
@@ -46,7 +46,7 @@ data class CosmicGeneCensus(
             CosmicGeneCensus(
                 record.get("Gene Symbol"),
                 record.get("Name"),
-                record.get("Entrez GeneId"),
+                record.get("Entrez GeneId").parseValidInteger(),
                 record.get("Genome Location"),
                 record.get("Tier").parseValidInteger(),
                 record.get("Hallmark").isNotBlank(),
@@ -57,7 +57,7 @@ data class CosmicGeneCensus(
                 processTumorTypes(record.get("Tumour Types(Germline)")),
                 record.get("Cancer Syndrome"),
                 record.get("Tissue Type").parseOnComma(),
-                record.get("Molecular Genetics"),
+                record.get("Molecular Genetics").parseOnComma(),
                 record.get("Role in Cancer").parseOnComma(),
                 record.get("Mutation Types").parseOnComma(),
                 record.get("Translocation Partner").parseOnComma(),

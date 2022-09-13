@@ -60,6 +60,12 @@ class CosmicGeneCensusDao(private val cosmicGene: CosmicGeneCensus) {
                 )
             )
             .plus(
+                CosmicAnnotationFunctions.generateAnnotationCypher(
+                    cosmicGene.molecularGenetics, "MolecularGenetics",
+                    CosmicGeneCensus.annoCollNodename
+                )
+            )
+            .plus(
                 CosmicAnnotationFunctions.generateTranslocationCypher(
                     cosmicGene.geneSymbol,
                     cosmicGene.translocationPartnerList
@@ -69,54 +75,52 @@ class CosmicGeneCensusDao(private val cosmicGene: CosmicGeneCensus) {
 
     private fun generateGeneMutationCollectionNodeCypher(): String =
         "CALL apoc.merge.node([\"GeneMutationCollection\"], " +
-                " {gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}," +
-                " {created: datetime(.formatNeo4jPropertyValue(),{}) YIELD node as ${CosmicGeneCensus.mutCollNodename} \n " +
+                " {gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}}," +
+                " {created: datetime()},{}) YIELD node as ${CosmicGeneCensus.mutCollNodename} \n " +
                 " CALL apoc.merge.relationship (${CosmicGeneCensus.nodename}, \"HAS_MUTATION_COLLECTION\", " +
-                "  {},{created: datetime(.formatNeo4jPropertyValue(), ${CosmicGeneCensus.mutCollNodename},{} ) YIELD rel AS mut_rel \n "
+                "  {},{created: datetime()}, ${CosmicGeneCensus.mutCollNodename},{} ) YIELD rel AS mut_rel \n "
 
     private fun generateGeneAnnotationCollectionCypher(): String =
         "CALL apoc.merge.node([\"GeneAnnotationCollection\"], " +
-                " {gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}," +
-                " {created: datetime(.formatNeo4jPropertyValue(),{}) YIELD node as ${CosmicGeneCensus.annoCollNodename} \n " +
+                " {gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}}," +
+                " {created: datetime()},{}) YIELD node as ${CosmicGeneCensus.annoCollNodename} \n " +
                 " CALL apoc.merge.relationship (${CosmicGeneCensus.nodename}, \"HAS_ANNOTATION_COLLECTION\", " +
-                "  {},{created: datetime(.formatNeo4jPropertyValue(), ${CosmicGeneCensus.annoCollNodename},{} ) YIELD rel AS anno_rel \n "
+                "  {},{created: datetime()}, ${CosmicGeneCensus.annoCollNodename},{} ) YIELD rel AS anno_rel \n "
 
 
     private fun generateMergeCypher(): String =
         when (Neo4jUtils.nodeExistsPredicate(cosmicGene.getNodeIdentifier())) {
             //update an existing CosmicGene node (i.e. placeholder)
-            true -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\",\"\"Gene\"," +
-                    "{  gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}, " +
+            true -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\",\"Gene\"] ," +
+                    "{  gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}}, " +
                     "{}," +
                     " {gene_name: ${cosmicGene.geneName.formatNeo4jPropertyValue()}," +
-                    " entrez_gene_id: ${cosmicGene.entrezGeneId.formatNeo4jPropertyValue()}," +
+                    " entrez_gene_id: ${cosmicGene.entrezGeneId}," +
                     " genome_location: ${cosmicGene.genomeLocation.formatNeo4jPropertyValue()}," +
                     " tier: ${cosmicGene.tier}, " +
                     " hallmark: ${cosmicGene.hallmark}, " +
                     " chromosome_band: ${cosmicGene.chromosomeBand}, " +
                     " somatic: ${cosmicGene.somatic}, germline: ${cosmicGene.germline}, " +
                     " cancer_syndrome: ${cosmicGene.cancerSyndrome.formatNeo4jPropertyValue()}," +
-                    " molecular_genetics: ${cosmicGene.molecularGenetics.formatNeo4jPropertyValue()}, " +
                     " other_germline_mut: ${cosmicGene.otherGermlineMut.formatNeo4jPropertyValue()}, " +
                     " cosmic_id: ${cosmicGene.cosmicId.formatNeo4jPropertyValue()} , " +
                     " cosmic_gene_name: ${cosmicGene.cosmicGeneName.formatNeo4jPropertyValue()} , " +
-                    "  created: datetime(.formatNeo4jPropertyValue()) YIELD node as ${CosmicGeneCensus.nodename} \n"
+                    "  created: datetime()} ) YIELD node as ${CosmicGeneCensus.nodename} \n"
             // create a new CosmicGene new node
-            false -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\",\"\"Gene\"]," +
-                    "{  gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}," +
+            false -> "CALL apoc.merge.node( [\"CosmicGene\",\"CensusGene\",\"Gene\"]," +
+                    "{  gene_symbol: ${cosmicGene.geneSymbol.formatNeo4jPropertyValue()}}," +
                     " {gene_name: ${cosmicGene.geneName.formatNeo4jPropertyValue()}," +
-                    " entrez_gene_id: ${cosmicGene.entrezGeneId.formatNeo4jPropertyValue()}," +
+                    " entrez_gene_id: ${cosmicGene.entrezGeneId}," +
                     " genome_location: ${cosmicGene.genomeLocation.formatNeo4jPropertyValue()}," +
                     " tier: ${cosmicGene.tier}, " +
                     " hallmark: ${cosmicGene.hallmark}, " +
                     " chromosome_band: ${cosmicGene.chromosomeBand}, " +
                     " somatic: ${cosmicGene.somatic}, germline: ${cosmicGene.germline}, " +
                     " cancer_syndrome: ${cosmicGene.cancerSyndrome.formatNeo4jPropertyValue()}," +
-                    " molecular_genetics: ${cosmicGene.molecularGenetics.formatNeo4jPropertyValue()}, " +
                     " other_germline_mut: ${cosmicGene.otherGermlineMut.formatNeo4jPropertyValue()}," +
                     " cosmic_id: ${cosmicGene.cosmicId.formatNeo4jPropertyValue()}, " +
                     "cosmic_gene_name: ${cosmicGene.cosmicGeneName.formatNeo4jPropertyValue()}, " +
-                    "  created: datetime(.formatNeo4jPropertyValue(),{}) YIELD node as ${CosmicGeneCensus.nodename} \n"
+                    "  created: datetime()},{}) YIELD node as ${CosmicGeneCensus.nodename} \n"
         }
 
     companion object : CoreModelDao {
@@ -142,8 +146,8 @@ class CosmicGeneCensusDao(private val cosmicGene: CosmicGeneCensus) {
      Create a relationship to an Entrez node loaded into the database as part of the GenomicGraphCore
       */
         private fun completeRelationshipToEntrez(cosmicGene: CosmicGeneCensus) {
-            if (cosmicGene.entrezGeneId.toInt() > 0) {
-                val entrez = NodeIdentifier("Entrez", "entrez_id", cosmicGene.entrezGeneId)
+            if (cosmicGene.entrezGeneId > 0) {
+                val entrez = NodeIdentifier("Entrez", "entrez_id", cosmicGene.entrezGeneId.toString())
                 NodeIdentifierDao.defineRelationship(
                     RelationshipDefinition(cosmicGene.getNodeIdentifier(), entrez, "HAS_ENTREZ")
                 )

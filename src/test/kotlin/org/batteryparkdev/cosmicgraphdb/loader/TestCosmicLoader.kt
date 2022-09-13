@@ -1,6 +1,8 @@
 package org.batteryparkdev.cosmicgraphdb.loader
 
 import arrow.core.NonEmptyList
+import org.batteryparkdev.genomicgraphcore.common.CoreModelLoader
+import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
 import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 
@@ -12,7 +14,7 @@ class TestCosmicLoader(val filename: String,val  nodeLabelList: NonEmptyList<Str
 
      fun getNodeCount(): Int =
          Neo4jConnectionService.executeCypherCommand(
-             "MATCH (n:${Neo4jUtils.formatPropertyValue(nodeLabelList[0])}) RETURN COUNT(n)").toInt()
+             "MATCH (n:${nodeLabelList[0].formatNeo4jPropertyValue()}) RETURN COUNT(n)").toInt()
 
     fun loadCosmicFile( ): Unit {
         deleteCosmicNode()
