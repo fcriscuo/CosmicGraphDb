@@ -4,9 +4,8 @@ import arrow.core.nonEmptyListOf
 import org.batteryparkdev.cosmicgraphdb.model.CosmicGeneCensus
 import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
 
-fun main() {
-    val filename = "./data/cancer_gene_census.csv"
-    //println("Loading Cosmic Gene Census data from: $filename")
+fun main (args: Array<String>) {
+    val filename = if (args.isNotEmpty()) args[0] else "./data/cancer_gene_census.csv"
     TestCoreModelLoader(
         CosmicGeneCensus, filename,
         listOf(

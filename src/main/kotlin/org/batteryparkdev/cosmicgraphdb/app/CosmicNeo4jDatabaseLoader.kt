@@ -1,7 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.app
 
 import com.google.common.base.Stopwatch
-import com.google.common.flogger.FluentLogger
 import kotlinx.coroutines.*
 import org.batteryparkdev.cosmicgraphdb.loader.CosmicHallmarkLoader
 import org.batteryparkdev.cosmicgraphdb.model.*
@@ -20,7 +19,7 @@ The COSMIC data will be loaded into the Neo4j database specified in the NEO4J_DA
  */
 
 class CosmicNeo4jDatabaseLoader() : CoroutineScope {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass();
+
 
     private val runmode = when (Neo4jConnectionService.isSampleContext()) {
         true -> "sample"

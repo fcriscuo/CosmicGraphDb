@@ -25,5 +25,4 @@ class TestCoreModelLoader (private val creator: CoreModelCreator, private val fi
             println("ERROR: Data loading tests can only be run against the sample Neo4j database")
         }
     }
-
 }

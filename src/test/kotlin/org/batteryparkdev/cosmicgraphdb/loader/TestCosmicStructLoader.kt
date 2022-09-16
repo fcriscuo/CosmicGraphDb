@@ -1,12 +1,13 @@
 package org.batteryparkdev.cosmicgraphdb.loader
 
-import arrow.core.nonEmptyListOf
+import org.batteryparkdev.cosmicgraphdb.model.CosmicStruct
 
-fun main () {
-    val filename = "CosmicStructExport.tsv"
-    println("Loading Cosmic Struct data from: $filename")
-    TestCosmicLoader(filename, nonEmptyListOf("CosmicStruct")).let {
-        it.loadCosmicFile()
-        println("Loaded Cosmic Struct data row count = ${it.getNodeCount()}")
+fun main (args: Array<String>) {
+    val filename = if (args.isNotEmpty()) args[0] else "./data/CosmicStructExport.tsv"
+    TestCoreModelLoader(
+        CosmicStruct, filename, listOf("CosmicStruct")
+    ).let {
+        it.testLoadData()
+        println("Loaded Cosmic Struct mutation data row count = ${it.getNodeCount()}")
     }
 }

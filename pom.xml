@@ -78,16 +78,14 @@
             <artifactId>commons-configuration2</artifactId>
             <version>${apache.commons.config.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/io.github.microutils/kotlin-logging -->
-
-<!--        &lt;!&ndash;local dependency for Neo4jService &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.batteryparkdev</groupId>-->
-<!--            <artifactId>Neo4jService</artifactId>-->
-<!--            <version>1.0-SNAPSHOT</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${project.basedir}/lib/Neo4jService-1.0-SNAPSHOT.jar</systemPath>-->
-<!--        </dependency>-->
+        <!-- local dependency for GenomicGraphCore library -->
+        <dependency>
+            <groupId>org.batteryparkdev</groupId>
+            <artifactId>GenomicGraphCore</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/genomicgraphcore-1.0-SNAPSHOT.jar</systemPath>
+        </dependency>
         <!-- Neo4j front end requires scala 2.12.13-->
         <!-- https://mvnrepository.com/artifact/org.scala-lang/scala-library -->
         <dependency>

@@ -1,12 +1,13 @@
 package org.batteryparkdev.cosmicgraphdb.loader
 
-import arrow.core.nonEmptyListOf
+import org.batteryparkdev.cosmicgraphdb.model.CosmicGeneCensus
 
-fun main () {
-    val filename = "CosmicMutantExportCensus.tsv"
-    println("Loading Cosmic Coding Mutation data from: $filename")
-    TestCosmicLoader(filename, nonEmptyListOf("CosmiCodingMutation")).let {
-        it.loadCosmicFile()
-        println("Loaded Cosmic Coding Mutation data row count = ${it.getNodeCount()}")
+fun main (args: Array<String>) {
+    val filename = if (args.isNotEmpty()) args[0] else "./data/cancer_gene_census.csv"
+    TestCoreModelLoader(
+        CosmicGeneCensus, filename, listOf("CosmicGene")
+    ).let {
+        it.testLoadData()
+        println("Loaded Cosmic Gene Census data row count = ${it.getNodeCount()}")
     }
 }
