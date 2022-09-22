@@ -16,6 +16,9 @@ data class CosmicCompleteCNA(
     val chromosomeStartStop:String
 ) : CoreModel
 {
+    override val idPropertyValue: String
+        get() = cnaId
+
     override fun createModelRelationships() = CosmicCompleteCNADao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicCompleteCNADao(this).generateLoadCosmicCompleteCNACypher()
@@ -24,16 +27,18 @@ data class CosmicCompleteCNA(
 
     override fun getModelSampleId(): String = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-    NodeIdentifier("CosmicCompleteCNA", "cna_id",
-        cnaId)
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicCompleteCNA, this)
 
     override fun getPubMedIds(): List<Int> = emptyList()
 
     override fun isValid(): Boolean = (sampleId > 0).and(cnvId > 0).and(geneId>0)
 
     companion object: CoreModelCreator{
-        val nodename = "complete_cna"
+        override val nodename = "complete_cna"
+        override val nodeIdProperty: String
+            get() = "cna_id"
+        override val nodelabel: String
+            get() = "CosmicCompleteCNA"
 
         fun parseCsvRecord(record: CSVRecord): CosmicCompleteCNA =
             CosmicCompleteCNA(
@@ -58,5 +63,6 @@ data class CosmicCompleteCNA(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
              = ::parseCsvRecord
+
     }
 }

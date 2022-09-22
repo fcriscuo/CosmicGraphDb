@@ -14,6 +14,7 @@ data class CosmicClassification(
     val nciCode: String,
     val efoUrl: String
 ): CoreModel {
+    override val idPropertyValue: String = this.cosmicPhenotypeId
 
     override fun createModelRelationships() = CosmicClassificationDao.modelRelationshipFunctions.invoke(this)
 
@@ -24,18 +25,19 @@ data class CosmicClassification(
 
     override fun getModelSampleId(): String =""
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier(
-            "CosmicClassification", "phenotype_id",
-            cosmicPhenotypeId
-        )
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicClassification, this)
+
 
     override fun getPubMedIds(): List<Int> = emptyList()
 
     override fun isValid(): Boolean = cosmicPhenotypeId.isNotEmpty()
 
     companion object : CoreModelCreator {
-        val nodename = "classification"
+        override val nodename = "classification"
+        override val nodeIdProperty: String
+            get() = "phenotype_id"
+        override val nodelabel: String
+            get() = "CosmicClassification"
 
         fun parseCsvRecord(record:CSVRecord): CosmicClassification {
             val nciCode = record.get("NCI_CODE") ?: "NS"
@@ -75,6 +77,7 @@ data class CosmicClassification(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel =
             Companion::parseCsvRecord
+
     }
 }
 

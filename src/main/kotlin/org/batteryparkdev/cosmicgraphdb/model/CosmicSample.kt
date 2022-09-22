@@ -31,6 +31,9 @@ data class CosmicSample(
     val cosmicPhenotypeId: String,
     val cosmicTumor: CoreModel
 ): CoreModel {
+    override val idPropertyValue: String
+        get() = sampleId.toString()
+
     override fun createModelRelationships() = CosmicSampleDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicSampleDao(this).generateLoadCosmicModelCypher()
@@ -39,15 +42,14 @@ data class CosmicSample(
 
     override fun getModelSampleId(): String = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("CosmicSample", "sample_id", sampleId.toString())
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicSample, this)
 
     override fun getPubMedIds(): List<Int> = emptyList()
 
     override fun isValid(): Boolean = sampleId > 0 && tumorId > 0
 
     companion object : CoreModelCreator {
-        const val nodename = "sample"
+        override val nodename = "sample"
         const val mutCollNodename = "sample_mut_coll"
         private const val classificationPrefix = "COSO"  // the classification file uses a prefix, the sample file does not
 
@@ -80,5 +82,9 @@ data class CosmicSample(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
             = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = "sample_id"
+        override val nodelabel: String
+            get() = "CosmicSample"
     }
 }

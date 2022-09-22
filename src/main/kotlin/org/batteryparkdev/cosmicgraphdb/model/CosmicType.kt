@@ -17,6 +17,8 @@ data class CosmicType(
     val subtype3: String = "NS",
     val typeId:Int  = UUID.randomUUID().hashCode()
 ): CoreModel {
+    override val idPropertyValue: String
+        get() = typeId.toString()
 
     override fun createModelRelationships() = CosmicTypeDao.modelRelationshipFunctions.invoke(this)
 

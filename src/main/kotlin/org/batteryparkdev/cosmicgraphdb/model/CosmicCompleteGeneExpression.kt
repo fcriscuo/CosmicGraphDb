@@ -17,6 +17,9 @@ data class CosmicCompleteGeneExpression(
     val key:String
     ): CoreModel
 {
+    override val idPropertyValue: String
+        get() = key
+
     override fun createModelRelationships() = CosmicCompleteGeneExpressionDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String =
@@ -26,9 +29,8 @@ data class CosmicCompleteGeneExpression(
 
     override fun getModelSampleId(): String = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("CompleteGeneExpression", "key",
-            key.toString())
+    override fun getNodeIdentifier(): NodeIdentifier =generateNodeIdentifierByModel(CosmicCompleteGeneExpression,
+        this)
 
     override fun getPubMedIds(): List<Int> = emptyList()
 
@@ -36,7 +38,7 @@ data class CosmicCompleteGeneExpression(
         .and(sampleId > 0).and(sampleName.isNotEmpty())
 
     companion object: CoreModelCreator {
-        val nodename = "expression"
+        override val nodename = "expression"
 
         fun parseCsvRecord(record: CSVRecord): CosmicCompleteGeneExpression =
             CosmicCompleteGeneExpression(
@@ -55,5 +57,9 @@ data class CosmicCompleteGeneExpression(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
             = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = "key"
+        override val nodelabel: String
+            get() = "CompleteGeneExpression"
     }
 }

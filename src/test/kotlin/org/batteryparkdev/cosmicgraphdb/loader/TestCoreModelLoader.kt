@@ -3,15 +3,15 @@ package org.batteryparkdev.cosmicgraphdb.loader
 import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
 import org.batteryparkdev.genomicgraphcore.common.CoreModelLoader
 import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
+import org.batteryparkdev.genomicgraphcore.common.parseValidInteger
 import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 
 class TestCoreModelLoader (private val creator: CoreModelCreator, private val filename: String,
                            private val nodeLabelList: List<String>){
 
-    fun getNodeCount(): Int =
-        Neo4jConnectionService.executeCypherCommand(
-            "MATCH (n:${nodeLabelList[0].formatNeo4jPropertyValue()}) RETURN COUNT(n)").toInt()
+    fun getNodeCount(): Int =  Neo4jConnectionService.executeCypherCommand(
+            "MATCH (n:${nodeLabelList[0].formatNeo4jPropertyValue()}) RETURN COUNT(n)").parseValidInteger()
 
     private fun deleteCosmicNodes(): Unit =
         nodeLabelList.forEach{ label -> Neo4jUtils.detachAndDeleteNodesByName(label) }

@@ -22,6 +22,9 @@ data class CosmicPatient(
     val individual_remark: String,
     val normal_tissue_tested: Boolean
 ): CoreModel {
+    override val idPropertyValue: String
+        get() = patientId.toString()
+
     override fun createModelRelationships() = CosmicPatientDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String  = CosmicPatientDao(this).generateLoadCosmicModelCypher()
@@ -30,15 +33,15 @@ data class CosmicPatient(
 
     override fun getModelSampleId(): String  = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("CosmicPatient", "patient_id", patientId.toString())
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicPatient, this)
 
     override fun getPubMedIds(): List<Int> = emptyList()
 
     override fun isValid(): Boolean = patientId > 0 && tumorId > 0
 
     companion object : CoreModelCreator {
-        const val nodename = "patient"
+
+        override val nodename = "patient"
 
         fun parseCsvRecord(record: CSVRecord): CosmicPatient =
             CosmicPatient(
@@ -56,6 +59,10 @@ data class CosmicPatient(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
                 = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = "patient_id"
+        override val nodelabel: String
+            get() = "CosmicPatient"
     }
 
 }

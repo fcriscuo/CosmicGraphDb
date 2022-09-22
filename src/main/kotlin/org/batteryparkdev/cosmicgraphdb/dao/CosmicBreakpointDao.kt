@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.dao
 
 import org.batteryparkdev.cosmicgraphdb.model.CosmicBreakpoint
+import org.batteryparkdev.cosmicgraphdb.model.CosmicStruct
 import org.batteryparkdev.genomicgraphcore.common.CoreModel
 import org.batteryparkdev.genomicgraphcore.common.CoreModelDao
 import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
@@ -46,8 +47,7 @@ class CosmicBreakpointDao(private val cosmicBreakpoint: CosmicBreakpoint) {
         Complete relationship to CosmicStruct node
          */
         private fun completeRelationshipToCosmicStruct(model:CoreModel) {
-            val struct = NodeIdentifier("CosmicStruct", "mutation_id",
-            model.getNodeIdentifier().idValue)
+            val struct = CosmicStruct.generateNodeIdentifierByValue(model.getNodeIdentifier().idValue)
             NodeIdentifierDao.defineRelationship(
                 RelationshipDefinition(struct, model.getNodeIdentifier(), "HAS_BREAKPOINT"))
         }

@@ -18,6 +18,9 @@ data class CosmicDiffMethylation(
     val twoSidedPValue: Double
 ): CoreModel
 {
+    override val idPropertyValue: String
+        get() = key
+
     override fun createModelRelationships() = CosmicDiffMethylationDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String  =
@@ -29,17 +32,15 @@ data class CosmicDiffMethylation(
 
     override fun getModelSampleId(): String = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("CosmicDiffMethylation", "key", key)
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicDiffMethylation, this)
 
     override fun getPubMedIds(): List<Int>  = emptyList()
-
 
     override fun isValid(): Boolean = sampleId > 0
 
 
     companion object : CoreModelCreator {
-        val nodename = "diff_methylation"
+        override val nodename = "diff_methylation"
 
         fun parseCsvRecord(record: CSVRecord): CosmicDiffMethylation =
             CosmicDiffMethylation(
@@ -64,6 +65,10 @@ data class CosmicDiffMethylation(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
             = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = "key"
+        override val nodelabel: String
+            get() = "CosmicDiffMethylation"
     }
 
 }

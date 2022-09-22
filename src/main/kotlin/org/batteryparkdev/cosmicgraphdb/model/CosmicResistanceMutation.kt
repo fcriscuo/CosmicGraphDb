@@ -27,6 +27,9 @@ data class CosmicResistanceMutation(
     val drugName: String,
     val pubmedId: Int
 ) : CoreModel {
+    override val idPropertyValue: String
+        get() = mutationId.toString()
+
     override fun createModelRelationships() = CosmicResistanceMutationCollectionDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicResistanceMutationCollectionDao(this)
@@ -36,20 +39,15 @@ data class CosmicResistanceMutation(
 
     override fun getModelSampleId(): String = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier(
-            "CosmicResistanceMutation", "mutation_id",
-            mutationId.toString()
-        )
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicResistanceMutation, this)
 
     override fun getPubMedIds(): List<Int> = listOf(pubmedId)
 
     override fun isValid(): Boolean = geneSymbol.isNotEmpty()
         .and(sampleId > 0).and(mutationId > 0)
 
-
     companion object : CoreModelCreator {
-        const val nodename = "resistance"
+        override val nodename = "resistance"
 
         fun parseCsvRecord(record: CSVRecord): CosmicResistanceMutation =
             CosmicResistanceMutation(
@@ -74,5 +72,9 @@ data class CosmicResistanceMutation(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
             = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = TODO("Not yet implemented")
+        override val nodelabel: String
+            get() = "CosmicResistanceMutation"
     }
 }

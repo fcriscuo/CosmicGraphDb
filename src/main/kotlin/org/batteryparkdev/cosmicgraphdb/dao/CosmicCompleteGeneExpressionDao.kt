@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.dao
 
 import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteGeneExpression
+import org.batteryparkdev.cosmicgraphdb.model.CosmicGeneCensus
 import org.batteryparkdev.genomicgraphcore.common.CoreModel
 import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
@@ -48,10 +49,7 @@ class CosmicCompleteGeneExpressionDao(private val completeExpression: CosmicComp
         }
 
         fun completeRelationshipToGene(model: CoreModel) {
-            val gene = NodeIdentifier(
-                "CosmicGene", "gene_symbol",
-                model.getModelGeneSymbol()
-            )
+            val gene = CosmicGeneCensus.generateNodeIdentifierByValue(model.getModelGeneSymbol())
             NodeIdentifierDao.defineRelationship(
                 RelationshipDefinition(
                     model.getNodeIdentifier(), gene,

@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.dao
 
+import org.batteryparkdev.cosmicgraphdb.model.CosmicSample
 import org.batteryparkdev.cosmicgraphdb.model.CosmicTumor
 import org.batteryparkdev.genomicgraphcore.common.CoreModel
 import org.batteryparkdev.genomicgraphcore.common.CoreModelDao
@@ -25,7 +26,7 @@ class CosmicTumorDao(private val tumor: CosmicTumor) {
     companion object : CoreModelDao {
         // Tumor - HAS_SAMPLE -> Sample
         private fun createRelationshipToSample(model: CoreModel) {
-          val sampleNode = NodeIdentifier("CosmicSample", "sample_id", model.getModelSampleId())
+            val sampleNode = CosmicSample.generateNodeIdentifierByValue(model.getModelSampleId())
             NodeIdentifierDao.defineRelationship(RelationshipDefinition(model.getNodeIdentifier(), sampleNode,
             "HAS_SAMPLE"))
         }

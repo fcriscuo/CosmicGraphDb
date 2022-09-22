@@ -1,6 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.dao
 
 import org.batteryparkdev.cosmicgraphdb.model.CosmicPatient
+import org.batteryparkdev.cosmicgraphdb.model.CosmicTumor
 import org.batteryparkdev.genomicgraphcore.common.CoreModel
 import org.batteryparkdev.genomicgraphcore.common.CoreModelDao
 import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
@@ -37,8 +38,7 @@ class CosmicPatientDao (private val patient: CosmicPatient) {
         // Patient - HAS_TUMOR -> Tumor
         private fun generateTumorRelationshipCypher(model: CoreModel) {
             if (model is CosmicPatient){
-                val tumorNode = NodeIdentifier("CosmicTumor", "tumor_id",
-                    model.tumorId.toString())
+                val tumorNode = CosmicTumor.generateNodeIdentifierByValue(model.tumorId.toString())
                 NodeIdentifierDao.defineRelationship(RelationshipDefinition(model.getNodeIdentifier(),
                  tumorNode, "HAS_TUMOR"))
             }

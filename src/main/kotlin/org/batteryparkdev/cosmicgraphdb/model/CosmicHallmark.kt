@@ -15,6 +15,9 @@ data class CosmicHallmark(
     val geneSymbol: String, val cellType: String, val pubmedId: Int,
     val hallmark: String, val impact: String, val description: String
 ) : CoreModel {
+    override val idPropertyValue: String
+        get() = hallmark.toString()
+
     override fun createModelRelationships() = CosmicHallmarkDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicHallmarkDao(this).generateLoadCosmicModelCypher()
@@ -23,19 +26,14 @@ data class CosmicHallmark(
 
     override fun getModelSampleId(): String = ""
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier(
-            "CosmicHallmark", "hallmark_id",
-            hallmarkId.toString()
-        )
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicHallmark, this)
 
     override fun getPubMedIds(): List<Int> = listOf(pubmedId)
 
     override fun isValid(): Boolean = geneSymbol.isNotEmpty().and(hallmark.isNotEmpty())
 
-
     companion object : CoreModelCreator {
-        const val nodename = "hallmark"
+        override val nodename = "hallmark"
         const val collectionname = "hallmark_collect"
 
         fun parseCsvRecord(record: CSVRecord): CosmicHallmark =
@@ -56,5 +54,9 @@ data class CosmicHallmark(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
                 = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = "hallmark_id"
+        override val nodelabel: String
+            get() = "CosmicHallmark"
     }
 }

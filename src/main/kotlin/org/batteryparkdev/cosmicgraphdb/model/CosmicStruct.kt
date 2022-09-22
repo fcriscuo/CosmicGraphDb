@@ -23,6 +23,9 @@ data class CosmicStruct(
     val pubmedId: Int,
     val structType: String
 ) : CoreModel {
+    override val idPropertyValue: String
+        get() = mutationId.toString()
+
     override fun createModelRelationships() = CosmicStructDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicStructDao(this).generateLoadCosmicModelCypher()
@@ -31,19 +34,14 @@ data class CosmicStruct(
 
     override fun getModelSampleId(): String = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier(
-            "CosmicStruct", "mutation_id", mutationId.toString(),
-            resolveStructType(description)
-        )
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicStruct, this)
 
     override fun getPubMedIds(): List<Int> = listOf(pubmedId)
 
     override fun isValid(): Boolean = sampleId > 0
 
-
     companion object : CoreModelCreator {
-        const val nodename = "struct"
+       override val nodename = "struct"
 
         fun parseCsvRecord(record: CSVRecord): CosmicStruct =
             CosmicStruct(
@@ -67,5 +65,9 @@ data class CosmicStruct(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
            = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = "mutation_id"
+        override val nodelabel: String
+            get() = "CosmicStruct"
     }
 }

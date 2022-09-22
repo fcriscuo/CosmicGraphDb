@@ -1,5 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.dao
 
+import org.batteryparkdev.cosmicgraphdb.model.CosmicClassification
 import org.batteryparkdev.cosmicgraphdb.model.CosmicSample
 import org.batteryparkdev.genomicgraphcore.common.CoreModel
 import org.batteryparkdev.genomicgraphcore.common.CoreModelDao
@@ -57,8 +58,7 @@ class CosmicSampleDao(private val sample: CosmicSample) {
 
         private fun createClassificationRelationship(model: CoreModel) {
             if (model is CosmicSample){
-                val classification = NodeIdentifier("CosmicClassification","phenotype_id",
-                model.cosmicPhenotypeId)
+                val classification = CosmicClassification.generateNodeIdentifierByValue(model.cosmicPhenotypeId)
                 NodeIdentifierDao.defineRelationship(RelationshipDefinition(model.getNodeIdentifier(), classification,
                 "HAS_CLASSIFICATION"))
             }

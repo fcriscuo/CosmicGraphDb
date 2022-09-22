@@ -10,7 +10,6 @@ import org.batteryparkdev.genomicgraphcore.common.parseValidInteger
 import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 
 data class CosmicGeneCensus(
-
     val geneSymbol: String, val geneName: String, val entrezGeneId: Int,
     val genomeLocation: String, val tier: Int = 0, val hallmark: Boolean = false,
     val chromosomeBand: String, val somatic: Boolean = false, val germline: Boolean,
@@ -22,6 +21,9 @@ data class CosmicGeneCensus(
     val cosmicId: String, val cosmicGeneName: String,
     val synonymList: List<String>
 ) : CoreModel {
+    override val idPropertyValue: String
+        get() = geneSymbol
+
     override fun createModelRelationships() = CosmicGeneCensusDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicGeneCensusDao(this).generateLoadCosmicModelCypher()
@@ -30,15 +32,14 @@ data class CosmicGeneCensus(
 
     override fun getModelSampleId(): String = ""
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("CosmicGene", "gene_symbol", geneSymbol)
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicGeneCensus, this)
 
     override fun getPubMedIds(): List<Int> = emptyList()
 
     override fun isValid(): Boolean = geneSymbol.isNotEmpty()
 
     companion object : CoreModelCreator {
-        const val nodename = "gene_census"
+        override val nodename = "gene_census"
         const val mutCollNodename = "gene_mut_collection"
         const val annoCollNodename = "gene_anno_collection"
 
@@ -81,6 +82,10 @@ data class CosmicGeneCensus(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
             = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = "gene_symbol"
+        override val nodelabel: String
+            get() = "CosmicGene"
     }
 }
 

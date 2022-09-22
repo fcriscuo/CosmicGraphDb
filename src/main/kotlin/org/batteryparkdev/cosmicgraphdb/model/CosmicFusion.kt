@@ -26,6 +26,9 @@ data class CosmicFusion(
     val three_genomeStopFrom: Int, val three_genomeStopTo: Int,
     val fusionType: String, val pubmedId: Int
 ) : CoreModel {
+    override val idPropertyValue: String
+        get() = fusionId.toString()
+
     override fun createModelRelationships() = CosmicFusionDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String = CosmicFusionDao(this).generateLoadCosmicModelCypher()
@@ -36,11 +39,7 @@ data class CosmicFusion(
 
     override fun getModelSampleId(): String = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier(
-            "CosmicFusion", "fusion_id",
-            fusionId.toString()
-        )
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicFusion, this)
 
     override fun getPubMedIds(): List<Int> = listOf(pubmedId)
 
@@ -51,7 +50,7 @@ data class CosmicFusion(
             .and(five_geneSymbol.isNotEmpty()).and(three_geneSymbol.isNotEmpty())
 
     companion object : CoreModelCreator {
-        const val nodename = "fusion"
+        override val nodename = "fusion"
 
         fun parseCsvRecord(record: CSVRecord): CosmicFusion =
             CosmicFusion(
@@ -83,6 +82,10 @@ data class CosmicFusion(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
             = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = "fusion_id"
+        override val nodelabel: String
+            get() = "CosmicFusion"
     }
 }
 

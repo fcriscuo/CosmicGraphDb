@@ -23,8 +23,9 @@ data class CosmicBreakpoint(
     val strandTo: String, val pubmedId: Int = 0, val studyId: Int
 ) : CoreModel {
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier("CosmicBreakpoint", "mutation_id", mutationId.toString())
+    override val idPropertyValue: String = this.mutationId.toString()
+
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicBreakpoint, this)
 
     override fun isValid(): Boolean = (sampleId > 0).and(mutationId > 0)
 
@@ -39,7 +40,11 @@ data class CosmicBreakpoint(
     override fun getModelSampleId(): String = sampleId.toString()
 
     companion object : CoreModelCreator {
-        const val nodename = "breakpoint"
+        override val nodename = "breakpoint"
+        override val nodeIdProperty: String
+            get() = "mutation_id"
+        override val nodelabel: String
+            get() = "CosmicBreakpoint"
 
         private fun parseCsvRecord(record: CSVRecord): CosmicBreakpoint {
             val sampleName = record.get("Sample name")

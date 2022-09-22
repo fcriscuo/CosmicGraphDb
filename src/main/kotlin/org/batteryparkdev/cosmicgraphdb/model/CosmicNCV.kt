@@ -17,6 +17,9 @@ data class CosmicNCV(
   val wholeGenomeReseq: Boolean, val wholeExome:Boolean, val studyId: Int,
   val pubmedId: Int, val hgvsg: String
 ): CoreModel  {
+    override val idPropertyValue: String
+        get() = genomicMutationId
+
     override fun createModelRelationships() = CosmicNCVDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String  = CosmicNCVDao(this).generateLoadCosmicModelCypher()
@@ -25,8 +28,7 @@ data class CosmicNCV(
 
     override fun getModelSampleId(): String = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier = NodeIdentifier("CosmicNCV",
-    "genomic_mutation_id", genomicMutationId)
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicNCV, this)
 
     override fun getPubMedIds(): List<Int> = listOf(pubmedId)
 
@@ -35,7 +37,7 @@ data class CosmicNCV(
     override fun isValid(): Boolean = sampleId > 0
 
     companion object: CoreModelCreator{
-        const val nodename = "ncv"
+        override val nodename = "ncv"
 
         fun parseCsvRecord(record: CSVRecord): CosmicNCV =
             CosmicNCV(
@@ -59,5 +61,9 @@ data class CosmicNCV(
 
         override val createCoreModelFunction: (CSVRecord) -> CoreModel
             = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() = "genomic_mutation_id"
+        override val nodelabel: String
+            get() = "CosmicNCV"
     }
 }

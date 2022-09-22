@@ -24,6 +24,9 @@ data class CosmicCodingMutation(
     val hgvsp: String, val hgvsc: String, val hgvsg: String, val tier: String
 ) : CoreModel {
 
+    override val idPropertyValue: String
+        get() = this.mutationId.toString()
+
     override fun createModelRelationships() = CosmicClassificationDao.modelRelationshipFunctions.invoke(this)
 
     override fun generateLoadModelCypher(): String  = CosmicCodingMutationDao(this).generateLoadCosmicModelCypher()
@@ -32,18 +35,22 @@ data class CosmicCodingMutation(
 
     override fun getModelSampleId(): String  = sampleId.toString()
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier(
-            "CosmicCodingMutation", "mutation_id",
-            mutationId.toString()
-        )
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicCodingMutation, this)
+
 
     override fun getPubMedIds(): List<Int>  = listOf(pubmedId)
 
     override fun isValid(): Boolean = geneSymbol.isNotEmpty()
 
     companion object: CoreModelCreator {
-        const val nodename = "coding_mutation"
+        override val nodename = "coding_mutation"
+
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+                = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() ="mutation_id"
+        override val nodelabel: String
+            get() = "CosmicCodingMutation"
 
           /*
           Method to parse a CsvRecord into a CosmicCodingMutation
@@ -75,7 +82,6 @@ data class CosmicCodingMutation(
                   record.get("HGVSG"),
                   record.get("Tier") ?: ""
               )
-
         /*
                Not all mutation files have a Tier column
           */
@@ -85,8 +91,6 @@ data class CosmicCodingMutation(
                 false -> ""
             }
 
-        override val createCoreModelFunction: (CSVRecord) -> CoreModel
-            = ::parseCsvRecord
 
     }
 }

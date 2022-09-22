@@ -147,7 +147,7 @@ class CosmicGeneCensusDao(private val cosmicGene: CosmicGeneCensus) {
       */
         private fun completeRelationshipToEntrez(cosmicGene: CosmicGeneCensus) {
             if (cosmicGene.entrezGeneId > 0) {
-                val entrez = NodeIdentifier("Entrez", "entrez_id", cosmicGene.entrezGeneId.toString())
+               val entrez = NodeIdentifier("Entrez", "entrez_id", cosmicGene.entrezGeneId.toString())
                 NodeIdentifierDao.defineRelationship(
                     RelationshipDefinition(cosmicGene.getNodeIdentifier(), entrez, "HAS_ENTREZ")
                 )
