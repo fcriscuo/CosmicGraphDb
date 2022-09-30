@@ -1,9 +1,10 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
-import org.neo4j.driver.Value
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicClassificationDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 
 data class CosmicClassification(
     val cosmicPhenotypeId: String,
@@ -12,32 +13,33 @@ data class CosmicClassification(
     val cosmicSiteType: CosmicType,
     val nciCode: String,
     val efoUrl: String
-) : CosmicModel {
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier(
-            "CosmicClassification", "phenotype_id",
-            cosmicPhenotypeId
-        )
+): CoreModel {
+    override val idPropertyValue: String = this.cosmicPhenotypeId
+
+    override fun createModelRelationships() = CosmicClassificationDao.modelRelationshipFunctions.invoke(this)
+
+    override fun generateLoadModelCypher(): String = CosmicClassificationDao(this)
+        .generateCosmicClassificationCypher()
+
+    override fun getModelGeneSymbol(): String =""
+
+    override fun getModelSampleId(): String =""
+
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicClassification, this)
+
+
+    override fun getPubMedIds(): List<Int> = emptyList()
+
     override fun isValid(): Boolean = cosmicPhenotypeId.isNotEmpty()
-    override fun getPubMedId(): Int = 0
 
-    override fun generateLoadCosmicModelCypher(): String =
-        generateMergeCypher()
-            .plus(siteType.generateCosmicTypeCypher(CosmicClassification.nodename))
-            .plus(histologyType.generateCosmicTypeCypher(CosmicClassification.nodename))
-            .plus(" RETURN ${CosmicClassification.nodename}\n")
+    companion object : CoreModelCreator {
+        override val nodename = "classification"
+        override val nodeIdProperty: String
+            get() = "phenotype_id"
+        override val nodelabel: String
+            get() = "CosmicClassification"
 
-    private fun generateMergeCypher(): String = "CALL apoc.merge.node([\"CosmicClassification\"]," +
-            "{ phenotype_id: \"${cosmicPhenotypeId}\"}," +
-            " { nci_code: \"${nciCode}\"," +
-            " efo_url: \"${efoUrl}\"," +
-            " created: datetime() }," +
-            "{ last_mod: datetime()}) YIELD node AS $nodename \n "
-
-    companion object : AbstractModel {
-        val nodename = "classification"
-
-        fun parseCSVRecord(record:CSVRecord): CosmicClassification {
+        fun parseCsvRecord(record:CSVRecord): CosmicClassification {
             val nciCode = record.get("NCI_CODE") ?: "NS"
             val efo = record.get("EFO") ?: "NS"
             val phenoId = record.get("COSMIC_PHENOTYPE_ID") ?: "NS"
@@ -73,16 +75,9 @@ data class CosmicClassification(
                 record.get("SITE_SUBTYPE3_COSMIC")
             )
 
-        fun generateChildRelationshipCypher(phenotypeId: String, parentNodeName: String): String {
-            val relationship = "HAS_COSMIC_CLASSIFICATION"
-            val relName = "rel_class"
-            return "CALL apoc.merge.node(['CosmicClassification'], {phenotype_id: " +
-                    " ${Neo4jUtils.formatPropertyValue(phenotypeId)}}, {},{}) " +
-                    " YIELD node AS $nodename\n " +
-                    " CALL apoc.merge.relationship( $parentNodeName, '$relationship', {}, " +
-                    " {created: datetime()}, $nodename, {} ) " +
-                    " YIELD rel AS $relName \n"
-        }
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel =
+            Companion::parseCsvRecord
+
     }
 }
 

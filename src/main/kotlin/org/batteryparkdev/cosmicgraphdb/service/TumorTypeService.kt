@@ -1,6 +1,6 @@
 package org.batteryparkdev.cosmicgraphdb.service
 
-import org.batteryparkdev.io.TsvRecordSequenceSupplier
+import org.batteryparkdev.genomicgraphcore.common.io.TsvRecordSequenceSupplier
 import java.nio.file.Paths
 
 /*
@@ -26,7 +26,6 @@ object TumorTypeService {
             true -> abbreviationsMap.get(abbreviation) ?: ""
             false -> abbreviation  // return the input
         }
-
 }
 
 fun main() {

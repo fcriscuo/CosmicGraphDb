@@ -1,8 +1,10 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
 import org.apache.commons.csv.CSVRecord
-import org.batteryparkdev.neo4j.service.Neo4jUtils
-import org.batteryparkdev.nodeidentifier.model.NodeIdentifier
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicClassificationDao
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicCodingMutationDao
+import org.batteryparkdev.genomicgraphcore.common.*
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
 import org.neo4j.driver.Value
 
 /*
@@ -20,107 +22,47 @@ data class CosmicCodingMutation(
     val mutationSomaticStatus: String,
     val pubmedId: Int, val genomeWideScreen: Boolean,
     val hgvsp: String, val hgvsc: String, val hgvsg: String, val tier: String
-) : CosmicModel {
+) : CoreModel {
 
-    override fun getNodeIdentifier(): NodeIdentifier =
-        NodeIdentifier(
-            "CosmicCodingMutation", "mutation_id",
-            mutationId.toString()
-        )
+    override val idPropertyValue: String
+        get() = this.mutationId.toString()
 
-    override fun isValid(): Boolean = geneSymbol.isNotEmpty().and(sampleId>0)
-    override fun getPubMedId(): Int  = pubmedId
+    override fun createModelRelationships() = CosmicClassificationDao.modelRelationshipFunctions.invoke(this)
 
-    override fun generateLoadCosmicModelCypher(): String =
-        generateMergeCypher()
-        .plus(generateGeneMutationCollectionRelationshipCypher(geneSymbol, nodename))
-        .plus(generateSampleMutationCollectionRelationshipCypher(sampleId, nodename))
-        .plus(" RETURN $nodename")
+    override fun generateLoadModelCypher(): String  = CosmicCodingMutationDao(this).generateLoadCosmicModelCypher()
 
-    private fun generateMergeCypher(): String = mergeNewNodeCypher
+    override fun getModelGeneSymbol(): String = geneSymbol
 
-    private val mergeNewNodeCypher = " CALL apoc.merge.node( [\"CosmicCodingMutation\"], " +
-            " {mutation_id: $mutationId}, " + // key
-            " { legacy_mutation_id: ${Neo4jUtils.formatPropertyValue(legacyMutationId)} ," +
-            " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
-            "  gene_cds_length: $geneCDSLength, " +
-            " genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)} ,"+
-            " mutation_cds: ${Neo4jUtils.formatPropertyValue(mutationCds)}," +
-            " mutation_aa: ${Neo4jUtils.formatPropertyValue(mutationAA)}, " +
-            " description: ${Neo4jUtils.formatPropertyValue(mutationDescription)}," +
-            " zygosity: ${Neo4jUtils.formatPropertyValue(mutationZygosity)}, " +
-            " loh: ${Neo4jUtils.formatPropertyValue(LOH)}, " +
-            " grch: ${Neo4jUtils.formatPropertyValue(GRCh)}, " +
-            " genome_position: ${Neo4jUtils.formatPropertyValue(mutationGenomePosition)}, " +
-            " strand: ${Neo4jUtils.formatPropertyValue(mutationStrand)}, " +
-            " resistance_mutation: ${Neo4jUtils.formatPropertyValue(resistanceMutation)}, " +
-            " somatic_status: ${Neo4jUtils.formatPropertyValue(mutationSomaticStatus)}, " +
-            " pubmed_id: $pubmedId, genome_wide_screen: $genomeWideScreen, " +
-            " hgvsp: ${Neo4jUtils.formatPropertyValue(hgvsp)}, " +
-            " hgvsc: ${Neo4jUtils.formatPropertyValue(hgvsc)}, " +
-            " hgvsq: ${Neo4jUtils.formatPropertyValue(hgvsg)}, " +
-            " tier: ${Neo4jUtils.formatPropertyValue(tier)}, " +
-            "  created: datetime()},{}) YIELD node as $nodename \n"
+    override fun getModelSampleId(): String  = sampleId.toString()
 
-    // Cypher to complete an existing placeholder node
-    private val mergeExistingNodeCypher = " CALL apoc.merge.node( [\"CosmicCodingMutation\"], " +
-            " {mutation_id: $mutationId}, {}," +
-            " { legacy_mutation_id: ${Neo4jUtils.formatPropertyValue(legacyMutationId)}, " +
-            " gene_symbol: ${Neo4jUtils.formatPropertyValue(geneSymbol)}, " +
-            " genomic_mutation_id: ${Neo4jUtils.formatPropertyValue(genomicMutationId)}, " +
-            "  gene_cds_length: $geneCDSLength, " +
-            " mutation_cds: ${Neo4jUtils.formatPropertyValue(mutationCds)}," +
-            " mutation_aa: ${Neo4jUtils.formatPropertyValue(mutationAA)}, " +
-            " description: ${Neo4jUtils.formatPropertyValue(mutationDescription)}," +
-            " zygosity: ${Neo4jUtils.formatPropertyValue(mutationZygosity)}, " +
-            " loh: ${Neo4jUtils.formatPropertyValue(LOH)}, " +
-            " grch: ${Neo4jUtils.formatPropertyValue(GRCh)}, " +
-            " genome_position: ${Neo4jUtils.formatPropertyValue(mutationGenomePosition)}, " +
-            " strand: ${Neo4jUtils.formatPropertyValue(mutationStrand)}, " +
-            " resistance_mutation: ${Neo4jUtils.formatPropertyValue(resistanceMutation)}, " +
-            " somatic_status: ${Neo4jUtils.formatPropertyValue(mutationSomaticStatus)}, " +
-            " pubmed_id: $pubmedId, genome_wide_screen: $genomeWideScreen, " +
-            " hgvsp: ${Neo4jUtils.formatPropertyValue(hgvsp)}, " +
-            " hgvsc: ${Neo4jUtils.formatPropertyValue(hgvsc)}, " +
-            " hgvsq: ${Neo4jUtils.formatPropertyValue(hgvsg)}, " +
-            " tier: ${Neo4jUtils.formatPropertyValue(tier)}, " +
-            "  created: datetime()}) YIELD node as $nodename \n"
+    override fun getNodeIdentifier(): NodeIdentifier = generateNodeIdentifierByModel(CosmicCodingMutation, this)
 
 
-    companion object : AbstractModel {
-        const val nodename = "coding_mutation"
+    override fun getPubMedIds(): List<Int>  = listOf(pubmedId)
 
-        /*
-        Private function to match or create a CosmicCodingMutationNode based on the specified
-        mutation id
-         */
-        private fun resolveCodingMutationCypher(mutationId: Int): String =
-            "CALL apoc.merge.node( [\"CosmicCodingMutation\"], " +
-                    " {mutation_id: $mutationId}," +
-                    "  {created: datetime()},{}) " +
-                    " YIELD node AS $nodename\n "
+    override fun isValid(): Boolean = geneSymbol.isNotEmpty()
 
-        fun generateChildRelationshipCypher(mutationId: Int, childLabel: String): String {
-            val relationship = "HAS_".plus(childLabel.uppercase())
-            val relname = "rel_mutation"
-            return resolveCodingMutationCypher(mutationId).plus(
-                "CALL apoc.merge.relationship($nodename, '$relationship', " +
-                        " {}, {created: datetime()}, ${childLabel.lowercase()},{} )" +
-                        " YIELD rel as $relname \n"
-            )
-        }
+    companion object: CoreModelCreator {
+        override val nodename = "coding_mutation"
+
+        override val createCoreModelFunction: (CSVRecord) -> CoreModel
+                = ::parseCsvRecord
+        override val nodeIdProperty: String
+            get() ="mutation_id"
+        override val nodelabel: String
+            get() = "CosmicCodingMutation"
 
           /*
           Method to parse a CsvRecord into a CosmicCodingMutation
           CosmicMutantExportCensus file is too large to use an APOC method
            */
-          fun parseCSVRecord(record:CSVRecord): CosmicCodingMutation =
+          fun parseCsvRecord(record:CSVRecord): CosmicCodingMutation =
               CosmicCodingMutation(
                   record.get("Gene name"), // actually HGNC approved symbol
                   record.get("ID_sample").toInt(),
                   record.get("GENOMIC_MUTATION_ID"),
-                  parseValidIntegerFromString(record.get("Gene CDS length")),
-                  parseValidIntegerFromString(record.get("HGNC ID")),
+                  record.get("Gene CDS length").parseValidInteger(),
+                  record.get("HGNC ID").parseValidInteger(),
                   record.get("LEGACY_MUTATION_ID"),
                   record.get("MUTATION_ID").toInt(),
                   record.get("Mutation CDS"),
@@ -133,14 +75,13 @@ data class CosmicCodingMutation(
                   record.get("Mutation strand"),
                   record.get("Resistance Mutation"),
                   record.get("Mutation somatic status"),
-                  parseValidIntegerFromString(record.get("Pubmed_PMID")),
-                  convertYNtoBoolean(record.get("Genome-wide screen")),
+                  record.get("Pubmed_PMID").parseValidInteger(),
+                  record.get("Genome-wide screen").YNtoBoolean(),
                   record.get("HGVSP"),
                   record.get("HGVSC"),
                   record.get("HGVSG"),
                   record.get("Tier") ?: ""
               )
-
         /*
                Not all mutation files have a Tier column
           */
@@ -149,6 +90,7 @@ data class CosmicCodingMutation(
                 true -> value["Tier"].asString()
                 false -> ""
             }
+
 
     }
 }

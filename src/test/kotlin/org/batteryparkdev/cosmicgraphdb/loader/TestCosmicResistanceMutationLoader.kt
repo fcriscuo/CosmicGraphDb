@@ -1,12 +1,13 @@
 package org.batteryparkdev.cosmicgraphdb.loader
 
-import arrow.core.nonEmptyListOf
+import org.batteryparkdev.cosmicgraphdb.model.CosmicResistanceMutation
 
-fun main () {
-    val filename = "CosmicResistanceMutations.tsv"
-    println("Loading Cosmic Resistance Mutation data from: $filename")
-    TestCosmicLoader(filename, nonEmptyListOf("CosmicResistanceMutation")).let {
-        it.loadCosmicFile()
+fun main (args: Array<String>) {
+    val filename = if (args.isNotEmpty()) args[0] else  "./data/CosmicResistanceMutations.tsv"
+    TestCoreModelLoader(
+        CosmicResistanceMutation, filename, listOf("CosmicResistanceMutation")
+    ).let {
+        it.testLoadData()
         println("Loaded Cosmic Resistance Mutation data row count = ${it.getNodeCount()}")
     }
 }

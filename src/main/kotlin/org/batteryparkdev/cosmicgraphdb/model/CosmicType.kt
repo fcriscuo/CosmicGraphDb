@@ -1,5 +1,12 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
+import org.apache.commons.csv.CSVRecord
+import org.batteryparkdev.cosmicgraphdb.dao.CosmicTypeDao
+import org.batteryparkdev.genomicgraphcore.common.CoreModel
+import org.batteryparkdev.genomicgraphcore.common.CoreModelCreator
+import org.batteryparkdev.genomicgraphcore.common.formatNeo4jPropertyValue
+import org.batteryparkdev.genomicgraphcore.neo4j.nodeidentifier.NodeIdentifier
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jUtils
 import java.util.*
 
 data class CosmicType(
@@ -7,28 +14,30 @@ data class CosmicType(
     val primary: String,
     val subtype1: String = "NS",
     val subtype2: String = "NS",
-    val subtype3: String = "NS"
-) {
+    val subtype3: String = "NS",
+    val typeId:Int  = UUID.randomUUID().hashCode()
+): CoreModel {
+    override val idPropertyValue: String
+        get() = typeId.toString()
 
-    fun generateCosmicTypeCypher(parentNodeName: String) =
-        generateMergeCypher()
-            .plus(generateParentRelationshipCypher(parentNodeName))
+    override fun createModelRelationships() = CosmicTypeDao.modelRelationshipFunctions.invoke(this)
 
-    private fun generateMergeCypher(): String =
-        " CALL apoc.merge.node([\"CosmicType\",\"${label}\"], " +
-                "{ cosmic_type_id: ${UUID.randomUUID().hashCode()}}, " +
-                "{ primary: \"${primary}\", " +
-                "  subtype1: \"${subtype1}\", " +
-                "  subtype2: \"${subtype2}\", " +
-                "  subtype3: \"${subtype3}\", " +
-                " created: datetime() }," +
-                "{ last_mod: datetime()}) YIELD node AS ${label.lowercase()}\n "
+    override fun generateLoadModelCypher(): String = CosmicTypeDao(this).generateLoadCosmicModelCypher()
 
-    private fun generateParentRelationshipCypher(parentNodeName: String): String {
-        val relationship = "HAS_".plus(label.uppercase()).plus("_TYPE")
-        val relName = "rel_".plus(label.lowercase())
-        return " CALL apoc.merge.relationship($parentNodeName, '$relationship' ," +
-                    " {}, {created: datetime()}," +
-                    " ${label.lowercase()}, {}) YIELD rel AS $relName\n"
+    override fun getModelGeneSymbol(): String = ""
+
+    override fun getModelSampleId(): String = ""
+
+    override fun getNodeIdentifier(): NodeIdentifier =
+        NodeIdentifier("CosmicType", "cosmic_type_id",typeId.toString(),label )
+
+    override fun getPubMedIds(): List<Int>  = emptyList()
+
+    override fun isValid(): Boolean = label.isNotEmpty().and(primary.isNotEmpty())
+
+    companion object {
+        val nodename = "cosmic_type_".plus(Neo4jUtils.getUniqueSuffix())
     }
+
+
 }

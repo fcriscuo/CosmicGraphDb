@@ -1,7 +1,7 @@
 package org.batteryparkdev.cosmicgraphdb.neo4j
 
-import com.google.common.flogger.FluentLogger
-import org.batteryparkdev.neo4j.service.Neo4jConnectionService
+import org.batteryparkdev.genomicgraphcore.common.service.LogService
+import org.batteryparkdev.genomicgraphcore.neo4j.service.Neo4jConnectionService
 
 /*
 A collection of Neo4j database constraint definitions in Cypher
@@ -32,17 +32,15 @@ val constraints by lazy {
     )
 }
 
-val logger: FluentLogger = FluentLogger.forEnclosingClass();
-
 fun defineConstraints() {
     constraints.forEach {
         Neo4jConnectionService.defineDatabaseConstraint(it)
-        logger.atInfo().log("Constraint: $it  has been defined")
+        LogService.logInfo("Constraint: $it  has been defined")
     }
 }
 
 // stand-alone invocation
 fun main(){
-    println("Define constrainsts for ${System.getenv("NEO4J_DATABASE")} database")
+    println("Define constraints for ${System.getenv("NEO4J_DATABASE")} database")
     defineConstraints()
 }

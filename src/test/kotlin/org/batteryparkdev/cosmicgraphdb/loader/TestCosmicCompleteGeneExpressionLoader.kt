@@ -1,12 +1,13 @@
 package org.batteryparkdev.cosmicgraphdb.loader
 
-import arrow.core.nonEmptyListOf
+import org.batteryparkdev.cosmicgraphdb.model.CosmicCompleteGeneExpression
 
-fun main () {
-    val filename = "CosmicCompleteGeneExpression.tsv"
-    println("Loading Cosmic Complete Gene Expression data from: $filename")
-    TestCosmicLoader(filename, nonEmptyListOf("CompleteGeneExpression")).let {
-        it.loadCosmicFile()
+fun main (args: Array<String>) {
+    val filename = if (args.isNotEmpty()) args[0] else  "./data/CosmicCompleteGeneExpression.tsv"
+    TestCoreModelLoader(
+        CosmicCompleteGeneExpression, filename, listOf("CompleteGeneExpression")
+    ).let {
+        it.testLoadData()
         println("Loaded Cosmic Complete Gene Expression data row count = ${it.getNodeCount()}")
     }
 }

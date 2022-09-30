@@ -1,38 +1,9 @@
 package org.batteryparkdev.cosmicgraphdb.model
 
-import org.batteryparkdev.cosmicgraphdb.service.CosmicFilenameService
-import org.batteryparkdev.io.CsvRecordSequenceSupplier
-import java.nio.file.Paths
-
-class TestCosmicClassification {
-    var nodeCount = 0
-    private val LIMIT = 400L
-
-    fun testCosmicModel(): Unit{
-        var nodeCount = 0
-        val filename =  CosmicFilenameService.resolveCosmicCompleteFileLocation("classification.csv")
-        println("Processing file: $filename")
-        val path = Paths.get(filename)
-        CsvRecordSequenceSupplier(path).get()
-            .chunked(100)
-
-            .forEach { recordList ->
-                recordList.stream()
-                    .map { record -> CosmicClassification.parseCSVRecord(record) }
-                    .forEach { classification ->
-                        nodeCount += 1
-                        when (classification.isValid()) {
-                            true -> println("PhenotypeId Id: ${classification.cosmicPhenotypeId}  NCI code: " +
-                                    " ${classification.nciCode}")
-                            false -> println("Row $nodeCount is invalid")
-                        }
-                    }
-            }
-        println("CosmicClassification record count = $nodeCount")
-    }
+fun main (args: Array<String>) {
+    val filename = if (args.isNotEmpty()) args[0] else
+        "./data/classification.csv"
+    TestCoreModel(CosmicClassification.Companion).loadModels(filename)
 }
 
-fun main(args: Array<String>) {
-    val test = TestCosmicClassification().testCosmicModel()
 
-}
