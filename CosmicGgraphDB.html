@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.1.251">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Fred Criscuolo">
+<meta name="dcterms.date" content="2022-11-03">
+<meta name="description" content="Decription of CosmicGraphDb Neo4j database components">
+
+<title>CosmicGraphDb</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="CosmicGgraphDB_files/libs/clipboard/clipboard.min.js"></script>
+<script src="CosmicGgraphDB_files/libs/quarto-html/quarto.js"></script>
+<script src="CosmicGgraphDB_files/libs/quarto-html/popper.min.js"></script>
+<script src="CosmicGgraphDB_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="CosmicGgraphDB_files/libs/quarto-html/anchor.min.js"></script>
+<link href="CosmicGgraphDB_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="CosmicGgraphDB_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="CosmicGgraphDB_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="CosmicGgraphDB_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="CosmicGgraphDB_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+</div>
+<main class="content page-columns page-full" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">CosmicGraphDb</h1>
+</div>
+
+<div>
+  <div class="description">
+    Decription of CosmicGraphDb Neo4j database components
+  </div>
+</div>
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <a href="https://fcriscuo.github.io">Fred Criscuolo</a> 
+  </div>
+    <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            GenomicDataSci
+          </p>
+      </div>
+    </div>
+
+<div class="quarto-title-meta">
+
+      
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 3, 2022</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+</header>
+<nav id="TOC" role="doc-toc">
+    <h2 id="toc-title">Contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+  <li><a href="#cosmicgraphdb-database-schema" id="toc-cosmicgraphdb-database-schema">CosmicGraphDb Database Schema</a></li>
+  <li><a href="#application-design" id="toc-application-design">Application Design</a></li>
+  <li><a href="#application-requirements" id="toc-application-requirements">Application Requirements</a></li>
+  <li><a href="#cosmic-data-files" id="toc-cosmic-data-files">COSMIC Data Files</a>
+  <ul>
+  <li><a href="#sample-vs-complete-loading" id="toc-sample-vs-complete-loading">Sample <em>vs</em> Complete Loading</a></li>
+  </ul></li>
+  </ul>
+</nav>
+<section id="introduction" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>CosmicGraphDb is a backend application implemented in Kotlin 1.7 that will load data from the <a href="https://cancer.sanger.ac.uk/cosmic">Catalog of Somatic Mutations in Cancer (COSMIC)</a> data files into a local <a href="https://neo4j.com/">Neo4j 5.1</a> database. The major graph database nodes and relationships are illustrated below. This schema diagram does not specify cardinality (<em>e.g.</em> A tumor may have &gt;1 samples). CosmicGraphDB represents a specialized addition to the Neo4j database created by the <a href="https://github.com/fcriscuo/GenomicGraphCore">GenomicGraphCore</a>]application.</p>
+<div class="callout-important callout callout-style-default callout-captioned page-columns page-full">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body page-columns page-full">
+<div class="page-columns page-full"><p>This repository does not distribute any of the COSMIC database content. Users must obtain a license from the Sanger Laboratory to download the required files: <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p><div class="no-row-height column-margin column-container"><li id="fn1"><p><sup>1</sup>&nbsp;See <a href="https://cancer.sanger.ac.uk/cosmic/license">COSMIC Licensing</a> for details</p></li></div></div>
+</div>
+</div>
+</section>
+<section id="cosmicgraphdb-database-schema" class="level2">
+<h2 class="anchored" data-anchor-id="cosmicgraphdb-database-schema">CosmicGraphDb Database Schema</h2>
+<p>The nodes and relationships created by the GenomicGraphCore application are enhanced by the nodes and relationships shown in the following schema diagram <img src="COSMICGraphDb.jpg" class="img-fluid" data-fig-align="center" alt="Neo4j Graph Database: COSMIC component schema"></p>
+</section>
+<section id="application-design" class="level2">
+<h2 class="anchored" data-anchor-id="application-design">Application Design</h2>
+<p>The application takes advantage of <a href="https://kotlinlang.org/docs/coroutines-overview.html">Kotlin’s native concurrency</a> capabilities (<em>i.e.</em> channels &amp; flows) to minimize execution run times. Data from COSMIC files are concurrently loaded into Neo4j as soon as parent-child dependencies are met. For example, as soon as loading data from the CosmicSample file is completed, loading all the specialized mutation files is initiated. Within each loader, distinct tasks are run concurrently using Kotlin channels. This overlap of processing tasks lowers the memory required to process the large COSMIC files.</p>
+</section>
+<section id="application-requirements" class="level2">
+<h2 class="anchored" data-anchor-id="application-requirements">Application Requirements</h2>
+<p>Applications running on the GenomeGraphCore platform access configuration settings from files stored in a users <em>$HOME/.genomicapps</em> directory. For example the settings requires to establish a connection to a Neo4j daatabasee are in the neo4j.config file.</p>
+</section>
+<section id="cosmic-data-files" class="level2">
+<h2 class="anchored" data-anchor-id="cosmic-data-files">COSMIC Data Files</h2>
+<p>With the acquistion of a license from The Sanger Laboratory, COSMIC data files can be downloaded from their [FTP] (https://cancer.sanger.ac.uk/cosmic/download) site. The local file location and file names must be specified in the <em>cosmicdb.config</em> file.</p>
+<div class="callout-note callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The current data import process is based on column names specified in COSMIC Release 96. There are usually a small number of breaking changes from one release to another.<br>
+This repository will attempt to remain consistent with the latest COSMIC release.</p>
+</div>
+</div>
+<section id="sample-vs-complete-loading" class="level3">
+<h3 class="anchored" data-anchor-id="sample-vs-complete-loading">Sample <em>vs</em> Complete Loading</h3>
+<p>Many of the COSMIC files downloaded from the Sanger Lab are very large, making testing of the loading procedure unwieldy and time-consuming. The application can accommodate loading a subset (<em>i.e.</em> sample) of the larger files. The user can create a sample file collection by executing the <em>create_cosmic_sample_files.sh</em> shell script from the directory containing the files downloaded from Sanger. The single argument to this script is the number of lines to copy from the larger files. Some of the smaller, reference files (e.g.&nbsp;gene census, classification) are copied over completely.</p>
+<p><em>e.g</em> create_cosmic_sample_files.sh 4000</p>
+<p>In this example the first 4000 rows, including the header row, are used to create a sample file in the sample subdirectory. The new sample file must contain the header row from the original COSMIC file and retain the same filename as the complete file.</p>
+<p>The user should note that some Neo4j relationships that cross COSMIC files may not be completed in the resulting sample database. A mutation listed in the first 4000 rows of the <em>CosmicMutantExportCensus.tsv</em> file may be related to a Cosmic sample that is not within the first 4000 rows of the <em>CosmicSample.tsv</em> file. As a result, creating a Neo4j sample database should only be performed to confirm that the application is functioning properly in the user’s environment and to examine the structure of a small database instance. Please note that when the application is invoked to load a sample database, any existing nodes and relationships in that database are deleted.</p>
+</section>
+</section>
+
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

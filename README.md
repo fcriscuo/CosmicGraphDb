@@ -45,7 +45,7 @@ This repository will attempt to remain consistent with the latest COSMIC release
 
 ### Sample *vs* Complete Loading
 Many of the COSMIC files downloaded from the Sanger Lab are very large, making testing of the
-loading procedure unwieldy and time consuming. The application can accommodate loading a subset
+loading procedure unwieldy and time-consuming. The application can accommodate loading a subset
 (*i.e.* sample) of the larger files. The user can create a sample file collection by executing
 the *create_cosmic_sample_files.sh* shell script from the directory containing the files downloaded
 from Sanger. The single argument to this script is the number of lines to copy from the larger files.
