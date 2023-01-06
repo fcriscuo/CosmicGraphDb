@@ -1,6 +1,12 @@
-CREATE CONSTRAINT unique_classification_id IF NOT EXISTS FOR (cl: CosmicClassification)  REQUIRE cl.phenotype_id IS UNIQUE;
-CREATE CONSTRAINT unique_site_id IF NOT EXISTS FOR (site:CosmicSite)  REQUIRE site.primary_site IS UNIQUE;
-CREATE CONSTRAINT unique_histology_id IF NOT EXISTS FOR (histology:Histology)  REQUIRE histology.histology IS UNIQUE;
-CREATE CONSTRAINT unique_gene_symbol IF NOT EXISTS FOR (gene:CosmicGene)  REQUIRE gene.gene_symbol IS UNIQUE;
-CREATE CONSTRAINT unique_hallmark_id IF NOT EXISTS FOR (hallmark:CosmicHallmark)  REQUIRE hallmark.hallmark_id IS UNIQUE;
-CREATE CONSTRAINT unique_hallmark_gene_symbol IF NOT EXISTS FOR (hgc:HallmarkGeneCollection)  REQUIRE hgc.gene_symbol IS UNIQUE;
+CREATE CONSTRAINT unique_classification_id IF NOT exists FOR (cl: CosmicClassification)  REQUIRE cl.phenotype_id IS UNIQUE;
+CREATE CONSTRAINT unique_site_id IF NOT exists FOR (site:CosmicSite)  REQUIRE site.primary_site IS UNIQUE;
+CREATE CONSTRAINT unique_histology_id IF NOT exists FOR (histology:Histology)  REQUIRE histology.histology IS UNIQUE;
+CREATE CONSTRAINT unique_gene_symbol IF NOT exists FOR (gene:CosmicGene)  REQUIRE gene.gene_symbol IS UNIQUE;
+CREATE CONSTRAINT unique_hallmark_id IF NOT exists FOR (hallmark:CosmicHallmark)  REQUIRE hallmark.hallmark_id IS UNIQUE;
+CREATE CONSTRAINT unique_hallmark_gene_symbol IF NOT exists FOR (hgc:HallmarkGeneCollection)  REQUIRE hgc.gene_symbol IS UNIQUE;
+CREATE CONSTRAINT unique_mutation_id IF NOT EXISTS FOR (cm:CosmicCodingMutation) REQUIRE cm.mutation_id IS UNIQUE;
+CREATE CONSTRAINT unique_sample_id IF NOT EXISTS FOR (cs:CosmicSample) REQUIRE cs.sample_id IS UNIQUE;
+CREATE CONSTRAINT unique_individual_id IF NOT EXISTS FOR (i:CosmicIndividual) REQUIRE i.individual_id IS UNIQUE;
+CREATE CONSTRAINT unique_sample_mut_coll_id IF NOT EXISTS FOR (smc:SampleMutationCollection) REQUIRE smc.sample_id IS UNIQUE;
+CREATE CONSTRAINT unique_tumor_id IF NOT EXISTS FOR (ct:CosmicTumor) REQUIRE ct.tumor_id IS UNIQUE;
+

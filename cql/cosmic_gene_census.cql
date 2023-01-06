@@ -1,16 +1,16 @@
 :auto CALL {
 LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/cosmic_gene_census.csv' AS line
+'file:///Volumes/SSD870/COSMIC_rel97/cancer_gene_census.csv' AS line
 
 MERGE (gene:CosmicGene:CensusGene:Gene{gene_symbol: line.`Gene Symbol`})
 SET gene.gene_name=line.Name,
 gene.entrez_id=line.`Entrez GeneId`,
 gene.genome_location=line.`Genome Location`,
 gene.tier=line.Tier,
-gene.is_halmark=line.Hallmark,
+gene.is_hallmark=toLower(line.Hallmark),
 gene.chr_band=line.`Chr Band`,
-gene.somatic=line.Somatic,
-gene.germ_line=line.Germline,
+gene.is_somatic=toLower(line.Somatic),
+gene.is_germ_line=toLower(line.Germline),
 gene.somatic_tumor_types=split(line.`Tumour Types(Somatic)`,','),
 gene.germline_tumor_types=split(line.`Tumour Types(Germline)`,','),
 gene.cancer_syndrome=line.`Cancer Syndrome`,
@@ -29,5 +29,14 @@ gene.date_created=datetime()
 
 MATCH (gene:CosmicGene) WHERE  gene.translocation_partner <> ""
 MATCH(partner:CosmicGene) WHERE partner.gene_symbol=gene.translocation_partner
-MERGE (gene)-[r:HAS_TRANSLOCATTION_PARTNER]-(partner)
+MERGE (gene)-[r:HAS_TRANSLOCATION_PARTNER]-(partner)
+;
+
+MATCH(gene:CosmicGene) WHERE gene.is_hallmark = "yes"
+MATCH(hgc:HallmarkGeneCollection) where hgc.gene_symbol = gene.gene_symbol
+MERGE (gene)-[r:HAS_HALLMARK_COLLECTION]->(hgc)
+;
+
+MATCH (cg:CosmicGene) WHERE cg.entrez_id is not null
+SET cg.entrez_gene_url= replace("https://www.ncbi.nlm.nih.gov/gene/XXXX","XXXX",cg.entrez_id)
 ;

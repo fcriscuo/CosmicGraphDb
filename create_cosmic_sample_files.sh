@@ -1,5 +1,5 @@
 #!/bin/bash
-#export COSMIC_DATA_HOME=/Volumes/SSD870/COSMIC_rel96
+export COSMIC_DATA_HOME=/Volumes/SSD870/COSMIC_rel97
 # shellcheck disable=SC2164
 if [ $# -eq 0 ]; then
     echo "The number of file rows to be copied must be provided"
