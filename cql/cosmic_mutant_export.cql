@@ -1,8 +1,8 @@
-:auto CALL {
-
+:auto
 LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/sample/CosmicMutantExportCensus.tsv' AS line FIELDTERMINATOR '\t'
-
+CALL {
+WITH line
 MERGE (mutation:CosmicCodingMutation:CosmicCensusMutation:Mutation{mutation_id:MUTATION_ID})
 SET mutation.gene_symbol= line.`Gene name`,
   mutation.accession_number=line.`Accession Number`,

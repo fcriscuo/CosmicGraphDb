@@ -1,6 +1,6 @@
 :auto CALL {
 LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/sample/CosmicSample.tsv' AS line FIELDTERMINATOR '\t'
+'file:///Volumes/SSD870/COSMIC_rel97/CosmicSample50K.tsv' AS line FIELDTERMINATOR '\t'
 
 MERGE (patient:Patient:Individual{individual_id: line.id_individual})
 MERGE (sample:CosmicSample{sample_id:line.sample_id})

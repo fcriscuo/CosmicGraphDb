@@ -1,7 +1,8 @@
-:auto CALL {
+:auto
 LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/classification.csv' AS line
-
+CALL {
+WITH line
 MERGE (cl:CosmicClassification {phenotype_id: line.COSMIC_PHENOTYPE_ID})
 MERGE (site: CosmicType:Site{primary_site:line.SITE_PRIMARY})
 MERGE (histology:CosmicType:Histology{histology: line.HISTOLOGY})

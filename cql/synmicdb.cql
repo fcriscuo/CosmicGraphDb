@@ -1,7 +1,9 @@
-:auto CALL {
-LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/SynMICdb.csv' AS line
 
+:auto LOAD CSV WITH HEADERS FROM
+'file:///Volumes/SSD870/SynMICdb/SynMICdb.csv' AS line
+
+ CALL {
+WITH line
 MERGE (syn:SynonymousMutation:Mutation{synonymous_id:apoc.create.uuid()})
 SET syn.gene_symbol=line.`Gene Name`,
   syn.mutation_id=line.`Mutation ID`,

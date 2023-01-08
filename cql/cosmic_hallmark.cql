@@ -1,7 +1,8 @@
-:auto CALL {
+:auto
 LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv' AS line FIELDTERMINATOR '\t'
-
+CALL {
+WITH line
 MERGE (hallmark:CosmicHallmark {hallmark_id:apoc.create.uuid()})
 SET hallmark.gene_symbol= line.`GENE_NAME`,
 hallmark.cell_type=line.CELL_TYPE,

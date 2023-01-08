@@ -1,7 +1,8 @@
-:auto CALL {
+:auto
 LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/cancer_gene_census.csv' AS line
-
+CALL {
+WITH line
 MERGE (gene:CosmicGene:CensusGene:Gene{gene_symbol: line.`Gene Symbol`})
 MERGE (gmc:GeneMutationCollection){gene_symbol: line.`Gene Symbol`})
 MERGE (gene)-[r:HAS_MUTATION_COLLECTION]->(gmc)
