@@ -6,6 +6,7 @@ WITH line
 MERGE (gene:CosmicGene:CensusGene:Gene{gene_symbol: line.`Gene Symbol`})
 MERGE (gmc:GeneMutationCollection){gene_symbol: line.`Gene Symbol`})
 MERGE (gene)-[r:HAS_MUTATION_COLLECTION]->(gmc)
+MERGE (gene)-[r2:HAS_ACTIONABILITY_COLLECTION]->(gac)
 
 SET gene.gene_name=line.Name,
 gene.entrez_id=line.`Entrez GeneId`,

@@ -1,9 +1,10 @@
 :auto
 LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/sample/CosmicMutantExportCensus.tsv' AS line FIELDTERMINATOR '\t'
+'file:///Volumes/SSD870/COSMIC_rel97/sample/CosmicMutantExport.tsv' AS line FIELDTERMINATOR '\t'
 CALL {
 WITH line
-MERGE (mutation:CosmicCodingMutation:CosmicCensusMutation:Mutation{mutation_id:MUTATION_ID})
+MERGE (mutation:CosmicMutation:Mutation{mutation_id:MUTATION_ID})
+
 SET mutation.gene_symbol= line.`Gene name`,
   mutation.accession_number=line.`Accession Number`,
   mutation.cds_length=toInteger(line.`Gene CDS length`),
@@ -35,14 +36,14 @@ SET mutation.gene_symbol= line.`Gene name`,
   mutation.date_created=datetime()
 }IN TRANSACTIONS OF 1000 ROWS;
 
-MATCH (ccm:CosmicCodingMutation)
+MATCH (ccm:CosmicMutation)
 MATCH (smc:SampleMutationCollection) WHERE toInteger(smc.sample_id) = ccm.sample_id
 MERGE (smc)-[r1:HAS_MUTATION]->(ccm)
 MATCH (gmc:GeneMutationCollection) WHERE gmc.gene_symbol = ccm.gene_symbol
 MERGE (gmc)-[r2:HAS_MUTATION]->(ccm)
 ;
 
-MATCH (ccm:CosmicCodingMutation) WHERE ccm.pub_id IS NOT NULL
+MATCH (ccm:CosmicMutation) WHERE ccm.pub_id IS NOT NULL
 MERGE(p:Publication{ pub_id:ccm.pub_id})
 SET p.url= genomiccore.resolvePubmedUrl(toString(ccm.pub_id))
 MERGE (ccm)-[HAS_PUBLICATION]->(p)

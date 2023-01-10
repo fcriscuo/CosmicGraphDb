@@ -10,4 +10,6 @@ CREATE CONSTRAINT unique_sample_id IF NOT EXISTS FOR (cs:CosmicSample) REQUIRE c
 CREATE CONSTRAINT unique_individual_id IF NOT EXISTS FOR (i:CosmicIndividual) REQUIRE i.individual_id IS UNIQUE;
 CREATE CONSTRAINT unique_sample_mut_coll_id IF NOT EXISTS FOR (smc:SampleMutationCollection) REQUIRE smc.sample_id IS UNIQUE;
 CREATE CONSTRAINT unique_tumor_id IF NOT EXISTS FOR (ct:CosmicTumor) REQUIRE ct.tumor_id IS UNIQUE;
+CREATE CONSTRAINT unique_ncv_id IF NOT EXISTS FOR (ncv:CosmicNCV) REQUIRE ncv.ncv_id IS UNIQUE;
 CREATE CONSTRAINT unique_syn_mut_id IF NOT EXISTS FOR (syn:SynonymousMutation) REQUIRE syn.synonymous_id IS UNIQUE;
+CREATE CONSTRAINT unique_action_id IF NOT EXISTS FOR (act:CosmicActionability) REQUIRE act.actionability_id IS UNIQUE;
