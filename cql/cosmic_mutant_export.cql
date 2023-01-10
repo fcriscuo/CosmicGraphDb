@@ -3,8 +3,7 @@ LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/sample/CosmicMutantExport.tsv' AS line FIELDTERMINATOR '\t'
 CALL {
 WITH line
-MERGE (mutation:CosmicMutation:Mutation{mutation_id:MUTATION_ID})
-
+MERGE (mutation:CosmicMutation:Mutation {mutation_id:toInteger(line.MUTATION_ID)})
 SET mutation.gene_symbol= line.`Gene name`,
   mutation.accession_number=line.`Accession Number`,
   mutation.cds_length=toInteger(line.`Gene CDS length`),

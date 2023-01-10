@@ -13,3 +13,6 @@ CREATE CONSTRAINT unique_tumor_id IF NOT EXISTS FOR (ct:CosmicTumor) REQUIRE ct.
 CREATE CONSTRAINT unique_ncv_id IF NOT EXISTS FOR (ncv:CosmicNCV) REQUIRE ncv.ncv_id IS UNIQUE;
 CREATE CONSTRAINT unique_syn_mut_id IF NOT EXISTS FOR (syn:SynonymousMutation) REQUIRE syn.synonymous_id IS UNIQUE;
 CREATE CONSTRAINT unique_action_id IF NOT EXISTS FOR (act:CosmicActionability) REQUIRE act.actionability_id IS UNIQUE;
+CREATE CONSTRAINT unique_cna_id IF NOT EXISTS FOR (cna:CosmicCNA) REQUIRE cna.cna_identifier IS UNIQUE;
+CREATE CONSTRAINT unique_cge_id IF NOT EXISTS FOR (cgq:CompleteGeneExpression) REQUIRE cge.cge_identifier IS UNIQUE;
+CREATE CONSTRAINT unique_mut_track_id IF NOT EXISTS (track:CosmicMutationTracking) REQUIRE track.mutation_id IS UNIQUE;
