@@ -14,6 +14,8 @@ CREATE CONSTRAINT unique_ncv_id IF NOT EXISTS FOR (ncv:CosmicNCV) REQUIRE ncv.nc
 CREATE CONSTRAINT unique_syn_mut_id IF NOT EXISTS FOR (syn:SynonymousMutation) REQUIRE syn.synonymous_id IS UNIQUE;
 CREATE CONSTRAINT unique_action_id IF NOT EXISTS FOR (act:CosmicActionability) REQUIRE act.actionability_id IS UNIQUE;
 CREATE CONSTRAINT unique_cna_id IF NOT EXISTS FOR (cna:CosmicCNA) REQUIRE cna.cna_identifier IS UNIQUE;
-CREATE CONSTRAINT unique_cge_id IF NOT EXISTS FOR (cgq:CompleteGeneExpression) REQUIRE cge.cge_identifier IS UNIQUE;
-CREATE CONSTRAINT unique_mut_track_id IF NOT EXISTS (track:CosmicMutationTracking) REQUIRE track.mutation_id IS UNIQUE;
-CREATE CONSTRAINT unique_diff_methyl_id IF NOT EXISTS (methyl:CosmicDiffMethylation) REQUIRE methyl.methyl_identifier IS UNIQUE;
+CREATE CONSTRAINT unique_cge_id IF NOT EXISTS  FOR (cge:CompleteGeneExpression) REQUIRE cge.cge_identifier IS UNIQUE;
+CREATE CONSTRAINT unique_mut_track_id IF NOT  EXISTS FOR (track:CosmicMutationTracking) REQUIRE track.mutation_id IS UNIQUE;
+CREATE CONSTRAINT unique_diff_methyl_id IF NOT EXISTS FOR (methyl:CosmicDiffMethylation) REQUIRE methyl.methyl_identifier IS UNIQUE;
+CREATE CONSTRAINT unique_struct_id IF NOT EXISTS FOR (struct:CosmicStruct) REQUIRE struct.mutation_id IS UNIQUE;
+// (struct:CosmicStruct:Mutation {mutation_id:toInteger(line.MUTATION_ID)})

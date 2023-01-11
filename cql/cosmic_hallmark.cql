@@ -1,5 +1,4 @@
-:auto
-LOAD CSV WITH HEADERS FROM
+:auto LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/Cancer_Gene_Census_Hallmarks_Of_Cancer.tsv' AS line FIELDTERMINATOR '\t'
 CALL {
 WITH line

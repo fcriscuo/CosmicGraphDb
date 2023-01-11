@@ -1,5 +1,4 @@
-:auto
-LOAD CSV WITH HEADERS FROM
+:auto LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/classification.csv' AS line
 CALL {
 WITH line

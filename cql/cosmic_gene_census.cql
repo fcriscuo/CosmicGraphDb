@@ -1,5 +1,4 @@
-:auto
-LOAD CSV WITH HEADERS FROM
+:auto LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/cancer_gene_census.csv' AS line
 CALL {
 WITH line
@@ -44,4 +43,8 @@ MERGE (gene)-[r:HAS_HALLMARK_COLLECTION]->(hgc)
 
 MATCH (cg:CosmicGene) WHERE cg.entrez_id is not null
 SET cg.entrez_gene_url= replace("https://www.ncbi.nlm.nih.gov/gene/XXXX","XXXX",cg.entrez_id)
+;
+
+MATCH (cg:CosmicGene)
+SET cg.cosmic_url= replace("https://cancer.sanger.ac.uk/cosmic/gene/analysis?ln=XXXX", "XXXX",cg.gene_symbol)
 ;
