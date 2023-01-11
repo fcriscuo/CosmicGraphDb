@@ -16,3 +16,4 @@ CREATE CONSTRAINT unique_action_id IF NOT EXISTS FOR (act:CosmicActionability) R
 CREATE CONSTRAINT unique_cna_id IF NOT EXISTS FOR (cna:CosmicCNA) REQUIRE cna.cna_identifier IS UNIQUE;
 CREATE CONSTRAINT unique_cge_id IF NOT EXISTS FOR (cgq:CompleteGeneExpression) REQUIRE cge.cge_identifier IS UNIQUE;
 CREATE CONSTRAINT unique_mut_track_id IF NOT EXISTS (track:CosmicMutationTracking) REQUIRE track.mutation_id IS UNIQUE;
+CREATE CONSTRAINT unique_diff_methyl_id IF NOT EXISTS (methyl:CosmicDiffMethylation) REQUIRE methyl.methyl_identifier IS UNIQUE;

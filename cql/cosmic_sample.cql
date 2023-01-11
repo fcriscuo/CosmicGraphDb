@@ -3,9 +3,9 @@ LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/CosmicSample50K.tsv' AS line FIELDTERMINATOR '\t'
 
 MERGE (patient:Patient:Individual{individual_id: line.id_individual})
-MERGE (sample:CosmicSample{sample_id:line.sample_id})
-MERGE (smc: SampleMutationCollection{sample_id:line.sample_id})
-MERGE (tumor:CosmicTumor{tumor_id:line.id_tumour})
+MERGE (sample:CosmicSample{sample_id:toInteger(line.sample_id)})
+MERGE (smc: SampleMutationCollection{sample_id:toInteger(line.sample_id)})
+MERGE (tumor:CosmicTumor{tumor_id:toInteger(line.id_tumour)})
 MERGE (patient)-[r1:HAS_TUMOR]->(tumor)
 MERGE (tumor)-[r2:HAS_SAMPLE]->(sample)
 MERGE (sample)-[r5:HAS_SAMPLE_MUTATION_COLLECTION]->(smc)

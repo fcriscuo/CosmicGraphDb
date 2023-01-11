@@ -36,7 +36,7 @@ SET mutation.gene_symbol= line.`Gene name`,
 }IN TRANSACTIONS OF 1000 ROWS;
 
 MATCH (ccm:CosmicMutation)
-MATCH (smc:SampleMutationCollection) WHERE toInteger(smc.sample_id) = ccm.sample_id
+MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = ccm.sample_id
 MERGE (smc)-[r1:HAS_MUTATION]->(ccm)
 MATCH (gmc:GeneMutationCollection) WHERE gmc.gene_symbol = ccm.gene_symbol
 MERGE (gmc)-[r2:HAS_MUTATION]->(ccm)
