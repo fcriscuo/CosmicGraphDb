@@ -12,7 +12,7 @@ SET struct.sample_name = line.`Sample name`,
   struct.pub_id = line.PUBMED_PMID,
   struct.study_id = toInteger(line.ID_STUDY),
   struct.date_created = datetime()
-}IN TRANSACTIONS OF 1000 ROWS;
+}IN TRANSACTIONS OF 2000 ROWS;
 
 // relationship to SampleMutationCollection
 MATCH (struct:CosmicStruct) WHERE struct.sample_id IS NOT NULL

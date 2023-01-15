@@ -23,5 +23,5 @@ MERGE (mut)-[r1:HAS_MUTATION_TRACKING]->(track)
 // relationship to Cosmic Gene
 MATCH (track:CosmicMutationTracking) WHERE track.gene_symbol IS NOT NULL
 MATCH (gene:CosmicGene) WHERE gene.gene_symbol = track.gene_symbol
-MERGE (gene)-][r2:HAS_MUTATION_TRACKING]->(track)
+MERGE (gene)-[r2:HAS_MUTATION_TRACKING]->(track)
 ;

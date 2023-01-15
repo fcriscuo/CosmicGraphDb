@@ -18,4 +18,6 @@ CREATE CONSTRAINT unique_cge_id IF NOT EXISTS  FOR (cge:CompleteGeneExpression) 
 CREATE CONSTRAINT unique_mut_track_id IF NOT  EXISTS FOR (track:CosmicMutationTracking) REQUIRE track.mutation_id IS UNIQUE;
 CREATE CONSTRAINT unique_diff_methyl_id IF NOT EXISTS FOR (methyl:CosmicDiffMethylation) REQUIRE methyl.methyl_identifier IS UNIQUE;
 CREATE CONSTRAINT unique_struct_id IF NOT EXISTS FOR (struct:CosmicStruct) REQUIRE struct.mutation_id IS UNIQUE;
-// (struct:CosmicStruct:Mutation {mutation_id:toInteger(line.MUTATION_ID)})
+CREATE CONSTRAINT unique_breakpoint_id IF NOT EXISTS FOR (break:CosmicBreakpoint) REQUIRE break.mutation_id IS UNIQUE;
+
+CREATE INDEX cosmic_sample_name_index FOR (cs:CosmicSample) ON (cs.sample_name)

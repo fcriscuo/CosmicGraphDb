@@ -23,7 +23,7 @@ SET syn.gene_symbol=line.`Gene Name`,
   syn.structure_change_score_remuRNA=toFloat(line.`Structure Change Score (remuRNA)`),
   syn.structure_change_significance_RNAsnp=toFloat(line.`Structure Change Significance (RNAsnp)`),
   syn.SynMICdb_score=line.`SynMICdb Score`,
-  syn.sample_id=line.`Sample ID`,
+  syn.sample_name=line.`Sample ID`,
   syn.organ_system=line.`Organ System`,
   syn.site=line.Site,
   syn.histology=line.Histology,
@@ -44,15 +44,15 @@ SET syn.gene_symbol=line.`Gene Name`,
   syn.ess_ese_loss_spliceadf=toInteger(line.`ESE & ESS Loss (SpliceAidF)`),
   syn.any_ess_ese_change=toInteger(line.`Any ESE/ESS Change`),
   syn.date_created=datetime()
-}IN TRANSACTIONS OF 1000 ROWS;
+}IN TRANSACTIONS OF 3000 ROWS;
 
 MATCH (syn:SynonymousMutation) WHERE syn.gene_symbol IS NOT NULL
 MATCH (gmc:GeneMutationCollection) WHERE gmc.gene_symbol = syn.gene_symbol
 MERGE (gmc)-[HAS_SYNONYMOUS_MUTATION]->(syn)
 ;
 
-MATCH (syn:SynonymousMutation) WHERE syn.mutation_id IS NOT NULL
-MATCH (ccm:CosmicCodingMutation) WHERE ccm.legacy_mutation_id = syn.mutation_id
-MATCH (smc:SampleMutationCollection) WHERE smc.mutation_id = ccm.mutation_id
+MATCH (syn:SynonymousMutation) WHERE syn.sample_name IS NOT NULL
+MATCH(cs:CosmicSample) WHERE cs.sample_name = syn.sample_name
+MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = cs.sample_id
 MERGE (smc)-[HAS_SYNONYMOUS_MUTATION]->(syn)
 ;

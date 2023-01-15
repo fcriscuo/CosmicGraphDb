@@ -2,7 +2,6 @@
 'file:///Volumes/SSD870/COSMIC_rel97/CosmicCompleteCNA.tsv' AS line FIELDTERMINATOR '\t'
 CALL {
 WITH line
-
 MERGE (cna:CosmicCNA {cna_identifier:apoc.create.uuid()})
 SET cna.cnv_id = toInteger(line.CNV_ID),
   cna.gene_id = toInteger(line.ID_CNA),

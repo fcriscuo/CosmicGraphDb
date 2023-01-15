@@ -1,7 +1,7 @@
-:auto CALL {
-LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/CosmicSample50K.tsv' AS line FIELDTERMINATOR '\t'
-
+:auto LOAD CSV WITH HEADERS FROM
+'file:///Volumes/SSD870/COSMIC_rel97/CosmicSample.tsv' AS line FIELDTERMINATOR '\t'
+CALL {
+WITH line
 MERGE (patient:Patient:Individual{individual_id: line.id_individual})
 MERGE (sample:CosmicSample{sample_id:toInteger(line.sample_id)})
 MERGE (smc: SampleMutationCollection{sample_id:toInteger(line.sample_id)})
@@ -43,7 +43,7 @@ SET sample.sample_name=line.sample_name,
     patient.gender=toUpper(line.gender),
     patient.individual_remark=line.individual_remark,
     patient.datecreated=datetime()
-} IN TRANSACTIONS OF 1000 ROWS;
+} IN TRANSACTIONS OF 3000 ROWS;
 
 MATCH (cs:CosmicSample) WHERE cs.cosmic_phenotype_id IS NOT NULL
 MATCH(cc:CosmicClassification) WHERE cc.phenotype_id = cs.cosmic_phenotype_id
