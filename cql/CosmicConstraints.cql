@@ -19,5 +19,8 @@ CREATE CONSTRAINT unique_mut_track_id IF NOT  EXISTS FOR (track:CosmicMutationTr
 CREATE CONSTRAINT unique_diff_methyl_id IF NOT EXISTS FOR (methyl:CosmicDiffMethylation) REQUIRE methyl.methyl_identifier IS UNIQUE;
 CREATE CONSTRAINT unique_struct_id IF NOT EXISTS FOR (struct:CosmicStruct) REQUIRE struct.mutation_id IS UNIQUE;
 CREATE CONSTRAINT unique_breakpoint_id IF NOT EXISTS FOR (break:CosmicBreakpoint) REQUIRE break.mutation_id IS UNIQUE;
+CREATE CONSTRAINT unique_resist_mutation_id IF NOT EXISTS FOR (resist:CosmicResistanceMutation) REQUIRE resist.resist_identifier IS UNIQUE;
 
 CREATE INDEX cosmic_sample_name_index FOR (cs:CosmicSample) ON (cs.sample_name)
+CREATE INDEX cosmic_resist_sample_id_index FOR (crm:CosmicResistanceMutation) ON (crm.sample_id)
+CREATE INDEX cosmic_resist_drug_name_index FOR (crm:CosmicResistanceMutation) ON (crm.drug_name)
