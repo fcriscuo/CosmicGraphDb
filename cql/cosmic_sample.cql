@@ -1,5 +1,5 @@
 :auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/CosmicSample.tsv' AS line FIELDTERMINATOR '\t'
+'file:///Volumes/SSD870/COSMIC_rel97/ShortCosmicSample.tsv' AS line FIELDTERMINATOR '\t'
 CALL {
 WITH line
 MERGE (patient:Patient:Individual{individual_id: line.id_individual})
@@ -45,7 +45,10 @@ SET sample.sample_name=line.sample_name,
     patient.datecreated=datetime()
 } IN TRANSACTIONS OF 3000 ROWS;
 
-MATCH (cs:CosmicSample) WHERE cs.cosmic_phenotype_id IS NOT NULL
-MATCH(cc:CosmicClassification) WHERE cc.phenotype_id = cs.cosmic_phenotype_id
-MERGE (cs)-[r:HAS_CALSSIFICATION]->(cc)
-;
+CALL {
+MATCH(cs:CosmicSample)
+    WHERE cs.cosmic_phenotype_id IS NOT NULL
+MATCH(cc:CosmicClassification)
+    WHERE cc.phenotype_id = cs.cosmic_phenotype_id
+MERGE (cs)-[r:HAS_CLASSIFICATION]->(cc)
+} IN TRANSACTIONS OF 3000 ROWS;

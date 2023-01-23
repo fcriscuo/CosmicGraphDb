@@ -7,7 +7,9 @@ MERGE (site: CosmicType:Site{primary_site:line.SITE_PRIMARY})
 MERGE (histology:CosmicType:Histology{histology: line.HISTOLOGY})
 MERGE (cl)-[r1:HAS_SITE]->(site)
 MERGE (cl)-[r2:HAS_HISTOLOGY]->(histology)
-SET cl.nci_code = line.NCI_CODE, cl.efo = line.EFO, cl.created = datetime(),
+SET cl.nci_code = line.NCI_CODE,
+cl.efo = line.EFO,
+cl.created = datetime(),
 site.subtype1 = line.SITE_SUBTYPE1,
 site.subtype2 = line.SITE_SUBTYPE2,
 site.subtype3 = line.SITE_SUBTYPE3,

@@ -20,6 +20,8 @@ CREATE CONSTRAINT unique_diff_methyl_id IF NOT EXISTS FOR (methyl:CosmicDiffMeth
 CREATE CONSTRAINT unique_struct_id IF NOT EXISTS FOR (struct:CosmicStruct) REQUIRE struct.mutation_id IS UNIQUE;
 CREATE CONSTRAINT unique_breakpoint_id IF NOT EXISTS FOR (break:CosmicBreakpoint) REQUIRE break.mutation_id IS UNIQUE;
 CREATE CONSTRAINT unique_resist_mutation_id IF NOT EXISTS FOR (resist:CosmicResistanceMutation) REQUIRE resist.resist_identifier IS UNIQUE;
+CREATE CONSTRAINT unique_gene_expression_id IF NOT EXISTS FOR (express:CosmicGeneExpression) REQUIRE express.express_identifier IS UNIQUE;
+CREATE CONSTRAINT unique_cmc_mutation_id IF NOT EXISTS FOR (cmc:CosmicCMC) REQUIRE cmc.legacy_mutation_id IS UNIQUE;
 
 CREATE INDEX cosmic_sample_name_index FOR (cs:CosmicSample) ON (cs.sample_name)
 CREATE INDEX cosmic_resist_sample_id_index FOR (crm:CosmicResistanceMutation) ON (crm.sample_id)

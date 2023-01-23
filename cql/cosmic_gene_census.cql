@@ -3,7 +3,7 @@
 CALL {
 WITH line
 MERGE (gene:CosmicGene:CensusGene:Gene{gene_symbol: line.`Gene Symbol`})
-MERGE (gmc:GeneMutationCollection){gene_symbol: line.`Gene Symbol`})
+MERGE (gmc:GeneMutationCollection{gene_symbol: line.`Gene Symbol`})
 MERGE (gene)-[r:HAS_MUTATION_COLLECTION]->(gmc)
 MERGE (gene)-[r2:HAS_ACTIONABILITY_COLLECTION]->(gac)
 
@@ -42,9 +42,21 @@ MERGE (gene)-[r:HAS_HALLMARK_COLLECTION]->(hgc)
 ;
 
 MATCH (cg:CosmicGene) WHERE cg.entrez_id is not null
-SET cg.entrez_gene_url= replace("https://www.ncbi.nlm.nih.gov/gene/XXXX","XXXX",cg.entrez_id)
+SET cg.entrez_gene_url= replace("https://www.ncbi.nlm.nih.gov/gene/?term=XXXX","XXXX",cg.entrez_id)
 ;
 
 MATCH (cg:CosmicGene)
 SET cg.cosmic_url= replace("https://cancer.sanger.ac.uk/cosmic/gene/analysis?ln=XXXX", "XXXX",cg.gene_symbol)
 ;
+
+:auto LOAD CSV WITH HEADERS FROM
+'file:///Volumes/SSD870/COSMIC_rel97/CosmicHGNC.tsv ' AS line FIELDTERMINATOR '\t'
+CALL {
+WITH line
+MATCH (cg:CosmicGene) where cg.gene_symbol = line.COSMIC_GENE_NAME
+SET cg.hgnc_id = apoc.text.join(["HGNC",line.HGNC_ID],':')
+WITH cg
+MATCH (h:Hgnc) WHERE h.hgnc_id = cg.hgnc_id
+MERGE (cg)-[r1:HAS_HGNC]->(h)
+
+} IN TRANSACTIONS OF 1000 ROWS;
