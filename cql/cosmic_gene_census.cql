@@ -26,7 +26,7 @@ gene.translocation_partner=line.`Translocation Partner`,
 gene.other_germline_mutations=split(line.`Other Germline Mut`,','),
 gene.other_syndromes=split(line.`Other Syndrome`,','),
 gene.cosmic_id=line.COSMIC_ID,
-gene.comic_gene_symbol=line.`cosmic gene name`,
+gene.cosmic_gene_symbol=line.`cosmic gene name`,
 gene.synonyms=split(line.Synonyms,','),
 gene.date_created=datetime()
 } IN TRANSACTIONS OF 1000 ROWS;
@@ -43,11 +43,20 @@ MERGE (gene)-[r:HAS_HALLMARK_COLLECTION]->(hgc)
 
 MATCH (cg:CosmicGene) WHERE cg.entrez_id is not null
 SET cg.entrez_gene_url= replace("https://www.ncbi.nlm.nih.gov/gene/?term=XXXX","XXXX",cg.entrez_id)
+MATCH (eg:EntrezGene) WHERE eg.gene_id = cg.entrez_id
+MERGE (cg)-[r1:HAS_ENTREZ_GENE]-(eg)
 ;
 
 MATCH (cg:CosmicGene)
 SET cg.cosmic_url= replace("https://cancer.sanger.ac.uk/cosmic/gene/analysis?ln=XXXX", "XXXX",cg.gene_symbol)
 ;
+
+// create a (gene)-[r:HAS_UNIPROT_ENTRY]-(uniprot) relationship
+MATCH (cg:CosmicGene)
+MATCH (uni:UniProtEntry) WHERE cg.gene_symbol = uni.gene_symbol
+MERGE (cg)-[r1:HAS_UNIPROT_ENTRY]->(uni)
+;
+
 
 :auto LOAD CSV WITH HEADERS FROM
 'file:///Volumes/SSD870/COSMIC_rel97/CosmicHGNC.tsv ' AS line FIELDTERMINATOR '\t'
@@ -60,3 +69,5 @@ MATCH (h:Hgnc) WHERE h.hgnc_id = cg.hgnc_id
 MERGE (cg)-[r1:HAS_HGNC]->(h)
 
 } IN TRANSACTIONS OF 1000 ROWS;
+
+
