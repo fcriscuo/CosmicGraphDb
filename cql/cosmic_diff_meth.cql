@@ -1,25 +1,27 @@
-:auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/CosmicCompleteDifferentialMethylation.tsv' AS line FIELDTERMINATOR '\t'
-CALL {
-WITH line
-MERGE (meth:CosmicDiffMethylation {methyl_identifier:apoc.create.uuid()})
-
-SET meth.study_id = toInteger(line.STUDY_ID),
-  meth.sample_id = toInteger(line.ID_SAMPLE),
-  meth.sample_name = line.SAMPLE_NAME,
-  meth.tumor_id = toInteger(line.ID_TUMOUR),
-  meth.fragment_id = line.FRAGMENT_ID,
-  meth.GRCh = line.GENOME_VERSION,
-  meth.chromosome = line.CHROMOSOME,
-  meth.position = toInteger(line.POSITION),
-  meth.stand = line.STRAND,
-  meth.gene_symbol = line.GENE_NAME,
-  meth.methylation = line.METHYLATION,
-  meth.avg_beta_value_normal = toFloat(line.AVG_BETA_VALUE_NORMAL),
-  meth.beta_value = toFloat(line.BETA_VALUE),
-  meth.two_sided_p_value = toFloat(line.TWO_SIDED_P_VALUE),
+CALL apoc.periodic.iterate('
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicCompleteDifferentialMethylation.tsv", { header:true,  sep:"TAB"}
+)
+YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
+','
+WHERE NOT toInteger(trim(nodeRecord.sample_id)) IS NULL
+MERGE (meth:CosmicDiffMethylation {methyl_identifier:toInteger(line_no) })
+SET meth.study_id = toInteger(nodeRecord.STUDY_ID),
+  meth.sample_id = toInteger(nodeRecord.ID_SAMPLE),
+  meth.sample_name = nodeRecord.SAMPLE_NAME,
+  meth.tumor_id = toInteger(nodeRecord.ID_TUMOUR),
+  meth.fragment_id = nodeRecord.FRAGMENT_ID,
+  meth.GRCh = nodeRecord.GENOME_VERSION,
+  meth.chromosome = nodeRecord.CHROMOSOME,
+  meth.position = toInteger(nodeRecord.POSITION),
+  meth.stand = nodeRecord.STRAND,
+  meth.gene_symbol = nodeRecord.GENE_NAME,
+  meth.methylation = nodeRecord.METHYLATION,
+  meth.avg_beta_value_normal = toFloat(nodeRecord.AVG_BETA_VALUE_NORMAL),
+  meth.beta_value = toFloat(nodeRecord.BETA_VALUE),
+  meth.two_sided_p_value = toFloat(nodeRecord.TWO_SIDED_P_VALUE),
   meth.date_created=datetime()
-} IN TRANSACTIONS OF 1000 ROWS;
+',
+{batchSize:4000, iterateList:true, parallel:true});
 
 // relationship to SampleMutationCollection
 MATCH (meth:CosmicDiffMethylation) WHERE meth.sample_id IS NOT NULL

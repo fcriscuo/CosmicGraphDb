@@ -1,38 +1,44 @@
-:auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/sample/CosmicMutantExport.tsv' AS line FIELDTERMINATOR '\t'
-CALL {
-WITH line
-MERGE (mutation:CosmicMutation:Mutation {mutation_id:toInteger(line.MUTATION_ID)})
-SET mutation.gene_symbol= line.`Gene name`,
-  mutation.accession_number=line.`Accession Number`,
-  mutation.cds_length=toInteger(line.`Gene CDS length`),
-  mutation.hgnc_id=line.`HGNC ID`,
-  mutation.sample_name=line.`Sample name`,
-  mutation.sample_id=toInteger(line.ID_sample),
-  mutation.tumor_id=toInteger(line.ID_tumour),
-  mutation.is_genome_wide_screen=toUpper(line.`Genome-wide screen`),
-  mutation.genomic_mutation_id=line.GENOMIC_MUTATION_ID,
-  mutation.legacy_mutation_id=line.LEGACY_MUTATION_ID,
-  mutation.mutation_cds=line.`Mutation CDS`,
-  mutation.mutation_aa=line.`Mutation AA`,
-  mutation.description=line.`Mutation Description`,
-  mutation.zygosity=line.`Mutation zygosity`,
-  mutation.loh=line.LOH,
-  mutation.GRCh=line.GRCh,
-  mutation.mutation_genome_position=line.`Mutation genome position`,
-  mutation.mutation_strand=line.`Mutation strand`,
-  mutation.resistance=toUpper(line.`Resistance Mutation`),
-  mutation.mutation_somatic_status=line.`Mutation somatic status`,
-  mutation.pub_id=toInteger(line.Pubmed_PMID),
-  mutation.study_id=line.ID_STUDY,
-  mutation.sample_type=line.`Sample Type`,
-  mutation.tumor_origin=line.`Tumour origin`,
-  mutation.ier=toInteger(line.Tier),
-  mutation.mutation_hgvsp=line.HGVSP,
-  mutation.mutation_hgvsc=line.HGVSC,
-  mutation.mutation.hgvsg=line.HGVSG,
-  mutation.date_created=datetime()
-}IN TRANSACTIONS OF 1000 ROWS;
+// CosmicMutation
+CALL apoc.periodic.iterate('
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicMutantExportCensus.tsv", { header:true,  sep:"TAB"}
+)
+YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
+','
+WHERE  toInteger(trim(nodeRecord.`MUTATION_ID`)) IS NULL
+MERGE (n: `CosmicMutation` { `mutation_id`: toInteger(trim(nodeRecord.`MUTATION_ID`)) })
+SET n.`gene_symbol` = nodeRecord.`Gene name`
+SET n.`accession_number` = nodeRecord.`Accession Number`
+SET n.`cds_length` = toInteger(trim(nodeRecord.`Gene CDS length`))
+SET n.`hgnc_id` = toInteger(trim(nodeRecord.`HGNC ID`))
+SET n.`sample_name` = nodeRecord.`Sample name`
+SET n.`sample_id` = toInteger(trim(nodeRecord.`ID_sample`))
+SET n.`tumor_id` = toInteger(trim(nodeRecord.`ID_tumour`))
+SET n.`primary_site` = nodeRecord.`Primary site`
+SET n.`primary_histology` = nodeRecord.`Primary histology`
+SET n.`genome_screen` = nodeRecord.`Genome-wide screen`
+SET n.`genomic_mutation_id` = nodeRecord.`GENOMIC_MUTATION_ID`
+SET n.`legacy_mutation_id` = nodeRecord.`LEGACY_MUTATION_ID`
+SET n.`mutation_cds` = nodeRecord.`Mutation CDS`
+SET n.`mutation_aa` = nodeRecord.`Mutation AA`
+SET n.`mutation_description` = nodeRecord.`Mutation Description`
+SET n.`Mutation zygosity` = nodeRecord.`Mutation zygosity`
+SET n.`LOH` = nodeRecord.`LOH`
+SET n.`GRCh` = toInteger(trim(nodeRecord.`GRCh`))
+SET n.`mutation_genome_position` = nodeRecord.`Mutation genome position`
+SET n.`mutation_strand` = nodeRecord.`Mutation strand`
+SET n.`resistance_mutation` = nodeRecord.`Resistance Mutation`
+SET n.`mutation_somatic_status` = nodeRecord.`Mutation somatic status`
+SET n.`pub_id` = toInteger(trim(nodeRecord.`Pubmed_PMID`))
+SET n.`study_id` = toInteger(trim(nodeRecord.`ID_STUDY`))
+SET n.`sample_type` = nodeRecord.`Sample Type`
+SET n.`tumor_origin` = nodeRecord.`Tumour origin`
+SET n.`Age` = toFloat(trim(nodeRecord.`Age`))
+SET n.`tier` = toInteger(trim(nodeRecord.`Tier`))
+SET n.`HGVSP` = nodeRecord.`HGVSP`
+SET n.`HGVSC` = nodeRecord.`HGVSC`
+SET n.`HGVSG` = nodeRecord.`HGVSG`;
+',
+{batchSize:1000, iterateList:true, parallel:true});
 
 MATCH (ccm:CosmicMutation)
 MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = ccm.sample_id

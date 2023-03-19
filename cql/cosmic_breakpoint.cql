@@ -1,28 +1,29 @@
-:auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/CosmicBreakpointsExport.tsv' AS line FIELDTERMINATOR '\t'
-CALL {
-WITH line
-
-MERGE (break:CosmicBreakpoint {mutation_id:toInteger(line.Mutation_ID)})
-SET break.sample_name = line.`Sample name`,
-  break.sample_id = toInteger(line.ID_SAMPLE),
-  break.tumor_id = toInteger(line.ID_TUMOUR),
-  break.mutation_type=line.`Mutation Type`,
-  break.breakpoint_order=line.`Breakpoint Order`,
-  break.GRCh = line.GRCh,
-  break.chromosome_from = line.`Chrom From`,
-  break.location_from_min = toInteger(line.`Location From min`),
-  break.location_from_max = toInteger(line.`Location From max`),
-  break.strand_from = line.`Strand From`,
-  break.chromosome_to = line.`Chrom To`,
-  break.location_to_min = toInteger(line.`Location From min`),
-  break.location_to_max = toInteger(line.`Location From max`),
-  break.strand_to = line.`Strand To`,
-  break.non_templated_ins_seq = line.`Non-templated ins seq`,
-  break.pub_id = toInteger(line.Pubmed_PMID),
-  break.study_id = toInteger(line.STUDY_ID),
-  break.date_created = datetime()
-} IN TRANSACTIONS OF 1000 ROWS;
+// CosmicBreakPointMutation
+CALL apoc.periodic.iterate('
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicBreakpointsExport.tsv", { header:true,  sep:"TAB"}
+)
+YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
+','
+WHERE NOT toInteger(trim(nodeRecord.`ID_SAMPLE`)) IS NULL
+MERGE (n: `CosmicBreakpointMutation` { `mutation_id` = toInteger(trim(nodeRecord.`Mutation ID`)) })
+SET n.`sample_id`: toInteger(trim(nodeRecord.`ID_SAMPLE`))
+SET n.`sample_name` = nodeRecord.`Sample name`
+SET n.`tumor_id` = toInteger(trim(nodeRecord.`ID_TUMOUR`))
+SET n.`mutation_type` = nodeRecord.`Mutation Type`
+SET n.`breakpoint_order` = nodeRecord.`Breakpoint Order`
+SET n.`GRCh` = toInteger(trim(nodeRecord.`GRCh`))
+SET n.`chrom_from` = nodeRecord.`Chrom From`
+SET n.`location_from_min` = toInteger(trim(nodeRecord.`Location From min`))
+SET n.`location_from_max` = toInteger(trim(nodeRecord.`Location From max`))
+SET n.`strand_from` = nodeRecord.`Strand From`
+SET n.`chrom_to` = tnodeRecord.`Chrom To`
+SET n.`location_to_min` = toInteger(trim(nodeRecord.`Location To min`))
+SET n.`location_to_max` = toInteger(trim(nodeRecord.`Location To max`))
+SET n.`strand_to` = nodeRecord.`Strand To`
+SET n.`non-templated_ins_seq` = nodeRecord.`Non-templated ins seq`
+SET n.`pub_id` = nodeRecord.`Pubmed_PMID`;
+',
+{batchSize:4000, iterateList:true, parallel:true});
 
 // create relationships to SampleMutationCollection nodes
 MATCH (break:CosmicBreakpoint) WHERE break.sample_id IS NOT NULL

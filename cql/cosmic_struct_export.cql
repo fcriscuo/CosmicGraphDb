@@ -1,18 +1,20 @@
-:auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/sample/CosmicStructExport.tsv' AS line FIELDTERMINATOR '\t'
-CALL {
-WITH line
-MERGE (struct:CosmicStruct:Mutation {mutation_id:toInteger(line.MUTATION_ID)})
-SET struct.sample_name = line.`Sample name`,
-  struct.sample_id = toInteger(line.ID_SAMPLE),
-  struct.tumor_id = toInteger(line.ID_TUMOUR),
-  struct.mutation_type = line.`Mutation Type`,
-  struct.GRCh = line.GRCh,
-  struct.description = line.description,
-  struct.pub_id = line.PUBMED_PMID,
-  struct.study_id = toInteger(line.ID_STUDY),
-  struct.date_created = datetime()
-}IN TRANSACTIONS OF 2000 ROWS;
+// CosmicStructuralMutation
+CALL apoc.periodic.iterate('
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicStructExport.tsv", { header:true,  sep:"TAB"}
+)
+YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
+','
+WHERE  NOT toInteger(trim(nodeRecord.`MUTATION_ID`)) IS NULL
+MERGE (n: `CosmicStructuralMutation` { `mutation_id`: toInteger(trim(nodeRecord.`MUTATION_ID`)) })
+SET n.`sample_name` = nodeRecord.`Sample name`
+SET n.`sample_id` = toInteger(trim(nodeRecord.`ID_SAMPLE`))
+SET n.`tumor_id` = toInteger(trim(nodeRecord.`ID_TUMOUR`))
+SET n.`mutation_type` = nodeRecord.`Mutation Type`
+SET n.`GRCh` = toInteger(trim(nodeRecord.`GRCh`))
+SET n.`description` = nodeRecord.`description`
+SET n.`pub_id` = nodeRecord.`PUBMED_PMID`;
+',
+{batchSize:4000, iterateList:true, parallel:true});
 
 // relationship to SampleMutationCollection
 MATCH (struct:CosmicStruct) WHERE struct.sample_id IS NOT NULL

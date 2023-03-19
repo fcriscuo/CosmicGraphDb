@@ -1,49 +1,47 @@
-:auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/ShortCosmicSample.tsv' AS line FIELDTERMINATOR '\t'
-CALL {
-WITH line
-MERGE (patient:Patient:Individual{individual_id: line.id_individual})
-MERGE (sample:CosmicSample{sample_id:toInteger(line.sample_id)})
-MERGE (smc: SampleMutationCollection{sample_id:toInteger(line.sample_id)})
-MERGE (tumor:CosmicTumor{tumor_id:toInteger(line.id_tumour)})
-MERGE (patient)-[r1:HAS_TUMOR]->(tumor)
-MERGE (tumor)-[r2:HAS_SAMPLE]->(sample)
-MERGE (sample)-[r5:HAS_SAMPLE_MUTATION_COLLECTION]->(smc)
+// CosmicSample,  CosmicSampleMutationCollection, CosmicTumor, & CosmicPatient nodes
+CALL apoc.periodic.iterate('
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicSample.tsv", { header:true,  sep:"TAB"})
+YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
+','
+MERGE (n: `CosmicSample` { `sample_id`: toInteger(trim(nodeRecord.`sample_id`)) })
+MERGE (csmc: `CosmicSampleMutationCollection`{ `sample_id`: toInteger(trim(nodeRecord.`sample_id`)) })
+MERGE (ct: `Tumor` { `tumor_id`: toInteger(trim(nodeRecord.`id_tumour`)) })
+MERGE (cp: `CosmicPatient` { `individual_id`: toInteger(trim(nodeRecord.`id_individual`)) })
 
-SET sample.sample_name=line.sample_name,
-    sample.therapy_relationship=line.therapy_relationship,
-    sample.sample_differentiator=line.sample_differentiator,
-    sample.mutation_allele_specification=line.mutation_allele_specification,
-    sample.msi=line.msi,
-    sample.ploidy=line.ploidy,
-    sample.whole_genome_screen=toUpper(line.whole_genome_screen),
-    sample.whole_exome_screen=toUpper(line.whole_exome_screen),
-    sample.sample_remark=line.sample_remark,
-    sample.germline_mutation=line.germline_mutation,
-    sample.sample_type=line.sample_type,
-    sample.cosmic_phenotype_id=apoc.text.join(["COSO",toString(line.cosmic_phenotype_id)],""),
-    sample.date_created=datetime(),
-    tumor.drug_response=line.drug_response,
-    tumor.grade=line.grade,
-    tumor.age_at_tumour_tumour_recurrence=toInteger(line.age_at_tumour_tumour_recurrence),
-    tumor.stage=line.stage,
-    tumor.cytogenetics=line.cytogenetics,
-    tumor.tumor_source=line.tumour_source,
-    tumor.tumor_remark=line.tumour_remark,
-    tumor.nci_code=line.nci_code,
-    tumor.nci_url=replace('https://ncit.nci.nih.gov/ncitbrowser/ConceptReport.jsp?dictionary=NCI%20Thesaurus&code=XXXX','XXXX',line.nci_code),
-    tumor.date_created=datetime(),
-    patient.metastatic_site=line.metastatic_site,
-    patient.age=toInteger(line.age),
-    patient.ethnicity=line.ethnicity,
-    patient.environmental_variables=line.environmental_variables,
-    patient.therapy=line.therapy,
-    patient.family=toUpper(line.family),
-    patient.normal_tissue_tested=toUpper(line.normal_tissue_tested),
-    patient.gender=toUpper(line.gender),
-    patient.individual_remark=line.individual_remark,
-    patient.datecreated=datetime()
-} IN TRANSACTIONS OF 3000 ROWS;
+MERGE  (n)-[r1:HAS_MUTATION_COLLECTION]->(csmc)
+MERGE (cp)-[r3:HAS_TUMOR]->(ct)
+MERGE (ct)-[r2:HAS_SAMPLE]->(n)
+
+SET n.`sample_name` = nodeRecord.`sample_name`
+SET csmc.`sample_name` = nodeRecord.`sample_name`
+SET n.`tumor_id` = toInteger(trim(nodeRecord.`id_tumour`))
+SET n.`therapy_relationship` = nodeRecord.`therapy_relationship`
+SET n.`sample_differentiator` = nodeRecord.`sample_differentiator`
+SET n.`mutation_allele_specification` = nodeRecord.`mutation_allele_specification`
+SET n.`msi` = nodeRecord.`msi`
+SET n.`whole_genome_screen` = nodeRecord.`whole_genome_screen`
+SET n.`whole_exome_screen` = nodeRecord.`whole_exome_screen`
+SET n.`sample_remark` = nodeRecord.`sample_remark`
+SET n.`germline_mutation` = nodeRecord.`germline_mutation`
+SET n.`sample_type` = nodeRecord.`sample_type`
+SET n.`cosmic_phenotype_id` = toInteger(trim(nodeRecord.`cosmic_phenotype_id`))
+SET cp.`metastatic_site` = nodeRecord.`metastatic_site`
+SET cp.`tumor_id` = toInteger(trim(nodeRecord.`id_tumour`))
+SET cp.`age` = toInteger(trim(nodeRecord.`age`))
+SET cp.`ethnicity` = nodeRecord.`ethnicity`
+SET cp.`environmental_variables` = nodeRecord.`environmental_variables`
+SET cp.`therapy` = nodeRecord.`therapy`
+SET cp.`family` = nodeRecord.`family`
+SET cp.`normal_tissue_tested` = nodeRecord.`normal_tissue_tested`
+SET cp.`individual_remark` = nodeRecord.`individual_remark`
+SET cp.`gender` = nodeRecord.`gender`
+SET ct.`drug_response` = nodeRecord.`drug_response`
+SET ct.`grade` = nodeRecord.`grade`
+SET ct.`age_at_tumor_recurrence` = nodeRecord.`age_at_tumour_recurrence`
+SET ct.`stage` = nodeRecord.`stage`
+SET ct.`nci_code` = nodeRecord.`nci_code`
+ ',
+{batchSize:1000, iterateList:true, parallel:true});
 
 CALL {
 MATCH(cs:CosmicSample)

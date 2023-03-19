@@ -1,18 +1,20 @@
-:auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/CosmicCompleteGeneExpression.tsv' AS line FIELDTERMINATOR '\t'
-CALL {
+CALL apoc.periodic.iterate('
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicCompleteGeneExpression.tsv", { header:true,  sep:"TAB"}
+)
+YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
+','
+WHERE NOT toInteger(trim(nodeRecord.`SAMPLE_ID`)) IS NULL
+MERGE (express:CosmicGeneExpression:Mutation {express_identifier: toInteger(line_no)})
 
-WITH line
-MERGE (express:CosmicGeneExpression:Mutation {express_identifier: apoc.create.uuid()})
-
-SET express.sample_id = toInteger(line.SAMPLE_ID),
-  express.sample_name = line.SAMPLE_NAME,
-  express.gene_symbol = line.GENE_NAME,
-  express.regulation = line.REGULATION,
+SET express.sample_id = toInteger(nodeRecord.SAMPLE_ID),
+  express.sample_name = nodeRecord.SAMPLE_NAME,
+  express.gene_symbol = nodeRecord.GENE_NAME,
+  express.regulation = nodeRecord.REGULATION,
   express.z_score = toFloadt(Z_SCORE),
-  express.study_id = toInteger(line.ID_STUDY),
+  express.study_id = toInteger(nodeRecord.ID_STUDY),
   express.date_created = datetime()
-}IN TRANSACTIONS OF 3000 ROWS;
+',
+{batchSize:4000, iterateList:true, parallel:true});
 
 // define relationships to SampleMutationCollection nodes
 MATCH (express:CosmicGeneExpression) WHERE express.sample_id IS NOT NULL

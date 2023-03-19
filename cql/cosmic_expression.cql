@@ -1,17 +1,19 @@
-:auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/CosmicCompleteGeneExpression.tsv' AS line FIELDTERMINATOR '\t'
-CALL {
-WITH line
-
-MERGE (express:CosmicGeneExpression {cge_identifier:apoc.create.uuid()})
-SET express.sample_id = toInteger(line.SAMPLE_ID),
-  express.sample_name = line.SAMPLE_NAME,
-  express.gene_symbol = line.GENE_NAME,
-  express.regulation = line.REGULATION,
-  express.z_score = toFloat(line.Z_SCORE),
-  express.study_id = line.ID_STUDY,
+CALL apoc.periodic.iterate('
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicCompleteGeneExpression.tsv", { header:true,  sep:"TAB"}
+)
+YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
+','
+WHERE NOT toInteger(trim(nodeRecord.SAMPLE_ID))) IS NULL
+MERGE (express:CosmicGeneExpression {cge_identifier:toInteger(line_no) })
+SET express.sample_id = toInteger(nodeRecord.SAMPLE_ID),
+  express.sample_name = nodeRecord.SAMPLE_NAME,
+  express.gene_symbol = nodeRecord.GENE_NAME,
+  express.regulation = nodeRecord.REGULATION,
+  express.z_score = toFloat(nodeRecord.Z_SCORE),
+  express.study_id = nodeRecord.ID_STUDY,
   express.date_created = datetime()
-} IN TRANSACTIONS OF 1000 ROWS;
+}',
+{batchSize:4000, iterateList:true, parallel:true});
 
 // relationship to CosmicGeneCensus
 MATCH (express:CosmicGeneExpression) WHERE express.gene_symbol IS NOT NULL

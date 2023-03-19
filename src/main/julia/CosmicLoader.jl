@@ -1,0 +1,2 @@
+#Load the Cypher constraints for the COSMIC nodes
+results1 = read(`cypher-shell -a neo4j://tosca.local:7687 --format plain -u neo4j -p fjc92677 -d neo4j -f ./softwaredev/CosmicGraphDb/cql/CosmicConstraints.cql`, String)

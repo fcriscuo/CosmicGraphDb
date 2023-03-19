@@ -1,32 +1,35 @@
-:auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/CosmicResistanceMutations.tsv' AS line FIELDTERMINATOR '\t'
-CALL {
-WITH line
-MERGE (resist:CosmicResistanceMutation:Mutation {resist_identifier: apoc.create.uuid()})
-
-SET resist.sample_name = line.`Sample Name`,
-resist.sample_id = toInteger(line.`Sample ID`),
-resist.gene_symbol = line.`Gene Name`,
-resist.transcript = line.Transcript,
-resist.census_gene = toUpper(line.`Census Gene`),
-resist.drug_name = line.`Gene	Drug`,
-resist.mutation_id = toInteger(line.MUTATION_ID),
-resist.genomic_mutation_id = line.GENOMIC_MUTATION_ID,
-resist.legacy_mutation_id = line.LEGACY_MUTATION_ID,
-resist.aa_mutation = line.`AA Mutation`,
-resist.cds_mutation = line.`CDS Mutation`,
-resist.pub_id = toInteger(line.`Pubmed Id`),
-resist.cgp_study = line.`CGP Study`,
-resist.somatic_status = line.`Somatic Status`,
-resist.sample_type = line.`Sample Type`,
-resist.zygosity = line.Zygosity,
-resist.genome_coordinates = line.`Genome Coordinates (GRCh38)	Tier`,
-resist.tier = toInteger(line.Tier),
-resist.hgvsp = line.HGVSP,
-resist.hgvsc = line.HGVSC,
-resist.hgvsg = line.HGVSG,
-resist.data_created = datetime()
-} IN TRANSACTIONS OF 3000 ROWS;
+// CosmicResistanceMutation
+CALL apoc.periodic.iterate('
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicResistanceMutations.tsv", { header:true,  sep:"TAB"}
+)
+YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
+','
+WHERE NOT toInteger(trim(nodeRecord.`MUTATION_ID`)) IS NULL
+MERGE (n: `CosmicResistanceMutation` { `identifier`: toInteger(line_no) })
+SET n.`mutation_id` = toInteger(nodeRecord.`MUTATION_ID`)
+SET n.`sample_name` = nodeRecord.`Sample Name`
+SET n.`sample_id` = toInteger(trim(nodeRecord.`Sample ID`))
+SET n.`gene_symbol` = nodeRecord.`Gene Name`
+SET n.`transcript` = nodeRecord.`Transcript`
+SET n.`census_gene` = nodeRecord.`Census Gene`
+SET n.`drug_name` = nodeRecord.`Drug Name`
+SET n.`genomic_mutation_id` = nodeRecord.`GENOMIC_MUTATION_ID`
+SET n.`legacy_mutation_id` = nodeRecord.`LEGACY_MUTATION_ID`
+SET n.`aa_mutation` = nodeRecord.`AA Mutation`
+SET n.`cds_mutation` = nodeRecord.`CDS Mutation`
+SET n.`primary_tissue` = nodeRecord.`Primary Tissue`
+SET n.`pub_id` = toInteger(trim(nodeRecord.`Pubmed Id`))
+SET n.`cgp_study` = nodeRecord.`CGP Study`
+SET n.`somatic_status` = nodeRecord.`Somatic Status`
+SET n.`sample_type` = nodeRecord.`Sample Type`
+SET n.`zygosity` = nodeRecord.`Zygosity`
+SET n.`genome_coordinates_grch38` = nodeRecord.`Genome Coordinates (GRCh38)`
+SET n.`tier` = toInteger(trim(nodeRecord.`Tier`))
+SET n.`HGVSP` = nodeRecord.`HGVSP`
+SET n.`HGVSC` = nodeRecord.`HGVSC`
+SET n.`HGVSG` = nodeRecord.`HGVSG`;
+',
+{batchSize:4000, iterateList:true, parallel:true});
 
 // relationship to PubMed
 MATCH(resist:CosmicResistanceMutation) WHERE resist.pub_id IS NOT NULL
