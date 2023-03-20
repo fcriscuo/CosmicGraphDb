@@ -25,15 +25,3 @@ SET n.`pub_id` = nodeRecord.`Pubmed_PMID`;
 ',
 {batchSize:4000, iterateList:true, parallel:true});
 
-// create relationships to SampleMutationCollection nodes
-MATCH (break:CosmicBreakpoint) WHERE break.sample_id IS NOT NULL
-MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = break.sample_id
-MERGE (smc)-[r1:HAS_BREAKPOINT_MUTATION]->(break)
-;
-
-// create relationships to Publication nodes
-MATCH(break:CosmicBreakpoint) WHERE break.pub_id IS NOT NULL
-MERGE(p:Publication{ pub_id:toInteger(break.pub_id)})
-SET p.url= genomiccore.resolvePubmedUrl(break.pub_id)
-MERGE (break)-[r2:HAS_PUBLICATION]->(p)
-;

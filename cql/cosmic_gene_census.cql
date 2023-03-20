@@ -17,6 +17,8 @@ WHERE NOT nodeRecord.`Gene Symbol` IS NULL
 MERGE (n: `CosmicGene` { gene_symbol: nodeRecord.`Gene Symbol` })
 MERGE (cgmc: `CosmicGeneMutationCollection` {gene_symbol: nodeRecord.`GeneSymbol`})
 MERGE (n)-[r:HAS_MUTATION_COLLECTION]->(cgmc)
+MERGE (ghc:`CosmicGeneHallmarkCollection` {gene_symbol: nodeRecord.`GeneSymbol`})
+MERGE (n)-[HAS_HALLMARK_COLLECTION]-(ghc)
 SET n.`gene_name` = nodeRecord.`Name`
 SET n.`entrez_gene_id` = toInteger(trim(nodeRecord.`Entrez GeneId`))
 SET n.`genome_location` = nodeRecord.`Genome Location`
@@ -42,41 +44,5 @@ SET n.`synonyms` = nodeRecord.synonyms;
 ',
 {batchSize:1000, iterateList:true, parallel:true});
 
-// CosmicGene to CosmicGeneHallmarkCollection relationship
-MATCH(gene:CosmicGene) WHERE gene.is_hallmark = 'yes'
-MERGE (hgc:HallmarkGeneCollection{gene_symbol:hallmark.gene_symbol})
-MERGE (gene)-[r:HAS_HALLMARK_COLLECTION]-(hgc);
-
-// Link CosmicGene translocation partners
-MATCH (gene:CosmicGene) WHERE  gene.translocation_partners IS NOT NULL
-UNWIND gene.translocation_partners AS translocation
-MATCH(partner:CosmicGene) WHERE partner.gene_symbol=translocation
-MERGE (gene)-[r:HAS_TRANSLOCATION_PARTNER]-(partner)
-;
-
-// Add URL to Entrez Gene page if Entrez ID is available
-MATCH (cg:CosmicGene) WHERE cg.entrez_id is not null
-SET cg.entrez_gene_url= replace("https://www.ncbi.nlm.nih.gov/gene/?term=XXXX","XXXX",cg.entrez_id)
-MATCH (eg:EntrezGene) WHERE eg.gene_id = cg.entrez_id
-MERGE (cg)-[r1:HAS_ENTREZ_GENE]-(eg)
-;
-
-// create a (gene)-[r:HAS_UNIPROT_ENTRY]-(uniprot) relationship
-MATCH (cg:CosmicGene)
-MATCH (uni:UniProtEntry) WHERE cg.gene_symbol = uni.gene_symbol
-MERGE (cg)-[r1:HAS_UNIPROT_ENTRY]->(uni)
-;
-
-:auto LOAD CSV WITH HEADERS FROM
-'file:///Volumes/SSD870/COSMIC_rel97/CosmicHGNC.tsv ' AS line FIELDTERMINATOR '\t'
-CALL {
-WITH line
-MATCH (cg:CosmicGene) where cg.gene_symbol = line.COSMIC_GENE_NAME
-SET cg.hgnc_id = apoc.text.join(["HGNC",line.HGNC_ID],':')
-WITH cg
-MATCH (h:Hgnc) WHERE h.hgnc_id = cg.hgnc_id
-MERGE (cg)-[r1:HAS_HGNC]->(h)
-
-} IN TRANSACTIONS OF 1000 ROWS;
 
 

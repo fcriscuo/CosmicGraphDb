@@ -73,11 +73,6 @@ SET action.gene_symbol=nodeRecord.GENE,
 ',
 {batchSize:4000, iterateList:true, parallel:true});
 
-// create CosmicClassification to Actionability relationship
-MATCH (act:CosmicActionability) WHERE act.classification_id IS NOT NULL
-MATCH (clas:CosmicClassification) WHERE class.phenotype_id = act.classification_id
-MERGE (class)-[r:HAS_ACTIONAVAILABILY]->(act)
-
 // add clinical trials URL property
 MATCH(act:CosmicActionability) WHERE act.trial_id IS NOT NULL
 SET act.drug_trial_url = replace("https://clinicaltrials.gov/ct2/show/XXXX","XXXX", act.trial_id)

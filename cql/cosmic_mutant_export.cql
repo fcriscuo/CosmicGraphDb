@@ -40,18 +40,7 @@ SET n.`HGVSG` = nodeRecord.`HGVSG`;
 ',
 {batchSize:1000, iterateList:true, parallel:true});
 
-MATCH (ccm:CosmicMutation)
-MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = ccm.sample_id
-MERGE (smc)-[r1:HAS_MUTATION]->(ccm)
-MATCH (gmc:GeneMutationCollection) WHERE gmc.gene_symbol = ccm.gene_symbol
-MERGE (gmc)-[r2:HAS_MUTATION]->(ccm)
-;
 
-MATCH (ccm:CosmicMutation) WHERE ccm.pub_id IS NOT NULL
-MERGE(p:Publication{ pub_id:ccm.pub_id})
-SET p.url= genomiccore.resolvePubmedUrl(toString(ccm.pub_id))
-MERGE (ccm)-[HAS_PUBLICATION]->(p)
-;
 
 
 

@@ -20,18 +20,7 @@ SET ncv.sample_name=nodeRecord.`Sample name`,
   ncv.study_id=nodeRecord.Whole_Exome,
   ncv.pub_id=nodeRecord.PUBMED_PMID,
   ncv.hgvsg=nodeRecord.HGVSG,
-  ncv.date_created=datetime()
 ',
 {batchSize:4000, iterateList:true, parallel:true});
 
-// relationship to  SampleMutationCollection node
-MATCH(ncv:CosmicNCV)
-MATCH(smc:SampleMutationCollection) WHERE smc.sample_id = ncv.sample_id
-MERGE (smc)-[r:HAS_MUTATION]->(ncv);
 
-//relationship to Publication node
-MATCH(ncv:CosmicNCV) WHERE ncv.pub_id IS NOT NULL
-MERGE(p:Publication{ pub_id:toInteger(ncv.pub_id)})
-SET p.url= genomiccore.resolvePubmedUrl(ncv.pub_id)
-MERGE (ncv)-[r:HAS_PUBLICATION]->(p)
-;

@@ -16,15 +16,4 @@ SET n.`pub_id` = nodeRecord.`PUBMED_PMID`;
 ',
 {batchSize:4000, iterateList:true, parallel:true});
 
-// relationship to SampleMutationCollection
-MATCH (struct:CosmicStruct) WHERE struct.sample_id IS NOT NULL
-MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = struct.sample_id
-MERGE (smc)-[r1:HAS_STRUCT_MUTATION]->(struct)
-;
 
-// add relationship tp Publication and  PubMed URL property
-MATCH (struct:CosmicStruct) WHERE struct.pub_id IS NOT NULL
-MERGE(p:Publication{ pub_id:toInteger(struct.pub_id)})
-SET p.url= genomiccore.resolvePubmedUrl(struct.pub_id)
-MERGE (struct)-[r:HAS_PUBLICATION]->(p)
-;

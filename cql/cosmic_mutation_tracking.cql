@@ -21,14 +21,4 @@ MATCH(act:CosmicActionability) WHERE act.trial_id IS NOT NULL
 SET act.drug_trial_url = replace("https://clinicaltrials.gov/ct2/show/XXXX","XXXX", act.trial_id)
 } IN TRANSACTIONS OF 1000 ROWS;
 
-// relationship to CosmicMutation
-MATCH (track:CosmicMutationTracking) WHERE track.mutation_id IS NOT NULL
-MATCH (mut:CosmicMutation) WHERE mut.mutation_id = track.mutation_id
-MERGE (mut)-[r1:HAS_MUTATION_TRACKING]->(track)
-;
 
-// relationship to Cosmic Gene
-MATCH (track:CosmicMutationTracking) WHERE track.gene_symbol IS NOT NULL
-MATCH (gene:CosmicGene) WHERE gene.gene_symbol = track.gene_symbol
-MERGE (gene)-[r2:HAS_MUTATION_TRACKING]->(track)
-;

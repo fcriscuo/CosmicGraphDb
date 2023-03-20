@@ -1,5 +1,5 @@
 CALL apoc.periodic.iterate('
-CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicCompleteCNA.tsv.tsv", { header:true,  sep:"TAB"}
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/CosmicCompleteCNA.tsv", { header:true,  sep:"TAB"}
 )
 YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
 ','
@@ -16,19 +16,7 @@ SET cna.cnv_id = toInteger(nodeRecord.CNV_ID),
   cna.mut_type = nodeRecord.MUT_TYPE,
   cna.study_id = toInteger(nodeRecord.ID_STUDY),
   cna.GRCh = nodeRecord.GRCh,
-  cna.chromosome_start_stop = nodeRecord.`Chromosome:G_Start..G_Stop`,
-  cna.date_created = datetime()
+  cna.chromosome_start_stop = nodeRecord.`Chromosome:G_Start..G_Stop`
 ',
 {batchSize:4000, iterateList:true, parallel:true});
 
-// relationship to SampleMutationCollection
-MATCH (cna:CosmicCNA) WHERE cna.sample_id IS NOT NULL
-MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = cna.sample_id
-MERGE (smc)-[r1:HAS_CNA_MUTATION]->(cna)
-;
-
-// relationship to GeneMutationCollection
-MATCH (cna:CosmicCNA) WHERE cna.gene_symbol IS NOT NULL
-MATCH (gmc:GeneMutationCollection) WHERE gmc.gene_symbol = cna.gene_symbol
-MERGE (gmc)-[r2:HAS_CNA_MUTATION]->(cna)
-;

@@ -11,19 +11,8 @@ SET express.sample_id = toInteger(nodeRecord.SAMPLE_ID),
   express.gene_symbol = nodeRecord.GENE_NAME,
   express.regulation = nodeRecord.REGULATION,
   express.z_score = toFloadt(Z_SCORE),
-  express.study_id = toInteger(nodeRecord.ID_STUDY),
-  express.date_created = datetime()
+  express.study_id = toInteger(nodeRecord.ID_STUDY)
 ',
 {batchSize:4000, iterateList:true, parallel:true});
 
-// define relationships to SampleMutationCollection nodes
-MATCH (express:CosmicGeneExpression) WHERE express.sample_id IS NOT NULL
-MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = express.sample_id
-MERGE (smc) -[r1:HAS_GENE_EXPRESSION_VARIANT] ->(express)
-;
 
-//define relationships to GeneMutationCollection nodes
-MATCH (express:CosmicGeneExpression) WHERE express.gene_symbol IS NOT NULL
-MATCH (gmc:GeneMutationCollection) WHERE gmc.gene_symbol = express.gene_symbol
-MERGE (gmc) -[r2:HAS_GENE_EXPRESSION_VARIANT] ->(express)
-;

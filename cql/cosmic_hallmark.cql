@@ -13,9 +13,4 @@ SET n.`impact` = nodeRecord.`IMPACT`
 SET n.`description` = nodeRecord.`DESCRIPTION`
 ',
 {batchSize:1000, iterateList:true, parallel:true});
-// CosmicHallmark to Publication relationship
-MATCH(hallmark:CosmicHallmark) WHERE hallmark.pub_id IS NOT NULL
-MERGE(p:Publication{ pub_id:toInteger(hallmark.pub_id)})
-SET p.url= genomiccore.resolvePubmedUrl(hallmark.pub_id)
-MERGE (hallmark)-[r:HAS_PUBLICATION]->(p)
-;
+

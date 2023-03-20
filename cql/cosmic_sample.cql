@@ -43,10 +43,3 @@ SET ct.`nci_code` = nodeRecord.`nci_code`
  ',
 {batchSize:1000, iterateList:true, parallel:true});
 
-CALL {
-MATCH(cs:CosmicSample)
-    WHERE cs.cosmic_phenotype_id IS NOT NULL
-MATCH(cc:CosmicClassification)
-    WHERE cc.phenotype_id = cs.cosmic_phenotype_id
-MERGE (cs)-[r:HAS_CLASSIFICATION]->(cc)
-} IN TRANSACTIONS OF 3000 ROWS;

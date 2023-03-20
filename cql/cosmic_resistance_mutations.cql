@@ -31,24 +31,8 @@ SET n.`HGVSG` = nodeRecord.`HGVSG`;
 ',
 {batchSize:4000, iterateList:true, parallel:true});
 
-// relationship to PubMed
-MATCH(resist:CosmicResistanceMutation) WHERE resist.pub_id IS NOT NULL
-MERGE(p:Publication{ pub_id:toInteger(resist.pub_id)})
-SET p.url= genomiccore.resolvePubmedUrl(resist.pub_id)
-MERGE (resist)-[r1:HAS_PUBLICATION]->(p)
-;
 
-// relationship to SampleMutationCollection
-MATCH (resist:CosmicResistanceMutation) WHERE resist.sample_id IS NOT NULL
-MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = resist.sample_id
-MERGE (smc) -[r2:HAS_DRUG_RESISTANCE_MUTATION] ->(resist)
-;
 
-// relationship to GeneMutationCollection for Census genes
-MATCH (resist:CosmicResistanceMutation) WHERE resist.gene_symbol IS NOT NULL AND resist.census_gene = 'YES'
-MATCH (gmc:GeneMutationCollection) WHERE gmc.gene_symbol = resist.gene_symbol
-MERGE (gmc)-[r3:HAS_DRUG_RESISTANCE_MUTATION] ->(resist)
-;
 
 
 

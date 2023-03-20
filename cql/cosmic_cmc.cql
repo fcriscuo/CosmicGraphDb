@@ -32,8 +32,3 @@ SET cmc.gene_symbol = nodeRecord.GENE_NAME,
 ',
 {batchSize:4000, iterateList:true, parallel:true});
 
-
-MATCH (cmc:CosmicCMC) WHERE cmc.gene_symbol IS NOT NULL
-MATCH (gmc:GeneMutationCollection) WHERE gmc.gene_symbol = cmc.gene_symbol
-MERGE (gmc) -[r1:HAS_CODING_MUTATION]->(cmc)
-;
