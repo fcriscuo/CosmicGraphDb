@@ -40,6 +40,8 @@ SET n.`other_syndromes` = nodeRecord.`other_syndromes`
 SET n.`cosmic_id` = nodeRecord.`COSMIC ID`
 SET n.`cosmic gene name` = nodeRecord.`cosmic gene name`
 SET n.cosmic_url= replace("https://cancer.sanger.ac.uk/cosmic/gene/analysis?ln=XXXX", "XXXX",n.gene_symbol)
+SET n.depmap_url= replace("https://depmap.org/portal/gene/XXXX?tab=overview", "XXXX",n.gene_symbol)
+SET n.genecards_url= replace("https://www.genecards.org/cgi-bin/carddisp.pl?gene=XXXX", "XXXX",n.gene_symbol)
 SET n.`synonyms` = nodeRecord.synonyms;
 ',
 {batchSize:1000, iterateList:true, parallel:true});
