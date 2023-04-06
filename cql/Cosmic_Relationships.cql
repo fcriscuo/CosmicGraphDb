@@ -1,8 +1,8 @@
 
-// CosmicClassification -> CosmicActionability
+// CosmicSampleClassification -> CosmicActionability
 MATCH (act:CosmicActionability) WHERE act.classification_id IS NOT NULL
-MATCH (clas:CosmicClassification) WHERE class.phenotype_id = act.classification_id
-MERGE (class)-[r:HAS_ACTIONAVAILABILY]->(act)
+MATCH (clas:CosmicSampleClassification) WHERE class.phenotype_id = act.classification_id
+MERGE (class)-[r:HAS_AVAILABLE_ACTIONS]->(act)
 ;
 
 // SampleMutationCollection -> CosmicBreakpoint
@@ -120,7 +120,6 @@ MATCH(smc:SampleMutationCollection) WHERE smc.sample_id = ncv.sample_id
 MERGE (smc)-[r:HAS_MUTATION]->(ncv)
 ;
 
-
 // CosmicResistanceMutation -> SampleMutationCollection
 MATCH (resist:CosmicResistanceMutation) WHERE resist.sample_id IS NOT NULL
 MATCH (smc:SampleMutationCollection) WHERE smc.sample_id = resist.sample_id
@@ -133,13 +132,13 @@ MATCH (gmc:GeneMutationCollection) WHERE gmc.gene_symbol = resist.gene_symbol
 MERGE (gmc)-[r3:HAS_DRUG_RESISTANCE_MUTATION] ->(resist)
 ;
 
-// CosmicSample -> CosmicClassification
+// CosmicSample -> CosmicSampleClassification
 CALL {
 MATCH(cs:CosmicSample)
   WHERE cs.cosmic_phenotype_id IS NOT NULL
-MATCH(cc:CosmicClassification)
+MATCH(cc:CosmicSampleClassification)
   WHERE cc.phenotype_id = cs.cosmic_phenotype_id
-MERGE (cs)-[r:HAS_CLASSIFICATION]->(cc)
+MERGE (cs)-[r:HAS_SAMPLE_CLASSIFICATION]->(cc)
 } IN TRANSACTIONS OF 3000 ROWS;
 
 

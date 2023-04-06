@@ -38,11 +38,21 @@ SET n.`HGVSP` = nodeRecord.`HGVSP`
 SET n.`HGVSC` = nodeRecord.`HGVSC`
 SET n.`HGVSG` = nodeRecord.`HGVSG`;
 ',
-{batchSize:1000, iterateList:true, parallel:true});
+{batchSize:1000, iterateList:true});
 
+// CosmicMutation -> GenomicEntity
+MATCH (ge:GenomicEntity) where ge.gene_symbol is not null
+match (cm:CosmicMutation) where cm.gene_symbol = ge.gene_symbol
+merge (cm)-[r:HAS_GENOMIC_ENTITY]-> (ge)
+;
 
-
-
-
+// CosmicMutation -> Publication
+MATCH (ccm:CosmicMutation) WHERE ccm.pub_id IS NOT NULL
+MERGE(p:Publication{ pub_id:ccm.pub_id})
+  ON CREATE
+  SET p.url= genomiccore.resolvePubmedUrl(toString(p.pub_id)),
+  p.needs_properties=true, p.needs_references=true
+MERGE (ccm)-[HAS_PUBLICATION]->(p)
+;
 
 

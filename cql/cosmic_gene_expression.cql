@@ -13,6 +13,6 @@ SET express.sample_id = toInteger(nodeRecord.SAMPLE_ID),
   express.z_score = toFloadt(Z_SCORE),
   express.study_id = toInteger(nodeRecord.ID_STUDY)
 ',
-{batchSize:4000, iterateList:true, parallel:true});
+{batchSize:4000, iterateList:true});
 
 

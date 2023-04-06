@@ -1,13 +1,13 @@
-:// CosmicGeneCensus
+// CosmicGeneCensus
 CALL apoc.periodic.iterate('
 CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/cancer_gene_census.csv", { header:true,
 mapping:{
-     `Tumour Types(Somatic)`: {array:true, arraySep:",", name:"tumor_types_somatic"},
-     `Tumour Types(Germline)`: {array:true, arraySep:",", name:"tumor_types_germline"},
-     `Translocation Partner`: {array:true, arraySep:",", name:"translocation_partners"},
-      `Mutation Types`: {array:true, arraySep:",", name:"mutation_types"},
-      `Other Syndrome`: {array:true, arraySep:",", name:"other_syndromes"},
-     Synonyms: {array:true, arraySep:",", name:"synonyms"}
+     `Tumour Types(Somatic)`: {array:true, arraySep:","},
+     `Tumour Types(Germline)`: {array:true, arraySep:","},
+     `Translocation Partner`: {array:true, arraySep:","},
+      `Mutation Types`: {array:true, arraySep:","},
+      `Other Syndrome`: {array:true, arraySep:","},
+     Synonyms: {array:true, arraySep:","}
    }
 }
 )
@@ -16,9 +16,9 @@ YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
 WHERE NOT nodeRecord.`Gene Symbol` IS NULL
 MERGE (n: `CosmicGene` { gene_symbol: nodeRecord.`Gene Symbol` })
 MERGE (cgmc: `CosmicGeneMutationCollection` {gene_symbol: nodeRecord.`GeneSymbol`})
-MERGE (n)-[r:HAS_MUTATION_COLLECTION]->(cgmc)
+MERGE (n)-[r2:HAS_MUTATION_COLLECTION]->(cgmc)
 MERGE (ghc:`CosmicGeneHallmarkCollection` {gene_symbol: nodeRecord.`GeneSymbol`})
-MERGE (n)-[HAS_HALLMARK_COLLECTION]-(ghc)
+MERGE (n)-[r3:HAS_HALLMARK_COLLECTION]-(ghc)
 SET n.`gene_name` = nodeRecord.`Name`
 SET n.`entrez_gene_id` = toInteger(trim(nodeRecord.`Entrez GeneId`))
 SET n.`genome_location` = nodeRecord.`Genome Location`
@@ -44,7 +44,9 @@ SET n.depmap_url= replace("https://depmap.org/portal/gene/XXXX?tab=overview", "X
 SET n.genecards_url= replace("https://www.genecards.org/cgi-bin/carddisp.pl?gene=XXXX", "XXXX",n.gene_symbol)
 SET n.`synonyms` = nodeRecord.synonyms;
 ',
-{batchSize:1000, iterateList:true, parallel:true});
+{batchSize:1000, iterateList:true});
 
-
-
+MATCH (cg:CosmicGene) WHERE cg.gene_symbol IS NOT NULL
+MATCH (ge:GenomicEntity) WHERE ge.gene_symbol = cg.gene_symbol
+MERGE (cg)-[r:HAS_GENOMIC_ENTITY]->(ge)
+;

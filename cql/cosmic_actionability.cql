@@ -1,10 +1,9 @@
-// CosmicActionability
 CALL apoc.periodic.iterate('
-CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/ActionabilityData.tsv", { header:true,  sep:"TAB"}
+CALL apoc.load.csv("/Volumes/Sea5TBExt/COSMIC_rel97/Actionability/ActionabilityData.tsv", { header:true,  sep:"TAB"}
 )
 YIELD lineNo, map AS nodeRecord RETURN nodeRecord, lineNo
 ','
-MERGE (action:CosmicActionability {actionability_id:toInteger(lineNo)})
+MERGE (action:CosmicActionability {actionability_id:apoc.create.uuid()})
 SET action.gene_symbol=nodeRecord.GENE,
   action.mutation_remark=nodeRecord.MUTATION_REMARK,
   action.genomic_mutation_id=nodeRecord.GENOMIC_MUTATION_ID,
@@ -29,7 +28,7 @@ SET action.gene_symbol=nodeRecord.GENE,
   action.primary_outcome_measure=nodeRecord.PRIMARY_OUTCOME_MEASURE,
   action.number_of_patients=toInteger(nodeRecord.NUMBER_OF_PATIENTS),
   action.treated_number=toInteger(nodeRecord.TREATED_NUMBER),
-  action.control_number=toInteger(CONTROL_NUMBER),
+  action.control_number=toInteger(nodeRecord.CONTROL_NUMBER),
   action.control_treatment=nodeRecord.CONTROL_TREATMENT,
   action.orr_treat=toFloat(nodeRecord.ORR_TREAT),
   action.orr_con=toFloat(nodeRecord.ORR_CON),
@@ -71,7 +70,7 @@ SET action.gene_symbol=nodeRecord.GENE,
   action.classification_id=nodeRecord.CLASSIFICATION_ID,
   action.last_update=nodeRecord.LAST_UPDATED
 ',
-{batchSize:4000, iterateList:true, parallel:true});
+{batchSize:4000, iterateList:true});
 
 // add clinical trials URL property
 MATCH(act:CosmicActionability) WHERE act.trial_id IS NOT NULL

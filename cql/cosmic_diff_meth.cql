@@ -20,5 +20,5 @@ SET meth.study_id = toInteger(nodeRecord.STUDY_ID),
   meth.beta_value = toFloat(nodeRecord.BETA_VALUE),
   meth.two_sided_p_value = toFloat(nodeRecord.TWO_SIDED_P_VALUE)
 ',
-{batchSize:4000, iterateList:true, parallel:true});
+{batchSize:4000, iterateList:true});
 

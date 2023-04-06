@@ -30,5 +30,5 @@ SET cmc.gene_symbol = nodeRecord.GENE_NAME,
   cmc.disease = nodeRecord.DISEASE,
   cmc.wgs_disease = nodeRecord.WHS_DISEASE
 ',
-{batchSize:4000, iterateList:true, parallel:true});
+{batchSize:4000, iterateList:true});
 

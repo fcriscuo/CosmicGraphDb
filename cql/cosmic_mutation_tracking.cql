@@ -13,7 +13,7 @@ SET track.gene_symbol = nodeRecord.GENE_NAME,
   track.mutation_type = nodeRecord.MUTATION_TYPE,
   track.is_canonical = toUpper(nodeRecord.IS_CANONICAL)
 ',
-{batchSize:4000, iterateList:true, parallel:true});
+{batchSize:4000, iterateList:true});
 
 // add clinical trials URL property
 CALL {

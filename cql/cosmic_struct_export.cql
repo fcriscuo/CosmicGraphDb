@@ -14,6 +14,15 @@ SET n.`GRCh` = toInteger(trim(nodeRecord.`GRCh`))
 SET n.`description` = nodeRecord.`description`
 SET n.`pub_id` = nodeRecord.`PUBMED_PMID`;
 ',
-{batchSize:4000, iterateList:true, parallel:true});
+{batchSize:4000, iterateList:true});
+
+// CosmicStruct ->Publication
+MATCH (struct:CosmicStruct) WHERE struct.pub_id IS NOT NULL
+MERGE(p:Publication{ pub_id:toInteger(struct.pub_id)})
+  ON CREATE
+  SET p.url= genomiccore.resolvePubmedUrl(toString(p.pub_id)),
+  p.needs_properties=true, p.needs_references=true
+MERGE (struct)-[r:HAS_PUBLICATION]->(p)
+;
 
 

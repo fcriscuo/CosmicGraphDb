@@ -41,5 +41,5 @@ SET ct.`age_at_tumor_recurrence` = nodeRecord.`age_at_tumour_recurrence`
 SET ct.`stage` = nodeRecord.`stage`
 SET ct.`nci_code` = nodeRecord.`nci_code`
  ',
-{batchSize:1000, iterateList:true, parallel:true});
+{batchSize:1000, iterateList:true});
 

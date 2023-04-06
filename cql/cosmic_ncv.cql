@@ -21,6 +21,16 @@ SET ncv.sample_name=nodeRecord.`Sample name`,
   ncv.pub_id=nodeRecord.PUBMED_PMID,
   ncv.hgvsg=nodeRecord.HGVSG,
 ',
-{batchSize:4000, iterateList:true, parallel:true});
+{batchSize:4000, iterateList:true});
+
+
+// CosmicNCV -> Publication
+MATCH(ncv:CosmicNCV) WHERE ncv.pub_id IS NOT NULL
+MERGE(p:Publication{ pub_id:toInteger(ncv.pub_id)})
+  ON CREATE
+  SET p.url= genomiccore.resolvePubmedUrl(toString(p.pub_id)),
+  p.needs_properties=true, p.needs_references=true
+MERGE (ncv)-[r:HAS_PUBLICATION]->(p)
+;
 
 

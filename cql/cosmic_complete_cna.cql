@@ -18,5 +18,5 @@ SET cna.cnv_id = toInteger(nodeRecord.CNV_ID),
   cna.GRCh = nodeRecord.GRCh,
   cna.chromosome_start_stop = nodeRecord.`Chromosome:G_Start..G_Stop`
 ',
-{batchSize:4000, iterateList:true, parallel:true});
+{batchSize:4000, iterateList:true});
 

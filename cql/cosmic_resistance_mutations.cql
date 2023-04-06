@@ -29,7 +29,16 @@ SET n.`HGVSP` = nodeRecord.`HGVSP`
 SET n.`HGVSC` = nodeRecord.`HGVSC`
 SET n.`HGVSG` = nodeRecord.`HGVSG`;
 ',
-{batchSize:4000, iterateList:true, parallel:true});
+{batchSize:4000, iterateList:true});
+
+// CosmicResistanceMutation -> Publication
+MATCH(resist:CosmicResistanceMutation) WHERE resist.pub_id IS NOT NULL
+MERGE(p:Publication{ pub_id:toInteger(resist.pub_id)})
+  ON CREATE
+  SET p.url= genomiccore.resolvePubmedUrl(toString(p.pub_id)),
+  p.needs_properties=true, p.needs_references=true
+MERGE (resist)-[r1:HAS_PUBLICATION]->(p)
+;
 
 
 
